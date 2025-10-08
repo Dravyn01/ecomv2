@@ -32,6 +32,7 @@ export class CategoryService {
       take: limit,
       order: { created_at: order },
       relations: {
+        parent: true,
         children: true,
         products: true,
       },
@@ -59,6 +60,7 @@ export class CategoryService {
     this.logger.debug(
       `[${this.className}::findOne] found category id=${category_id}`,
     );
+
     return category;
   }
 
@@ -86,7 +88,10 @@ export class CategoryService {
     return result;
   }
 
-  async updateCategory(category_id: number, req: UpdateCategoryReq) {
+  async updateCategory(
+    category_id: number,
+    req: UpdateCategoryReq,
+  ): Promise<Category> {
     this.logger.log(
       `[${this.className}::updateCategory] updating id=${category_id}`,
     );
@@ -130,5 +135,9 @@ export class CategoryService {
       `[${this.className}::updateCategory] updated successfully id=${result.id}`,
     );
     return result;
+  }
+
+  async deleteCategory(category_id: number): Promise<void> {
+    await this.categoryRepo.remove(await this.findOne(category_id));
   }
 }

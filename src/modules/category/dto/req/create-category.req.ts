@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Min,
 } from 'class-validator';
 
 export class CreateCategoryReq {
@@ -17,6 +18,7 @@ export class CreateCategoryReq {
   @IsOptional()
   @IsArray() // ดูว่าเป็ฯ array ไหม(ไม่ได้ดู elm)
   @Type(() => Number) // แปลงค่า "1" -> 1
+  @Min(1, { each: true, message: '' })
   @IsInt({ each: true, message: 'หมายเลขหมวดหมู่ต้องเป็นตัวเลขเท่านั้น' }) // each: true ดู elm ทุกตัวว่าเป็น int ไหม
   category_ids?: number[];
 }

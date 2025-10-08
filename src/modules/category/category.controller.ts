@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { FindAllCategory } from './dto/req/find-all-category.query';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { CategoryService } from './category.service';
@@ -39,12 +49,22 @@ export class CategoryController {
 
   @Put(':id')
   async updateCategory(
-    @Param('id') category_id: number,
+    @Param('id') category_id: string,
     @Body() req: UpdateCategoryReq,
   ): Promise<ApiResponse<Category>> {
     return {
       message: 'อัพเดทหมวดหมู่เรีบลร้อย',
-      data: await this.categoryService.updateCategory(category_id, req),
+      data: await this.categoryService.updateCategory(+category_id, req),
+    };
+  }
+
+  @Delete(':id')
+  async deleteCategory(
+    @Param('id') category_id: string,
+  ): Promise<ApiResponse<void>> {
+    return {
+      message: 'delete category successfully!',
+      data: await this.categoryService.deleteCategory(+category_id),
     };
   }
 }
