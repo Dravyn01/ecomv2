@@ -1,0 +1,20 @@
+regsiter:
+client -> req -> server -> 
+controller -> service 
+-> hash password -> save db
+
+login:
+client -> req -> server -> 
+controller -> service ->
+check email & (compare password with hashPassword) ->
+-> gen token -> response token
+
+authorization:
+client -> req -> server -> middleware ->
+check authorization Barer: token ->
+verify token -> get subject -> find by subject in db -> if existing = success
+
+dto:
+client -> req -> server ->
+request body -> transform to dto -> 
+controller
