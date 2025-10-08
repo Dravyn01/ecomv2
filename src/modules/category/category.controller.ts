@@ -13,7 +13,8 @@ export class CategoryController {
 
   @Get()
   async all(@Query() req: FindAllCategory): Promise<ApiResponse<CategorysRes>> {
-    return { message: '', data: await this.categoryService.findAll(req) };
+    const result = await this.categoryService.findAll(req);
+    return { message: `พบ "${result.count}" หมวดหมู่`, data: result };
   }
 
   @Get(':id')
@@ -21,7 +22,7 @@ export class CategoryController {
     @Param('id') category_id: string,
   ): Promise<ApiResponse<Category>> {
     return {
-      message: '',
+      message: `หมวดหมู่หมายเลข: ${category_id}`,
       data: await this.categoryService.findOne(+category_id),
     };
   }
@@ -31,7 +32,7 @@ export class CategoryController {
     @Body() req: CreateCategoryReq,
   ): Promise<ApiResponse<Category>> {
     return {
-      message: '',
+      message: 'สร้างหมวดหมู่เรีบลร้อย',
       data: await this.categoryService.createCategory(req),
     };
   }
@@ -42,7 +43,7 @@ export class CategoryController {
     @Body() req: UpdateCategoryReq,
   ): Promise<ApiResponse<Category>> {
     return {
-      message: '',
+      message: 'อัพเดทหมวดหมู่เรีบลร้อย',
       data: await this.categoryService.updateCategory(category_id, req),
     };
   }

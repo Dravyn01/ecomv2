@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsString,
   Length,
-  Min,
 } from 'class-validator';
 
 export class CreateCategoryReq {
