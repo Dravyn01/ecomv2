@@ -34,6 +34,15 @@ export class ProductVariantService {
     return { variants, count };
   }
 
+  // find by id
+  async findOne(variant_id: number): Promise<ProductVariant> {
+    const product = await this.variantRepo.findOneBy({ id: variant_id });
+    if (!product) {
+      throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
+    }
+    return product;
+  }
+
   // create variant
   async create(req: CreateVariantReq): Promise<ProductVariant> {
     const existing_product = await this.productService.findOne(req.product_id);
@@ -57,9 +66,7 @@ export class ProductVariantService {
     variant_id: number,
     req: UpdateVariantReq,
   ): Promise<ProductVariant> {
-    const existing = await this.variantRepo.findOneBy({ id: variant_id });
-    if (!existing)
-      throw new NotFoundException(`ไม่พบสินค้าหมายเลข: ${variant_id}`);
+    const existing = await this.findOne(variant_id);
 
     const instant_update = {
       ...(req.product_id && {
@@ -80,6 +87,7 @@ export class ProductVariantService {
 
   // delete variant
   async delete(variant_id: number): Promise<void> {
-    await this.findOne(variant_id);
+    const existing = await this.findOne(variant_id);
+    await this.variantRepo.remove(existing);
   }
 }
