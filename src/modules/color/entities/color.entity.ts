@@ -1,4 +1,4 @@
-import { ProductVariant } from 'src/modules/product/entities/product.entity';
+import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity('colors')

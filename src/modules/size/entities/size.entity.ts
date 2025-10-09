@@ -1,4 +1,4 @@
-import { ProductVariant } from 'src/modules/product/entities/product.entity';
+import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('sizes')

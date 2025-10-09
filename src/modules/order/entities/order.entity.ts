@@ -1,5 +1,5 @@
 import { User } from 'src/config/entities.config';
-import { ProductVariant } from 'src/modules/product/entities/product.entity';
+import { ProductVariant } from 'src/config/entities.config';
 import { Shipment } from 'src/modules/shipments/entities/shipment.entity';
 import {
   Column,
