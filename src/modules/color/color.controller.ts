@@ -18,45 +18,50 @@ export class ColorController {
   constructor(private readonly colorsService: ColorService) {}
 
   @Post()
-  create(@Body() dto: CreateColorReq): ApiResponse<Promise<Color>> {
+  async create(@Body() dto: CreateColorReq): Promise<ApiResponse<Color>> {
+    const color = await this.colorsService.create(dto);
     return {
       message: 'สร้าง Color สำเร็จ',
-      data: this.colorsService.create(dto),
+      data: color,
     };
   }
 
   @Get()
-  findAll(): ApiResponse<Promise<Color[]>> {
+  async findAll(): Promise<ApiResponse<Color[]>> {
+    const colors = await this.colorsService.findAll();
     return {
       message: 'ดึงข้อมูล Color ทั้งหมดสำเร็จ',
-      data: this.colorsService.findAll(),
+      data: colors,
     };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): ApiResponse<Promise<Color>> {
+  async findOne(@Param('id') id: string): Promise<ApiResponse<Color>> {
+    const color = await this.colorsService.findOne(+id);
     return {
       message: `ดึงข้อมูล Color id=${id} สำเร็จ`,
-      data: this.colorsService.findOne(+id),
+      data: color,
     };
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() dto: UpdateColorReq,
-  ): ApiResponse<Promise<Color>> {
+  ): Promise<ApiResponse<Color>> {
+    const updatedColor = await this.colorsService.update(+id, dto);
     return {
       message: `อัปเดต Color id=${id} สำเร็จ`,
-      data: this.colorsService.update(+id, dto),
+      data: updatedColor,
     };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): ApiResponse<Promise<void>> {
+  async remove(@Param('id') id: string): Promise<ApiResponse<void>> {
+    await this.colorsService.remove(+id);
     return {
       message: `ลบ Color id=${id} สำเร็จ`,
-      data: this.colorsService.remove(+id),
+      data: undefined,
     };
   }
 }

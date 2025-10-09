@@ -18,7 +18,7 @@ export class ColorService {
   }
 
   async findAll(): Promise<Color[]> {
-    return this.colorRepo.find();
+    return await this.colorRepo.find();
   }
 
   async findOne(id: number): Promise<Color> {

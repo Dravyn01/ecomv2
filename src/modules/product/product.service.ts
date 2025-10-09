@@ -17,6 +17,7 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
+  // find all
   async findAll(req: FindAllProducts): Promise<ProductsRes> {
     const { query, page, limit, order } = req;
 
@@ -35,7 +36,8 @@ export class ProductService {
     return { products, count } as ProductsRes;
   }
 
-  async findById(product_id: number): Promise<Product> {
+  // find by id
+  async findOne(product_id: number): Promise<Product> {
     const product = await this.productRepo.findOneBy({ id: product_id });
     if (!product) {
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${product_id}`);
@@ -43,7 +45,8 @@ export class ProductService {
     return product;
   }
 
-  async createProduct(req: CreateProductReq): Promise<Product> {
+  // create product
+  async create(req: CreateProductReq): Promise<Product> {
     const saved_product = this.productRepo.create({
       name: req.name,
       description: req.description,
@@ -56,18 +59,20 @@ export class ProductService {
     return await this.productRepo.save(saved_product);
   }
 
-  async updateProduct(
+  // update product
+  async update(
     product_id: number,
     updateProductDto: UpdateProductReq,
   ): Promise<Product> {
-    const existing = await this.findById(product_id);
+    const existing = await this.findOne(product_id);
 
     const saved_product = this.productRepo.merge(existing, updateProductDto);
 
     return await this.productRepo.save(saved_product);
   }
 
-  async deleteProduct(product_id: number): Promise<DeleteResult> {
+  // delete product
+  async delete(product_id: number): Promise<DeleteResult> {
     return await this.productRepo.delete(product_id);
   }
 }

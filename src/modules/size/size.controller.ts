@@ -18,45 +18,50 @@ export class SizeController {
   constructor(private readonly sizesService: SizeService) {}
 
   @Post()
-  create(@Body() dto: CreateSizeReq): ApiResponse<Promise<Size>> {
+  async create(@Body() dto: CreateSizeReq): Promise<ApiResponse<Size>> {
+    const size = await this.sizesService.create(dto);
     return {
       message: 'สร้าง Size สำเร็จ',
-      data: this.sizesService.create(dto),
+      data: size,
     };
   }
 
   @Get()
-  findAll(): ApiResponse<Promise<Size[]>> {
+  async findAll(): Promise<ApiResponse<Size[]>> {
+    const sizes = await this.sizesService.findAll();
     return {
       message: 'ดึงข้อมูล Size ทั้งหมดสำเร็จ',
-      data: this.sizesService.findAll(),
+      data: sizes,
     };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): ApiResponse<Promise<Size>> {
+  async findOne(@Param('id') id: string): Promise<ApiResponse<Size>> {
+    const size = await this.sizesService.findOne(+id);
     return {
       message: `ดึงข้อมูล Size id=${id} สำเร็จ`,
-      data: this.sizesService.findOne(+id),
+      data: size,
     };
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() dto: UpdateSizeReq,
-  ): ApiResponse<Promise<Size>> {
+  ): Promise<ApiResponse<Size>> {
+    const updated = await this.sizesService.update(+id, dto);
     return {
       message: `อัปเดต Size id=${id} สำเร็จ`,
-      data: this.sizesService.update(+id, dto),
+      data: updated,
     };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): ApiResponse<Promise<void>> {
+  async remove(@Param('id') id: string): Promise<ApiResponse<void>> {
+    await this.sizesService.remove(+id);
     return {
       message: `ลบ Size id=${id} สำเร็จ`,
-      data: this.sizesService.remove(+id),
+      data: undefined,
     };
   }
 }

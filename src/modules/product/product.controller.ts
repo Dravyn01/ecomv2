@@ -14,7 +14,6 @@ import { ApiResponse } from 'src/common/dto/res/common-response';
 import { ProductService } from './product.service';
 import { ProductsRes } from './dto/res/products.res';
 import { CreateProductReq } from './dto/req/create-product.req';
-import { DeleteResult } from 'typeorm';
 import { UpdateProductReq } from './dto/req/update-product.req';
 import { FindAllProducts } from './dto/req/find-all-products.query';
 
@@ -39,7 +38,7 @@ export class ProductController {
   async ProductDetails(
     @Param('id') product_id: number,
   ): Promise<ApiResponse<Product>> {
-    const product = await this.productService.findById(product_id);
+    const product = await this.productService.findOne(product_id);
     return {
       message: `ข้อมูลสินค้าหมายเลข ${product_id}`,
       data: product,
@@ -50,9 +49,10 @@ export class ProductController {
   async CreateProduct(
     @Body() req: CreateProductReq,
   ): Promise<ApiResponse<Product>> {
+    const product = await this.productService.create(req);
     return {
       message: 'สร้างสินค้าเสร็จสิ้น',
-      data: await this.productService.createProduct(req),
+      data: product,
     };
   }
 
@@ -61,26 +61,21 @@ export class ProductController {
     @Body() req: UpdateProductReq,
     @Param('id') product_id: string,
   ): Promise<ApiResponse<Product>> {
-    this.logger.log(
-      `[UpdateProduct]: product_id=${product_id}, req=${JSON.stringify(req)}`,
-    );
-
+    const product = await this.productService.update(+product_id, req);
     return {
       message: 'อัพเดทสินค้าเรียบร้อย',
-      data: await this.productService.updateProduct(+product_id, req),
+      data: product,
     };
   }
 
   @Delete(':id')
   async DeleteProduct(
     @Param('id') product_id: string,
-  ): Promise<ApiResponse<DeleteResult>> {
+  ): Promise<ApiResponse<null>> {
+    await this.productService.delete(+product_id);
     return {
       message: `ลบสินค้าหมายเลข ${product_id} เสร็จสิ้น`,
-      data: await this.productService.deleteProduct(+product_id),
+      data: null,
     };
   }
 }
-
-@Controller('/api/products')
-export class ProductVariantController {}

@@ -34,6 +34,7 @@ export class CartItem {
   id: number;
 
   @ManyToOne(() => Cart, (cart) => cart.cart_items)
+  @JoinColumn()
   cart: Cart;
 
   @OneToOne(() => ProductVariant, (variant) => variant.cart_item)

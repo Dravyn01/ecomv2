@@ -18,7 +18,7 @@ export class SizeService {
   }
 
   async findAll(): Promise<Size[]> {
-    return this.sizeRepo.find();
+    return await this.sizeRepo.find();
   }
 
   async findOne(id: number): Promise<Size> {

@@ -9,5 +9,5 @@ import {
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 
-@Controller('cart')
+@Controller('carts')
 export class CartController {}
