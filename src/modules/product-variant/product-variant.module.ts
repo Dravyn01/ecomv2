@@ -16,5 +16,6 @@ import { ColorModule } from '../color/color.module';
   ],
   controllers: [ProductVariantController],
   providers: [ProductVariantService],
+  exports: [ProductVariantService],
 })
 export class ProductVariantModule {}

@@ -1,7 +1,11 @@
+import { Cart, Order } from 'src/config/entities.config';
+
 export class UserResponse {
-  readonly id: number;
-  readonly username: string;
-  readonly email: string;
-  readonly created_at: Date;
-  readonly updated_at: Date;
+  id: number;
+  username: string;
+  email: string;
+  orders: Order[];
+  cart: Cart | null;
+  created_at: Date;
+  updated_at: Date;
 }

@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { toUserResponse } from 'src/common/mapper/user.mapper';
 import { User } from 'src/modules/user/entities/user.entity';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly cartService: CartService,
   ) {}
 
   /*
@@ -37,13 +39,18 @@ export class AuthService {
       email: req.email,
       password: hash_password,
     });
+
     this.logger.debug(
       `[AuthService][register] - User entity created: ${JSON.stringify(user)}`,
     );
 
-    const savedUser = await this.userRepository.save(user);
+    const saved_user = await this.userRepository.save(user);
+
+    // after save user create cart
+    // await this.cartService.createCart(saved_user.id);
+
     this.logger.log(
-      `[AuthService][register] - User registered successfully: ${savedUser.email}`,
+      `[AuthService][register] - User registered successfully: ${saved_user.email}`,
     );
 
     return toUserResponse(user);

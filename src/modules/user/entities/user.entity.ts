@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -23,8 +24,8 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => Cart, (cart) => cart.user)
-  carts: Cart[];
+  @OneToOne(() => Cart, (cart) => cart.user)
+  cart: Cart | null;
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];

@@ -8,7 +8,6 @@ import {
   ManyToOne,
   OneToMany,
   OneToOne,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -17,7 +16,7 @@ export class Cart {
   @PrimaryGeneratedColumn({ name: 'cart_id' })
   id: number;
 
-  @ManyToOne(() => User, (user) => user.carts)
+  @OneToOne(() => User, (user) => user.cart, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -30,7 +29,7 @@ export class Cart {
 
 @Entity('cart_item')
 export class CartItem {
-  @PrimaryColumn({ name: 'cart_item_id' })
+  @PrimaryGeneratedColumn({ name: 'cart_item_id' })
   id: number;
 
   @ManyToOne(() => Cart, (cart) => cart.cart_items)
@@ -40,7 +39,7 @@ export class CartItem {
   @OneToOne(() => ProductVariant, (variant) => variant.cart_item)
   variant: ProductVariant;
 
-  @Column()
+  @Column({ type: 'int' })
   quantity: number;
 
   @CreateDateColumn()

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ColorService } from '../color/color.service';
@@ -9,6 +9,8 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
 import { UpdateVariantReq } from './dto/req/update-variant.req';
+import { ProductVariantResponse } from './dto/res/product-variant.res';
+import { toProductVariantResponse } from 'src/common/mapper/product-variant.mapper';
 
 @Injectable()
 export class ProductVariantService {
@@ -36,12 +38,24 @@ export class ProductVariantService {
 
   // find by id
   async findOne(variant_id: number): Promise<ProductVariant> {
-    const product = await this.variantRepo.findOneBy({ id: variant_id });
+    const product = await this.variantRepo.findOne({
+      where: { id: variant_id },
+      relations: ['product', 'color', 'size'],
+    });
     if (!product) {
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
     }
     return product;
   }
+
+  // no relation
+  // async findOneById(variant_id: number): Promise<ProductVariantResponse> {
+  //   const product = await this.variantRepo.findOneBy({ id: variant_id });
+  //   if (!product) {
+  //     throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
+  //   }
+  //   return toProductVariantResponse(product);
+  // }
 
   // create variant
   async create(req: CreateVariantReq): Promise<ProductVariant> {

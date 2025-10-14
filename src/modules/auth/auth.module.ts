@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from 'src/modules/user/entities/user.entity';
+import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { User } from 'src/modules/user/entities/user.entity';
         },
       }),
     }),
+    CartModule,
   ],
 
   controllers: [AuthController],

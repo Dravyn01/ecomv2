@@ -5,14 +5,18 @@ import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { UserResponse } from './dto/user.response';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 
-@Controller('/user')
+@Controller('/users')
 export class UserController {
   private readonly logger = new Logger(UserController.name);
   constructor(private readonly userService: UserService) {}
 
-  @Get('/all-user')
-  async allUser() {
-    return await this.userService.getAllUser();
+  @Get()
+  async allUser(): Promise<ApiResponse<UserResponse[]>> {
+    const users = await this.userService.getAllUser();
+    return {
+      message: '',
+      data: users,
+    };
   }
 
   @Get('/profile')

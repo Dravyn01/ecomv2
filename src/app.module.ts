@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
@@ -9,6 +9,7 @@ import { SizeModule } from './modules/size/size.module';
 import { CategoryModule } from './modules/category/category.module';
 import { DB_CONFIG } from './config/db.config';
 import * as entities from './config/entities.config';
+import { CartModule } from './modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import * as entities from './config/entities.config';
     ColorModule,
     SizeModule,
     CategoryModule,
+    CartModule,
   ],
 
   controllers: [],

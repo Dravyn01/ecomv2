@@ -16,7 +16,7 @@ export class UserService {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> {
@@ -35,13 +35,13 @@ export class UserService {
 
   async getAllUser(): Promise<UserResponse[]> {
     this.logger.log('getAllUser called');
-    const users = await this.userRepository.find();
+    const users = await this.userRepo.find();
     return users.map(toUserResponse);
   }
 
   async findByEmail(email: string): Promise<User> {
     this.logger.log(`findByEmail called with email=${email}`);
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepo.findOneBy({ email });
     if (user) {
       this.logger.debug(`findByEmail success for email=${email}`);
       return user;
@@ -49,6 +49,15 @@ export class UserService {
 
     this.logger.error(`findByEmail user not found for email=${email}`);
     throw new NotFoundException('user not found');
+  }
+
+  async findOne(user_id: number): Promise<UserResponse> {
+    const user = await this.userRepo.findOne({
+      where: { id: user_id },
+      relations: ['cart', 'orders'],
+    });
+    if (!user) throw new NotFoundException('not found user');
+    return user;
   }
 
   async getProfile(email: string): Promise<UserResponse> {
