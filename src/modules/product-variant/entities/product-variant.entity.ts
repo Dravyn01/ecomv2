@@ -19,21 +19,6 @@ export class ProductVariant {
   @PrimaryGeneratedColumn({ name: 'product_variant_id' })
   id: number;
 
-  @ManyToOne(() => Product, (product) => product.variants, {
-    onDelete: 'CASCADE',
-    nullable: true,
-  })
-  @JoinColumn({ name: 'product_id' }) // fk
-  product: Product;
-
-  @ManyToOne(() => Color, (color) => color.variant)
-  @JoinColumn({ name: 'color_id' })
-  color: Color;
-
-  @ManyToOne(() => Size, (size) => size.variant)
-  @JoinColumn({ name: 'size_id' })
-  size: Size;
-
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
@@ -43,14 +28,32 @@ export class ProductVariant {
   @Column({ type: 'text' })
   image_url: string;
 
-  @ManyToOne(() => OrderItem, (orderItem) => orderItem.variants)
-  @JoinTable({ name: 'order_item_id' })
-  order_item: OrderItem;
-
-  @OneToOne(() => CartItem, (cartItem) => cartItem.variant)
-  @JoinTable({ name: 'cart_item_id' })
-  cart_item: CartItem;
-
   @CreateDateColumn()
   added_at: Date;
+
+  // One OrderItem One ProductVariant
+  @OneToOne(() => OrderItem, (orderItem) => orderItem.variants)
+  order_item: OrderItem;
+
+  // One CartItem One ProductVariant
+  @OneToOne(() => CartItem, (cartItem) => cartItem.variant)
+  cart_item: CartItem;
+
+  // One Product Many Variant
+  @ManyToOne(() => Product, (product) => product.variants, {
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
+  @JoinColumn() // fk
+  product: Product;
+
+  // One Variant One Color
+  @OneToOne(() => Color, (color) => color.variant)
+  @JoinColumn()
+  color: Color;
+
+  // One Variant One Size
+  @OneToOne(() => Size, (size) => size.variant)
+  @JoinColumn()
+  size: Size;
 }

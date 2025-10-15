@@ -13,7 +13,7 @@ export enum Carrier {
   EASY_EXPRESS = 'EASY_EXPRESS',
 }
 
-// สถานะใช้ติดตามขั้นตอนการจัดส่งสำหรับ order
+// Order Status
 export enum ShippingStatus {
   PENDING = 'PENDING', // ยังไม่ถูกจัดส่ง (รอ warehouse)
   IN_TRANSIT = 'IN_TRANSIT', // สินค้าอยู่ระหว่างการจัดส่ง
@@ -27,9 +27,6 @@ export enum ShippingStatus {
 export class Shipment {
   @PrimaryGeneratedColumn({ name: 'shipment_id' })
   id: number;
-
-  @OneToMany(() => Order, (order) => order.shipment)
-  orders: Order[];
 
   @Column({ type: 'enum', enum: Carrier, default: Carrier.THUNDER_EXPRESS })
   carrier: Carrier;
@@ -49,4 +46,8 @@ export class Shipment {
 
   @Column({ type: 'timestamp' })
   delivered_at: Date;
+
+  // One Shipment Many Order
+  @OneToMany(() => Order, (order) => order.shipment)
+  orders: Order[];
 }

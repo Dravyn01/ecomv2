@@ -9,6 +9,7 @@ import {
   JoinTable,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -29,20 +30,6 @@ export class Order {
   @PrimaryGeneratedColumn({ name: 'order_id' })
   id: number;
 
-  // 1 user มีหลาย order
-  @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
-
-  // หลาย order มี 1 ขนส่ง
-  @ManyToOne(() => Shipment, (shipment) => shipment.orders)
-  @JoinColumn({ name: 'shipment_id' })
-  shipment: Shipment;
-
-  // 1 order มีหลาย order item
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
-  order_item: OrderItem[];
-
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number;
 
@@ -51,19 +38,26 @@ export class Order {
 
   @CreateDateColumn()
   order_date: Date;
+
+  // One User Many Order
+  @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  // One Shipment Many Order
+  @ManyToOne(() => Shipment, (shipment) => shipment.orders)
+  @JoinColumn({ name: 'shipment_id' })
+  shipment: Shipment;
+
+  // One Order Many Order Item
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
+  order_item: OrderItem[];
 }
 
 @Entity('order_item')
 export class OrderItem {
   @PrimaryGeneratedColumn({ name: 'order_item_id' })
   id: number;
-
-  @ManyToOne(() => Order, (order) => order.order_item)
-  @JoinTable({ name: 'order_id' })
-  order: Order;
-
-  @OneToMany(() => ProductVariant, (variant) => variant.order_item)
-  variants: ProductVariant[];
 
   @Column()
   quantity: number;
@@ -73,4 +67,14 @@ export class OrderItem {
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number;
+
+  // One Order Many OrderItem
+  @ManyToOne(() => Order, (order) => order.order_item)
+  @JoinTable({ name: 'order_id' })
+  order: Order;
+
+  // One ProductVariant One OrderItem
+  @OneToOne(() => ProductVariant, (variant) => variant.order_item)
+  @JoinColumn()
+  variants: ProductVariant;
 }

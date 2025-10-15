@@ -27,9 +27,9 @@ export class Product {
   @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
   discount_price?: number | null;
 
-  // one product many variant
+  // One To Product
   @OneToMany(() => ProductVariant, (variant) => variant.product, {
-    cascade: true,
+    onDelete: 'CASCADE', // Delete Product Delete all Variant
   })
   variants: ProductVariant[];
 
