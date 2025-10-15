@@ -7,9 +7,8 @@ import { ProductModule } from './modules/product/product.module';
 import { ColorModule } from './modules/color/color.module';
 import { SizeModule } from './modules/size/size.module';
 import { CategoryModule } from './modules/category/category.module';
-import { DB_CONFIG } from './config/db.config';
-import * as entities from './config/entities.config';
 import { CartModule } from './modules/cart/cart.module';
+import { TypeOrmConfig } from './config/typeorm.config';
 
 @Module({
   imports: [
@@ -19,14 +18,9 @@ import { CartModule } from './modules/cart/cart.module';
     }),
 
     // typeorm config
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      autoLoadEntities: true,
-      entities: Object.values(entities) as Function[],
-      ...DB_CONFIG,
-    }),
+    TypeOrmModule.forRoot(TypeOrmConfig),
 
-    // app module
+    // modules
     AuthModule,
     UserModule,
     ProductModule,

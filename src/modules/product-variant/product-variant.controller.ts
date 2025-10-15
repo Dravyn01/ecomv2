@@ -39,6 +39,17 @@ export class ProductVariantController {
     };
   }
 
+  // dev mode
+  @Get()
+  async test(): Promise<ApiResponse<any>> {
+    const variants = await this.variantService.listDevmode();
+
+    return {
+      message: '',
+      data: variants,
+    };
+  }
+
   @Post()
   async createVariant(
     @Body() req: CreateVariantReq,

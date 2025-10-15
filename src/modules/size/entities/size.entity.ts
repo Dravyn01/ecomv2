@@ -1,5 +1,5 @@
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('sizes')
 export class Size {
@@ -12,6 +12,6 @@ export class Size {
   @Column({ type: 'varchar', length: 100 })
   description: string;
 
-  @OneToOne(() => ProductVariant, (variant) => variant.size)
-  variant: ProductVariant;
+  @OneToMany(() => ProductVariant, (variant) => variant.size)
+  variant: ProductVariant[];
 }

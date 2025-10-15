@@ -9,8 +9,6 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
 import { UpdateVariantReq } from './dto/req/update-variant.req';
-import { ProductVariantResponse } from './dto/res/product-variant.res';
-import { toProductVariantResponse } from 'src/common/mapper/product-variant.mapper';
 
 @Injectable()
 export class ProductVariantService {
@@ -36,6 +34,10 @@ export class ProductVariantService {
     return { variants, count };
   }
 
+  async listDevmode() {
+    return await this.variantRepo.find();
+  }
+
   // find by id
   async findOne(variant_id: number): Promise<ProductVariant> {
     const product = await this.variantRepo.findOne({
@@ -47,15 +49,6 @@ export class ProductVariantService {
     }
     return product;
   }
-
-  // no relation
-  // async findOneById(variant_id: number): Promise<ProductVariantResponse> {
-  //   const product = await this.variantRepo.findOneBy({ id: variant_id });
-  //   if (!product) {
-  //     throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
-  //   }
-  //   return toProductVariantResponse(product);
-  // }
 
   // create variant
   async create(req: CreateVariantReq): Promise<ProductVariant> {

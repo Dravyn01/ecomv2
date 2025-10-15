@@ -1,6 +1,6 @@
 import { IsInt, Min } from 'class-validator';
 
-export class CreateCartItemReq {
+export class AddToCartReq {
   @IsInt({ message: '' })
   @Min(1)
   user_id: number;

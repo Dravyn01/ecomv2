@@ -1,14 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cart, CartItem, ProductVariant } from 'src/config/entities.config';
+import { Cart, CartItem } from 'src/config/entities.config';
 import { FindAllCartsDto } from './dto/req/find-all-carts.query';
 import { CartsRes } from './dto/res/carts.res';
 import { Repository } from 'typeorm';
-import { CreateCartItemReq } from './dto/req/create-cart-item.req';
 import { CartResponse } from './dto/res/cart.res';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { UserService } from '../user/user.service';
-import { warn } from 'console';
+import { AddToCartReq } from './dto/req/add-to-cart.req';
+import { async } from 'rxjs';
 
 @Injectable()
 export class CartService {
@@ -37,9 +37,15 @@ export class CartService {
     return { carts, count } as CartsRes;
   }
 
-  async findOne(cart_id: number): Promise<CartResponse> {
+  async findOneCart(cart_id: number): Promise<CartResponse> {
     const existing = await this.cartRepo.findOneBy({ id: cart_id });
     if (!existing) throw new NotFoundException('not found cart');
+    return existing;
+  }
+
+  async findOneCartItem(cart_item_id: number): Promise<CartItem> {
+    const existing = await this.cartItemRepo.findOneBy({ id: cart_item_id });
+    if (!existing) throw new NotFoundException('not found cartitem');
     return existing;
   }
 
@@ -68,4 +74,26 @@ export class CartService {
   //     variant,
   //   });
   // }
+
+  async addToCart(req: AddToCartReq): Promise<void> {
+    const user = await this.userService.findOne(req.user_id);
+    const variant = await this.variantService.findOne(req.variant_id);
+
+    let cart = user.cart;
+    if (!cart) {
+      cart = await this.cartRepo.save({
+        user: { id: user.id },
+      });
+    }
+
+    await this.cartItemRepo.save({
+      cart: { id: cart.id },
+      variant: { id: variant.id },
+      quantity: req.quantity,
+    });
+  }
+
+  async delete(cart_id: number): Promise<void> {
+    await this.cartRepo.delete(cart_id);
+  }
 }
