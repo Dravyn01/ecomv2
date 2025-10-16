@@ -74,7 +74,7 @@ export class OrderItem {
   order: Order;
 
   // One ProductVariant One OrderItem
-  @OneToOne(() => ProductVariant, (variant) => variant.order_item)
+  @ManyToOne(() => ProductVariant, (variant) => variant.order_items)
   @JoinColumn()
   variants: ProductVariant;
 }

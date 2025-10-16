@@ -38,11 +38,11 @@ export class CartItem {
   @CreateDateColumn()
   added_at: number;
 
-  @ManyToOne(() => Cart, (cart) => cart.cart_items)
+  @ManyToOne(() => Cart, (cart) => cart.cart_items, { onDelete: 'CASCADE' })
   @JoinColumn()
   cart: Cart; // One Cart Many CartItem
 
-  @OneToOne(() => ProductVariant, (variant) => variant.cart_item)
+  @ManyToOne(() => ProductVariant, (variant) => variant.cart_items)
   @JoinColumn()
-  variant: ProductVariant; // One Product One CartItem
+  variant: ProductVariant; // One ProductVariant One CartItem
 }

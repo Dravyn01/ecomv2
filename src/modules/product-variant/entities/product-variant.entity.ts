@@ -3,10 +3,10 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinTable,
   JoinColumn,
   OneToOne,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { OrderItem } from 'src/modules/order/entities/order.entity';
 import { Size } from 'src/modules/size/entities/size.entity';
@@ -32,12 +32,12 @@ export class ProductVariant {
   added_at: Date;
 
   // One OrderItem One ProductVariant
-  @OneToOne(() => OrderItem, (orderItem) => orderItem.variants)
-  order_item: OrderItem;
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.variants)
+  order_items: OrderItem;
 
   // One CartItem One ProductVariant
-  @OneToOne(() => CartItem, (cartItem) => cartItem.variant)
-  cart_item: CartItem;
+  @OneToMany(() => CartItem, (cartItem) => cartItem.variant)
+  cart_items: CartItem[];
 
   // One Product Many Variant
   @ManyToOne(() => Product, (product) => product.variants, {
@@ -48,12 +48,12 @@ export class ProductVariant {
   product: Product;
 
   // One Variant One Color
-  @OneToOne(() => Color, (color) => color.variant)
+  @ManyToOne(() => Color, (color) => color.variant)
   @JoinColumn()
   color: Color;
 
   // One Variant One Size
-  @OneToOne(() => Size, (size) => size.variant)
+  @ManyToOne(() => Size, (size) => size.variant)
   @JoinColumn()
   size: Size;
 }

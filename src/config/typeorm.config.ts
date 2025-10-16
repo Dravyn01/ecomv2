@@ -15,13 +15,10 @@ const config: DataSourceOptions = {
   password: process.env.DB_PASS || 'root',
   database: process.env.DB_NAME || 'unknow_db',
   synchronize: true, // false if production
-  logging: true,
 };
 
 // for typeorm cli and migration
 export const AppDataSource = new DataSource(config);
 
 // for nestjs
-export const TypeOrmConfig: TypeOrmModuleOptions = {
-  ...config,
-};
+export const TypeOrmConfig: TypeOrmModuleOptions = { ...config };
