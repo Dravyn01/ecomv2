@@ -12,7 +12,7 @@ import {
 import { Product } from './entities/product.entity';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { ProductService } from './product.service';
-import { ProductsRes } from './dto/res/products.res';
+import { ProductsResponse } from './dto/res/products.res';
 import { CreateProductReq } from './dto/req/create-product.req';
 import { UpdateProductReq } from './dto/req/update-product.req';
 import { FindAllProducts } from './dto/req/find-all-products.query';
@@ -26,7 +26,7 @@ export class ProductController {
   @Get()
   async AllProducts(
     @Query() req: FindAllProducts,
-  ): Promise<ApiResponse<ProductsRes>> {
+  ): Promise<ApiResponse<ProductsResponse>> {
     this.logger.log(
       `[product.controller.ts]: LOG paramter {q: ${req.query}, page: ${req.page}, limit: ${req.limit}, order: ${req.order}}`,
     );

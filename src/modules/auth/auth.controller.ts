@@ -7,7 +7,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { User } from 'src/modules/user/entities/user.entity';
 
-@Controller('/auth')
+@Controller('/api/auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 

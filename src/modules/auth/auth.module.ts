@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from 'src/modules/user/entities/user.entity';
-import { CartModule } from '../cart/cart.module';
 
 @Module({
   imports: [
@@ -18,6 +17,7 @@ import { CartModule } from '../cart/cart.module';
       inject: [ConfigService],
       useFactory: (service: ConfigService) => ({
         secret: service.get<string>('SECRET_KEY'),
+        // set default jwt options
         signOptions: {
           expiresIn: '1h',
           algorithm: 'HS256',
@@ -25,7 +25,6 @@ import { CartModule } from '../cart/cart.module';
         },
       }),
     }),
-    CartModule,
   ],
 
   controllers: [AuthController],

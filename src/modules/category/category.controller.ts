@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   Put,
   Query,
@@ -17,7 +16,7 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryReq } from './dto/req/create-category.req';
 import { UpdateCategoryReq } from './dto/req/update-category.req';
 
-@Controller('/admin/categorys/')
+@Controller('/admin/categorys')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

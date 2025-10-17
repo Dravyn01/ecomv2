@@ -5,7 +5,7 @@ import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { UserResponse } from './dto/user.response';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 
-@Controller('/users')
+@Controller('/admin/users')
 export class UserController {
   private readonly logger = new Logger(UserController.name);
   constructor(private readonly userService: UserService) {}

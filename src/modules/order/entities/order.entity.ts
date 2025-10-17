@@ -1,6 +1,5 @@
 import { User } from 'src/config/entities.config';
 import { ProductVariant } from 'src/config/entities.config';
-import { Shipment } from 'src/modules/shipments/entities/shipment.entity';
 import {
   Column,
   CreateDateColumn,
@@ -9,7 +8,6 @@ import {
   JoinTable,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -34,7 +32,7 @@ export class Order {
   total_price: number;
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
-  status: OrderStatus;
+  status: OrderStatus = OrderStatus.PENDING;
 
   @CreateDateColumn()
   order_date: Date;
@@ -45,12 +43,14 @@ export class Order {
   user: User;
 
   // One Shipment Many Order
-  @ManyToOne(() => Shipment, (shipment) => shipment.orders)
-  @JoinColumn({ name: 'shipment_id' })
-  shipment: Shipment;
+  // @ManyToOne(() => Shipment, (shipment) => shipment.orders)
+  // @JoinColumn({ name: 'shipment_id' })
+  // shipment: Shipment;
 
   // One Order Many Order Item
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
+    cascade: true,
+  })
   order_item: OrderItem[];
 }
 
@@ -68,13 +68,13 @@ export class OrderItem {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number;
 
-  // One Order Many OrderItem
-  @ManyToOne(() => Order, (order) => order.order_item)
-  @JoinTable({ name: 'order_id' })
+  // Many CartItem One Order
+  @ManyToOne(() => Order, (order) => order.order_item, { onDelete: 'CASCADE' })
+  @JoinTable()
   order: Order;
 
-  // One ProductVariant One OrderItem
+  // Many CartItem One ProductVariant
   @ManyToOne(() => ProductVariant, (variant) => variant.order_items)
   @JoinColumn()
-  variants: ProductVariant;
+  variant: ProductVariant;
 }

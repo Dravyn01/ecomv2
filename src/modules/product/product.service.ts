@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Product } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
-import { ProductsRes } from './dto/res/products.res';
+import { ProductsResponse } from './dto/res/products.res';
 import { FindAllProducts } from './dto/req/find-all-products.query';
 import { CreateProductReq } from './dto/req/create-product.req';
 import { UpdateProductReq } from './dto/req/update-product.req';
@@ -18,7 +18,7 @@ export class ProductService {
   ) {}
 
   // find all
-  async findAll(req: FindAllProducts): Promise<ProductsRes> {
+  async findAll(req: FindAllProducts): Promise<ProductsResponse> {
     const { query, page, limit, order } = req;
 
     let search = query ? { name: ILike(`%${query}%`) } : {};
@@ -33,7 +33,7 @@ export class ProductService {
       order: { created_at: order },
     });
 
-    return { products, count } as ProductsRes;
+    return { data: products, count } as ProductsResponse;
   }
 
   // find by id

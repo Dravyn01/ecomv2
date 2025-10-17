@@ -13,7 +13,7 @@ import { ColorService } from './color.service';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Color } from './entities/color.entity';
 
-@Controller('colors')
+@Controller('/admin/colors')
 export class ColorController {
   constructor(private readonly colorsService: ColorService) {}
 
@@ -57,11 +57,11 @@ export class ColorController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<ApiResponse<void>> {
+  async remove(@Param('id') id: string): Promise<ApiResponse<null>> {
     await this.colorsService.remove(+id);
     return {
       message: `ลบ Color id=${id} สำเร็จ`,
-      data: undefined,
+      data: null,
     };
   }
 }

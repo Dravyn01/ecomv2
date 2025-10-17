@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { RegisterRequest } from './dto/register.request';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,7 +7,6 @@ import * as bcrypt from 'bcryptjs';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { toUserResponse } from 'src/common/mapper/user.mapper';
 import { User } from 'src/modules/user/entities/user.entity';
-import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class AuthService {
@@ -15,9 +14,8 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepo: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly cartService: CartService,
   ) {}
 
   /*
@@ -31,10 +29,16 @@ export class AuthService {
   async register(req: RegisterRequest): Promise<UserResponse> {
     this.logger.log('[AuthService][register] - Start process');
 
+    const is_existing = await this.userRepo.existsBy({ email: req.email });
+
+    if (is_existing) {
+      throw new ConflictException('existing email');
+    }
+
     const hash_password = await bcrypt.hash(req.password, 10);
     this.logger.debug('[AuthService][register] - Hashed password generated');
 
-    const user = this.userRepository.create({
+    const user = this.userRepo.create({
       username: req.username,
       email: req.email,
       password: hash_password,
@@ -44,10 +48,7 @@ export class AuthService {
       `[AuthService][register] - User entity created: ${JSON.stringify(user)}`,
     );
 
-    const saved_user = await this.userRepository.save(user);
-
-    // after save user create cart
-    // await this.cartService.createCart(saved_user.id);
+    const saved_user = await this.userRepo.save(user);
 
     this.logger.log(
       `[AuthService][register] - User registered successfully: ${saved_user.email}`,
@@ -68,6 +69,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
     };
+
     this.logger.debug(
       `[AuthService][login] - Payload for token: ${JSON.stringify(payload)}`,
     );
@@ -77,6 +79,4 @@ export class AuthService {
 
     return { accessToken: token };
   }
-
-  // async logout() {}
 }

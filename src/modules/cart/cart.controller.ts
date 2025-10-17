@@ -11,7 +11,7 @@ import {
 import { CartService } from './cart.service';
 import { FindAllCartsDto } from './dto/req/find-all-carts.query';
 import { ApiResponse } from 'src/common/dto/res/common-response';
-import { CartsRes } from './dto/res/carts.res';
+import { CartsResponse } from './dto/res/carts.res';
 import { AddToCartReq } from './dto/req/add-to-cart.req';
 import { DeleteCartItemRequest } from './dto/req/delete-cart-item.req';
 import { CartItem } from './entities/cart.entity';
@@ -23,8 +23,7 @@ export class CartController {
   @Get()
   async findAllCarts(
     @Query() req: FindAllCartsDto,
-  ): Promise<ApiResponse<CartsRes>> {
-    // const carts = await this.cartService.findAll(req);
+  ): Promise<ApiResponse<CartsResponse>> {
     const carts = await this.cartService.findAll(req);
     return {
       message: '',

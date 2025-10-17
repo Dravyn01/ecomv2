@@ -3,12 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ColorService } from '../color/color.service';
 import { SizeService } from '../size/size.service';
-import { VariantsRes } from '../product/dto/res/variants.res';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariant } from './entities/product-variant.entity';
 import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
 import { UpdateVariantReq } from './dto/req/update-variant.req';
+import { ProductVariantsResponse } from './dto/res/product-variants.res';
 
 @Injectable()
 export class ProductVariantService {
@@ -20,8 +20,16 @@ export class ProductVariantService {
     private readonly sizeService: SizeService,
   ) {}
 
+  // *DEBUG MODE*
+  async listDevmode() {
+    return await this.variantRepo.find();
+  }
+
   // list product variants by product
-  async list(product_id: number, req: FindAllQuery): Promise<VariantsRes> {
+  async findAllByProduct(
+    product_id: number,
+    req: FindAllQuery,
+  ): Promise<ProductVariantsResponse> {
     const { page, limit, order } = req;
 
     const [variants, count] = await this.variantRepo.findAndCount({
@@ -31,11 +39,7 @@ export class ProductVariantService {
       order: { added_at: order },
     });
 
-    return { variants, count };
-  }
-
-  async listDevmode() {
-    return await this.variantRepo.find();
+    return { data: variants, count };
   }
 
   // find by id
@@ -56,16 +60,14 @@ export class ProductVariantService {
     const existing_color = await this.colorService.findOne(req.color_id);
     const existing_size = await this.sizeService.findOne(req.size_id);
 
-    const saved_variant = this.variantRepo.create({
-      product: existing_product,
-      color: existing_color,
-      size: existing_size,
+    return await this.variantRepo.save({
+      product: { id: existing_product.id },
+      color: { id: existing_color.id },
+      size: { id: existing_size.id },
       price: req.price,
       sku: req.sku,
       image_url: req.image_url,
     });
-
-    return await this.variantRepo.save(saved_variant);
   }
 
   // update variant

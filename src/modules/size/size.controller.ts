@@ -13,7 +13,7 @@ import { UpdateSizeReq } from './dto/req/update-size.req';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Size } from './entities/size.entity';
 
-@Controller('sizes')
+@Controller('/admin/sizes')
 export class SizeController {
   constructor(private readonly sizesService: SizeService) {}
 

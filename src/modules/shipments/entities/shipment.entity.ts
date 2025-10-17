@@ -48,6 +48,6 @@ export class Shipment {
   delivered_at: Date;
 
   // One Shipment Many Order
-  @OneToMany(() => Order, (order) => order.shipment)
-  orders: Order[];
+  // @OneToMany(() => Order, (order) => order.shipment)
+  // orders: Order[];
 }

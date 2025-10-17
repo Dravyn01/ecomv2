@@ -39,7 +39,7 @@ export class CategoryService {
     });
 
     this.logger.debug(`[${this.className}:findAll] found ${count} categories`);
-    return { categorys: categories, count };
+    return { data: categories, count };
   }
 
   async findOne(category_id: number): Promise<Category> {
