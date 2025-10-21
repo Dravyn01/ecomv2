@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  Length,
+  Min,
+} from 'class-validator';
 
 export class CreateProductReq {
   @IsNotEmpty({ message: 'กรุนากรอกชื่อสินค้า' })
@@ -14,12 +21,13 @@ export class CreateProductReq {
   description: string;
 
   @IsNotEmpty({ message: 'กรุนากรอกราคาพื้นฐานของสินค้า' })
-  @IsInt({ message: 'ราคาสินค้าต้องเป็นตัวเลขเท่านั้น' })
+  @IsNumber({}, { message: 'ราคาพื้นฐานต้องเป็นตัวเลขเท่านั้น' })
   @Min(1, { message: 'ราคาพื้นฐานต้องมากว่า 0 บาท' })
   base_price: number;
 
   @IsOptional()
-  @IsInt({ message: 'ราคาสินค้าต้องเป็นตัวเลขเท่านั้น' })
+  @IsNumber({}, { message: 'ราคาหลังลดต้องเป็นตัวเลขเท่านั้น' })
   @Min(1, { message: 'ราคาหลังลดต้องมากกว่า 0 บาท' })
   discount_price: number;
+  // discount_price?: number;
 }

@@ -1,4 +1,5 @@
-import { IsInt, IsString, Length, Min } from 'class-validator';
+import { IsIn, IsInt, IsString, Length, Min } from 'class-validator';
+import { StockChangeType } from 'src/modules/stock/entities/stock.entity';
 
 export class CreateVariantReq {
   @IsInt()
@@ -17,10 +18,14 @@ export class CreateVariantReq {
   @Min(1, { message: 'หมายเลขไซส์ไม่ถูกต้อง' })
   price: number;
 
-  @IsString()
-  @Length(1, 100)
+  @IsString({ message: '' })
+  @Length(1, 100, { message: '' })
   sku: string;
 
   @IsString()
   image_url: string;
+
+  @Min(1, { message: '' })
+  @IsInt({ message: '' })
+  quantity: number;
 }

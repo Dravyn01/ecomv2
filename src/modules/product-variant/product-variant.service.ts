@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ColorService } from '../color/color.service';
 import { SizeService } from '../size/size.service';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
@@ -9,15 +14,25 @@ import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
 import { UpdateVariantReq } from './dto/req/update-variant.req';
 import { ProductVariantsResponse } from './dto/res/product-variants.res';
+import { StockChangeType } from '../stock/entities/stock.entity';
+import { CreateMovement } from '../stock/dto/create-movement.stock';
+import { StockService } from '../stock/stock.service';
 
 @Injectable()
 export class ProductVariantService {
   constructor(
+    // ProductVariantRepository
     @InjectRepository(ProductVariant)
     private readonly variantRepo: Repository<ProductVariant>,
+
+    // Stock Service
+    @Inject(forwardRef(() => StockService))
+    private readonly stockService: StockService,
+
+    private readonly sizeService: SizeService,
     private readonly productService: ProductService,
     private readonly colorService: ColorService,
-    private readonly sizeService: SizeService,
+    private readonly datasource: EntityManager,
   ) {}
 
   // *DEBUG MODE*
@@ -48,26 +63,34 @@ export class ProductVariantService {
       where: { id: variant_id },
       relations: ['product', 'color', 'size'],
     });
-    if (!product) {
+    if (!product)
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
-    }
     return product;
   }
 
   // create variant
   async create(req: CreateVariantReq): Promise<ProductVariant> {
-    const existing_product = await this.productService.findOne(req.product_id);
-    const existing_color = await this.colorService.findOne(req.color_id);
-    const existing_size = await this.sizeService.findOne(req.size_id);
+    const product = await this.productService.findOne(req.product_id);
+    const color = await this.colorService.findOne(req.color_id);
+    const size = await this.sizeService.findOne(req.size_id);
 
-    return await this.variantRepo.save({
-      product: { id: existing_product.id },
-      color: { id: existing_color.id },
-      size: { id: existing_size.id },
-      price: req.price,
-      sku: req.sku,
-      image_url: req.image_url,
+    const product_variant = await this.datasource.transaction((tx) => {
+      tx.save(ProductVariant, {
+        size: { id: size.id },
+        product: { id: product.id },
+        color: { id: color.id },
+      });
     });
+
+    const dto: CreateMovement = {
+      variant_id: saved_product_variant.id,
+      change_type: StockChangeType.IN,
+      quantity: req.quantity,
+    };
+
+    await this.stockService.createMovement(dto, tx);
+
+    return saved_product_variant;
   }
 
   // update variant
@@ -84,13 +107,13 @@ export class ProductVariantService {
       ...(req.color_id && {
         color: await this.colorService.findOne(req.color_id),
       }),
-      ...(req.size_id && { size: await this.sizeService.findOne(req.size_id) }),
-      ...(req.price && { price: req.price }),
-      ...(req.sku && { sku: req.sku }),
-      ...(req.image_url && { image_url: req.image_url }),
+      ...req,
     };
 
+    console.log('instant update', instant_update);
+
     const updated = this.variantRepo.merge(existing, instant_update);
+
     return await this.variantRepo.save(updated);
   }
 

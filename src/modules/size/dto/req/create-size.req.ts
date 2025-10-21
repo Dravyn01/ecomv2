@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 
 export class CreateSizeReq {
   @IsString({ message: 'ชื่อไซส์ต้องเป็นตัวอักษรเท่านั้น' })

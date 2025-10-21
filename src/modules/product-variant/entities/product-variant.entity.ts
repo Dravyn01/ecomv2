@@ -6,12 +6,14 @@ import {
   JoinColumn,
   CreateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { OrderItem } from 'src/modules/order/entities/order.entity';
 import { Size } from 'src/modules/size/entities/size.entity';
 import { Color } from 'src/modules/color/entities/color.entity';
 import { CartItem } from 'src/modules/cart/entities/cart.entity';
 import { Product } from 'src/config/entities.config';
+import { Stock } from 'src/modules/stock/entities/stock.entity';
 
 @Entity('product_variants')
 export class ProductVariant {
@@ -43,7 +45,7 @@ export class ProductVariant {
     onDelete: 'CASCADE',
     nullable: true,
   })
-  @JoinColumn() // fk
+  @JoinColumn()
   product: Product;
 
   // One Variant One Color
@@ -55,4 +57,9 @@ export class ProductVariant {
   @ManyToOne(() => Size, (size) => size.variant)
   @JoinColumn()
   size: Size;
+
+  // One Variant One Size
+  @OneToOne(() => Stock, (stock) => stock.variant, { cascade: true })
+  @JoinColumn()
+  stock: Stock;
 }

@@ -1,9 +1,7 @@
-import { Order } from 'src/config/entities.config';
 import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 

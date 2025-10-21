@@ -24,7 +24,7 @@ export class Cart {
   user: User;
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.cart)
-  cart_items: CartItem[];
+  items: CartItem[];
 }
 
 @Entity('cart_item')
@@ -38,7 +38,7 @@ export class CartItem {
   @CreateDateColumn()
   added_at: number;
 
-  @ManyToOne(() => Cart, (cart) => cart.cart_items, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
   @JoinColumn()
   cart: Cart; // One Cart Many CartItem
 

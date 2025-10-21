@@ -1,5 +1,6 @@
 import { User } from 'src/config/entities.config';
 import { ProductVariant } from 'src/config/entities.config';
+import { StockMovement } from 'src/modules/stock/entities/stock.entity';
 import {
   Column,
   CreateDateColumn,
@@ -47,11 +48,16 @@ export class Order {
   // @JoinColumn({ name: 'shipment_id' })
   // shipment: Shipment;
 
+  @OneToMany(() => StockMovement, (movement) => movement.order, {
+    nullable: true,
+  })
+  movements: StockMovement[];
+
   // One Order Many Order Item
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
     cascade: true,
   })
-  order_item: OrderItem[];
+  items: OrderItem[];
 }
 
 @Entity('order_item')
@@ -69,7 +75,7 @@ export class OrderItem {
   total_price: number;
 
   // Many CartItem One Order
-  @ManyToOne(() => Order, (order) => order.order_item, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinTable()
   order: Order;
 

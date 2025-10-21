@@ -11,6 +11,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { TypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './modules/order/order.module';
 import { ShipmentsModule } from './modules/shipments/shipments.module';
+import { StockModule } from './modules/stock/stock.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ShipmentsModule } from './modules/shipments/shipments.module';
     CartModule,
     OrderModule,
     ShipmentsModule,
+    StockModule,
   ],
 
   controllers: [],

@@ -5,18 +5,22 @@ import { Repository, DataSource } from 'typeorm';
 import { OrdersResponse } from './dto/res/orders.res';
 import { FindAllOrdersQuery } from './dto/req/find-all-orders.query';
 import { UserService } from '../user/user.service';
-import { Cart } from 'src/config/entities.config';
+import { Cart, StockChangeType, User } from 'src/config/entities.config';
+import { StockService } from '../stock/stock.service';
+import { CreateMovement } from '../stock/dto/create-movement.stock';
+import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
     private readonly userService: UserService,
+    private readonly stockService: StockService,
     private readonly datasource: DataSource,
   ) {}
 
   async findAll(): Promise<Order[]> {
-    const orders = await this.orderRepo.find({ relations: ['user.id'] });
+    const orders = await this.orderRepo.find({ relations: ['user'] });
     return orders;
   }
 
@@ -31,23 +35,30 @@ export class OrderService {
       skip: (page - 1) * limit,
       take: limit,
       order: { order_date: order },
-      relations: ['order_item'],
+      relations: ['items'],
     });
 
     return { orders, count };
   }
 
   async checkout(user_id: number): Promise<Order> {
-    const order = this.datasource.transaction(async (tx) => {
+    const user = await this.userService.findOne(user_id);
+
+    const order = await this.datasource.transaction(async (tx) => {
       const cart = await tx.findOne(Cart, {
-        where: { user: { id: user_id } },
-        relations: ['cart_items'],
+        where: { user: { id: user.id } },
+        relations: {
+          items: {
+            variant: true,
+          },
+          user: true,
+        },
       });
 
-      if (!cart || cart.cart_items.length === 0)
+      if (!cart || cart.items.length === 0)
         throw new NotFoundException('not checkout');
 
-      const total_price = cart.cart_items.reduce(
+      const total_price = cart.items.reduce(
         (acc, item) => acc + item.variant.price * item.quantity,
         0,
       );
@@ -55,7 +66,7 @@ export class OrderService {
       const order = await tx.save(Order, {
         user: { id: user_id },
         total_price: total_price,
-        order_items: cart.cart_items.map((item) => ({
+        items: cart.items.map((item) => ({
           unit_price: item.variant.price,
           total_price: item.variant.price * item.quantity,
           quantity: item.quantity,
@@ -66,13 +77,14 @@ export class OrderService {
       await tx.delete(Cart, cart.id);
       return order;
     });
+
     return order;
   }
 
   async findOne(order_id: number): Promise<Order> {
     const order = await this.orderRepo.findOne({
       where: { id: order_id },
-      relations: ['order_items'],
+      relations: ['items'],
     });
     if (!order) throw new NotFoundException('not found order');
     return order;
