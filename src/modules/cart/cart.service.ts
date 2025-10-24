@@ -7,7 +7,7 @@ import { Repository, DataSource } from 'typeorm';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { UserService } from '../user/user.service';
 import { AddToCartReq } from './dto/req/add-to-cart.req';
-import { DeleteCartItemRequest } from './dto/req/delete-cart-item.req';
+import { ActionsCartItemReq } from './dto/req/actions-cartitem.req';
 
 @Injectable()
 export class CartService {
@@ -30,7 +30,7 @@ export class CartService {
     const [carts, count] = await this.cartRepo.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
-      order: { added_at: order },
+      order: { created_at: order },
       relations: {
         items: {
           variant: true,
@@ -44,13 +44,10 @@ export class CartService {
     return { data: carts, count } as CartsResponse;
   }
 
-  async findOneCart(cart_id: number): Promise<Cart> {
+  async findOneByUser(user_id: number): Promise<Cart> {
     const existing = await this.cartRepo.findOne({
-      where: { id: cart_id },
-      relations: {
-        items: true,
-        user: true,
-      },
+      where: { user: { id: user_id } },
+      relations: ['items'],
     });
     if (!existing) throw new NotFoundException('not found cart');
     return existing;
@@ -87,12 +84,13 @@ export class CartService {
   }
 
   async delete(cart_id: number): Promise<void> {
-    const cart = await this.findOneCart(cart_id);
+    const cart = await this.cartRepo.findOneBy({ id: cart_id });
+    if (!cart) throw new NotFoundException('not found cart');
     await this.cartRepo.delete(cart.id);
   }
 
-  async itemAction(req: DeleteCartItemRequest): Promise<CartItem> {
-    const cart = await this.findOneCart(req.user_id);
+  async itemAction(req: ActionsCartItemReq): Promise<CartItem> {
+    const cart = await this.findOneByUser(req.user_id);
     const cart_item = await this.cartItemRepo.findOneBy({
       cart: { id: cart.id },
       variant: { id: req.variant_id },
@@ -110,10 +108,9 @@ export class CartService {
       return cart_item;
     }
 
-    return await this.cartItemRepo.save({
-      id: cart_item.id,
-      quantity: cart_item.quantity - 1,
-    });
+    cart_item.quantity -= 1;
+
+    return await this.cartItemRepo.save(cart_item);
   }
 
   // async addToCart(req: AddToCartReq): Promise<void> {

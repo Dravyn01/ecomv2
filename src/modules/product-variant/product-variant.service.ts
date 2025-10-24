@@ -14,9 +14,9 @@ import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
 import { UpdateVariantReq } from './dto/req/update-variant.req';
 import { ProductVariantsResponse } from './dto/res/product-variants.res';
-import { StockChangeType } from '../stock/entities/stock.entity';
 import { CreateMovement } from '../stock/dto/create-movement.stock';
 import { StockService } from '../stock/stock.service';
+import { StockChangeType } from '../stock/enums/stock-change.enum';
 
 @Injectable()
 export class ProductVariantService {
@@ -74,23 +74,27 @@ export class ProductVariantService {
     const color = await this.colorService.findOne(req.color_id);
     const size = await this.sizeService.findOne(req.size_id);
 
-    const product_variant = await this.datasource.transaction((tx) => {
-      tx.save(ProductVariant, {
+    const product_variant = await this.datasource.transaction(async (tx) => {
+      const saved_variant = await tx.save(ProductVariant, {
         size: { id: size.id },
         product: { id: product.id },
         color: { id: color.id },
+        price: req.price,
+        sku: req.sku,
+        image_url: req.image_url,
       });
+
+      const dto: CreateMovement = {
+        variant_id: saved_variant.id,
+        change_type: StockChangeType.IN,
+        quantity: req.quantity,
+      };
+
+      await this.stockService.createMovement(dto, tx);
+      return saved_variant;
     });
 
-    const dto: CreateMovement = {
-      variant_id: saved_product_variant.id,
-      change_type: StockChangeType.IN,
-      quantity: req.quantity,
-    };
-
-    await this.stockService.createMovement(dto, tx);
-
-    return saved_product_variant;
+    return product_variant;
   }
 
   // update variant
@@ -100,21 +104,19 @@ export class ProductVariantService {
   ): Promise<ProductVariant> {
     const existing = await this.findOne(variant_id);
 
-    const instant_update = {
+    const saved_variant = {
       ...(req.product_id && {
         product: await this.productService.findOne(req.product_id),
       }),
       ...(req.color_id && {
         color: await this.colorService.findOne(req.color_id),
       }),
+      ...(req.size_id && { size: await this.sizeService.findOne(req.size_id) }),
       ...req,
     };
 
-    console.log('instant update', instant_update);
-
-    const updated = this.variantRepo.merge(existing, instant_update);
-
-    return await this.variantRepo.save(updated);
+    const updated_variant = await this.variantRepo.save(saved_variant);
+    return updated_variant;
   }
 
   // delete variant

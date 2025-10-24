@@ -13,7 +13,7 @@ import { FindAllCartsDto } from './dto/req/find-all-carts.query';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { CartsResponse } from './dto/res/carts.res';
 import { AddToCartReq } from './dto/req/add-to-cart.req';
-import { DeleteCartItemRequest } from './dto/req/delete-cart-item.req';
+import { ActionsCartItemReq } from './dto/req/actions-cartitem.req';
 import { CartItem } from './entities/cart.entity';
 
 @Controller('/admin/carts')
@@ -48,7 +48,7 @@ export class CartController {
 
   @Put('/item-action')
   async cartItemAction(
-    @Body() req: DeleteCartItemRequest,
+    @Body() req: ActionsCartItemReq,
   ): Promise<ApiResponse<CartItem>> {
     const result = await this.cartService.itemAction(req);
     return {

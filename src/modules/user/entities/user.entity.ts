@@ -25,7 +25,7 @@ export class User {
   password: string;
 
   @OneToOne(() => Cart, (cart) => cart.user)
-  cart: Cart | null;
+  cart: Cart;
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];

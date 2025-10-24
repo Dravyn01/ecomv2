@@ -5,7 +5,7 @@ export class UserResponse {
   username: string;
   email: string;
   orders: Order[];
-  cart: Cart | null;
+  cart: Cart;
   created_at: Date;
   updated_at: Date;
 }

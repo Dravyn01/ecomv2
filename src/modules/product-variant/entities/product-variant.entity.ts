@@ -43,7 +43,6 @@ export class ProductVariant {
   // One Product Many Variant
   @ManyToOne(() => Product, (product) => product.variants, {
     onDelete: 'CASCADE',
-    nullable: true,
   })
   @JoinColumn()
   product: Product;
@@ -59,7 +58,10 @@ export class ProductVariant {
   size: Size;
 
   // One Variant One Size
-  @OneToOne(() => Stock, (stock) => stock.variant, { cascade: true })
+  @OneToOne(() => Stock, (stock) => stock.variant, {
+    cascade: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn()
   stock: Stock;
 }

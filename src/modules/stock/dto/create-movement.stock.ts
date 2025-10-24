@@ -6,7 +6,7 @@ import {
   Length,
   Min,
 } from 'class-validator';
-import { StockChangeType } from '../entities/stock.entity';
+import { StockChangeType } from '../enums/stock-change.enum';
 
 export class CreateMovement {
   @IsNotEmpty({ message: '' })
@@ -15,7 +15,6 @@ export class CreateMovement {
   variant_id: number;
 
   @IsNotEmpty({ message: '' })
-  @Min(1, { message: '' })
   @IsInt({ message: '' })
   quantity: number;
 

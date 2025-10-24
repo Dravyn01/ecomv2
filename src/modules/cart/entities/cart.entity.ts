@@ -17,7 +17,7 @@ export class Cart {
   id: number;
 
   @CreateDateColumn()
-  added_at: Date;
+  created_at: Date;
 
   @OneToOne(() => User, (user) => user.cart, { nullable: true })
   @JoinColumn()
@@ -36,7 +36,7 @@ export class CartItem {
   quantity: number;
 
   @CreateDateColumn()
-  added_at: number;
+  created_at: number;
 
   @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
   @JoinColumn()

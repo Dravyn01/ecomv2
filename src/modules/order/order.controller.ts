@@ -29,6 +29,8 @@ export class OrderController {
     @Param('user_id') user_id: string,
     @Query() req: FindAllOrdersQuery,
   ): Promise<ApiResponse<OrdersResponse>> {
+    console.log(user_id);
+    console.log(req);
     const orders = await this.orderService.findOrderByUser(+user_id, req);
     return { message: '', data: orders };
   }

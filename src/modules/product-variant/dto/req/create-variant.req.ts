@@ -1,5 +1,4 @@
-import { IsIn, IsInt, IsString, Length, Min } from 'class-validator';
-import { StockChangeType } from 'src/modules/stock/entities/stock.entity';
+import { IsInt, IsString, Length, Min } from 'class-validator';
 
 export class CreateVariantReq {
   @IsInt()

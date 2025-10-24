@@ -3,19 +3,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum StockChangeType {
-  IN = 'IN',
-  OUT = 'OUT',
-  RETURN = 'RETURN',
-  ADJUST = 'ADJUST',
-}
+import { StockChangeType } from '../enums/stock-change.enum';
 
 @Entity('stocks')
 export class Stock {
@@ -54,7 +49,11 @@ export class StockMovement {
   @Column({ type: 'varchar', length: 255, nullable: true })
   note?: string;
 
-  @ManyToOne(() => Order, (order) => order.movements, { nullable: true })
+  @ManyToOne(() => Order, (order) => order.movements, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn()
   order?: Order; // เคสที่ movement เกิดจาก order เช่น สั่งซื้อสินค้า 3 ซิ้นจาก order 123
 
   @CreateDateColumn()

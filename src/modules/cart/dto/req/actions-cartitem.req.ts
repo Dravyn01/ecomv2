@@ -1,6 +1,6 @@
 import { IsIn, IsInt, IsNotEmpty } from 'class-validator';
 
-export class DeleteCartItemRequest {
+export class ActionsCartItemReq {
   @IsNotEmpty()
   @IsInt()
   user_id: number;
