@@ -22,7 +22,7 @@ export class ProductVariantController {
 
   // *DEBUG MODE*
   @Get()
-  async test(): Promise<ApiResponse<any>> {
+  async variants(): Promise<ApiResponse<any>> {
     const variants = await this.variantService.listDevmode();
     return {
       message: '',
@@ -30,11 +30,9 @@ export class ProductVariantController {
     };
   }
 
-  /*
-   * หา variant ตาม product_id เพื่อดูว่า product นี้มีกี่ variant
-   * */
+  // หา variant ตาม product_id เพื่อดูว่า product นี้มีกี่ variant
   @Get(':id')
-  async listVariant(
+  async findByVariant(
     @Param('id') product_variant_id: string,
     @Query() req: FindAllQuery, // ในอนาตคอาจมีการแยกเป็น FindAllVariants
   ): Promise<ApiResponse<ProductVariantsResponse>> {
@@ -50,7 +48,7 @@ export class ProductVariantController {
   }
 
   @Post()
-  async createVariant(
+  async create(
     @Body() req: CreateVariantReq,
   ): Promise<ApiResponse<ProductVariant>> {
     const variant = await this.variantService.create(req);
@@ -61,7 +59,7 @@ export class ProductVariantController {
   }
 
   @Put(':id')
-  async updateVariant(
+  async upate(
     @Param('id') variant_id: string,
     @Body() req: UpdateVariantReq,
   ): Promise<ApiResponse<ProductVariant>> {
@@ -73,9 +71,7 @@ export class ProductVariantController {
   }
 
   @Delete(':id')
-  async deleteVariant(
-    @Param('id') variant_id: number,
-  ): Promise<ApiResponse<null>> {
+  async delete(@Param('id') variant_id: number): Promise<ApiResponse<null>> {
     await this.variantService.delete(variant_id);
     return {
       message: '',

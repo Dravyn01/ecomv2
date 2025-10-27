@@ -23,14 +23,14 @@ export class ProductVariant {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100 }) // sku should be unique
   sku: string;
 
   @Column({ type: 'text' })
   image_url: string;
 
   @CreateDateColumn()
-  added_at: Date;
+  created_at: Date;
 
   // One ProductVariatn Many OrderItem
   @OneToMany(() => OrderItem, (orderItem) => orderItem.variant)

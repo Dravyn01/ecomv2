@@ -1,4 +1,4 @@
-import { IsInt, IsString, Length, Min } from 'class-validator';
+import { IsInt, IsNumber, IsString, Length, Min } from 'class-validator';
 
 export class CreateVariantReq {
   @IsInt()
@@ -13,7 +13,7 @@ export class CreateVariantReq {
   @Min(1, { message: 'ราคาต้องไม่ต่ำกว่า 1 บาท' })
   size_id: number;
 
-  @IsInt({ message: 'ราคาต้องเป็นตัวเลข' })
+  @IsNumber({}, { message: 'ราคาต้องเป็นตัวเลข' })
   @Min(1, { message: 'หมายเลขไซส์ไม่ถูกต้อง' })
   price: number;
 

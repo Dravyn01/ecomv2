@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Param, Query } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { Repository, DataSource, Not, In } from 'typeorm';
@@ -53,7 +53,6 @@ export class OrderService {
 
   async checkout(user_id: number): Promise<Order> {
     const user = await this.userService.findOne(user_id);
-    console.log('check out user', user);
 
     const order = await this.datasource.transaction(async (tx) => {
       const cart = await tx.findOne(Cart, {
@@ -63,8 +62,6 @@ export class OrderService {
 
       if (!cart || cart.items.length === 0)
         throw new NotFoundException('not checkout');
-
-      console.log('cart.items.length', cart.items.length);
 
       const total_price = cart.items.reduce(
         (acc, item) => acc + item.variant.price * item.quantity,
@@ -82,7 +79,7 @@ export class OrderService {
         })),
       });
 
-      // await tx.delete(Cart, cart.id);
+      await tx.delete(Cart, cart.id);
 
       for (const item of cart.items) {
         const dto: CreateMovement = {
@@ -111,8 +108,6 @@ export class OrderService {
         relations: ['items.variant'],
       });
 
-      console.log('found order:', order);
-
       if (!order) {
         throw new NotFoundException('Not Found Order');
       }
@@ -121,8 +116,6 @@ export class OrderService {
       await tx.save(order);
 
       for (const item of order.items) {
-        console.log(item);
-
         const dto: CreateMovement = {
           order_id,
           change_type: StockChangeType.RETURN,

@@ -19,7 +19,7 @@ export class OrderController {
 
   // *DEBUG MODE*
   @Get()
-  async allOrder(): Promise<any> {
+  async debug(): Promise<any> {
     const orders = await this.orderService.findAll();
     return { message: '', data: orders };
   }

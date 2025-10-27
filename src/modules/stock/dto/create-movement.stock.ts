@@ -3,6 +3,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   Length,
   Min,
 } from 'class-validator';
@@ -24,8 +25,8 @@ export class CreateMovement {
   change_type: StockChangeType;
 
   @IsOptional()
-  @IsNotEmpty({ message: '' })
   @Length(1, 255, { message: '' })
+  @IsString({ message: '' })
   note?: string;
 
   @IsOptional()

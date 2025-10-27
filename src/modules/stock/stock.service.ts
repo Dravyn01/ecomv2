@@ -38,184 +38,65 @@ export class StockService {
     await this.stockRepo.delete(movement_id);
   }
 
-  // async createMovement(req: CreateMovement, tx: EntityManager) {
-  //   const variant = await tx.findOne(ProductVariant, {
-  //     where: {
-  //       id: req.variant_id,
-  //     },
-  //     relations: {
-  //       stock: true,
-  //     },
-  //   });
-  //
-  //   if (!variant) throw new NotFoundException('not found product');
-  //
-  //   if (!variant.stock) {
-  //     await tx.save(Stock, {
-  //       variant: { id: req.variant_id },
-  //       quantity: 0,
-  //     });
-  //   }
-  //
-  //   const stock = await tx.findOneBy(Stock, { variant: { id: variant.id } });
-  //   if (!stock)
-  //     throw new NotFoundException(
-  //       `not found stock of variant id ${req.variant_id}`,
-  //     );
-  //
-  //   if (req.change_type === StockChangeType.IN) {
-  //     stock.quantity += req.quantity;
-  //     await tx.save(Stock, stock);
-  //
-  //     await tx.save(StockMovement, {
-  //       stock: { id: stock.id },
-  //       quantity: req.quantity,
-  //       change_type: StockChangeType.IN,
-  //       note: `Import product #${variant.id}, quantity ${req.quantity}`,
-  //     });
-  //   }
-  //
-  //   if (req.change_type === StockChangeType.OUT) {
-  //     const order = await tx.findOneBy(Order, { id: req.order_id });
-  //     const stock = await tx.findOneBy(Stock, {
-  //       variant: { id: req.variant_id },
-  //     });
-  //
-  //     if (!stock)
-  //       throw new NotFoundException('find stock by variant id is not found');
-  //
-  //     if (stock.quantity < req.quantity) {
-  //       throw new BadRequestException();
-  //     }
-  //
-  //     stock.quantity -= req.quantity;
-  //     await tx.save(stock);
-  //
-  //     await tx.save(StockMovement, {
-  //       stock: { id: stock.id },
-  //       quantity: req.quantity,
-  //       change_type: StockChangeType.OUT,
-  //       note: order ? `Order #${order.id}` : req.note,
-  //       ...(order && { order: { id: order.id } }),
-  //     });
-  //   }
-  //
-  //   if (req.change_type === StockChangeType.RETURN) {
-  //     await tx.save(Stock, {
-  //       ...stock,
-  //       quantity: (stock.quantity += req.quantity),
-  //     });
-  //     await tx.save(StockMovement, {
-  //       stock: { id: stock.id },
-  //       change_type: StockChangeType.RETURN,
-  //       quantity: req.quantity,
-  //       note: `Order Return #${req.order_id}`,
-  //     });
-  //   }
-  //
-  //   if (req.change_type === StockChangeType.ADJUST) {
-  //     await tx.save(Stock, { ...stock, quantity: req.quantity });
-  //     await tx.save(StockMovement, {
-  //       stock: { id: stock.id },
-  //       change_type: StockChangeType.ADJUST,
-  //       quantity: req.quantity,
-  //       note: req.note ? req.note : 'unknow',
-  //     });
-  //   }
-  // }
-
   async createMovement(req: CreateMovement, tx: EntityManager) {
+    console.log('createMovement start');
+    console.log('rewq', req);
     const variant = await tx.findOne(ProductVariant, {
       where: { id: req.variant_id },
       relations: ['stock'],
     });
     if (!variant) throw new NotFoundException('not found product');
 
-    // no have a stock. create stock
-    if (!variant.stock) {
-      await tx.save(Stock, { variant: { id: req.variant_id }, quantity: 0 });
+    let stock = variant.stock;
+    if (!stock) {
+      // create if no existing stock
+      stock = await tx.save(Stock, {
+        variant: { id: req.variant_id },
+        quantity: 0,
+      });
     }
 
-    const stock = await tx.findOneBy(Stock, { variant: { id: variant.id } });
+    let newQuantity = stock.quantity;
 
-    if (!stock)
-      throw new NotFoundException(
-        `not found stock of variant id ${req.variant_id}`,
-      );
+    if (
+      req.change_type === StockChangeType.IN ||
+      req.change_type === StockChangeType.RETURN
+    ) {
+      console.log('CASE IN OR RETURN');
+      newQuantity += req.quantity;
+    } else if (req.change_type === StockChangeType.OUT) {
+      newQuantity -= req.quantity;
+      console.log('CASE OUT');
+      if (stock.quantity < req.quantity)
+        throw new BadRequestException(
+          `stock quantity lass req.quantity ${stock.quantity} < ${req.quantity}`,
+        );
+    } else if (req.change_type === StockChangeType.ADJUST) {
+      console.log('CASE ADJUST');
+      newQuantity += req.quantity;
+      if (newQuantity < 0) newQuantity = 0;
+    }
+
+    console.log(`END OF CASE "${req.change_type}"`);
+
+    const defaultNote = {
+      [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${variant.id}`,
+      [StockChangeType.OUT]: `Order #${req.order_id}`,
+      [StockChangeType.ADJUST]: `Adjust product #${variant.id}, quantity: ${variant.id}`,
+      [StockChangeType.RETURN]: `Import product #${variant.id}, quantity: ${variant.id}`,
+    };
+
+    const saved_stock = { ...stock, quantity: newQuantity };
 
     const saved_movement = {
       stock: { id: stock.id },
       quantity: req.quantity,
-      change_type: StockChangeType.IN,
-      note:
-        req.note ?? `Import product #${variant.id}, quantity ${req.quantity}`,
+      change_type: req.change_type,
+      note: req.note ?? defaultNote[req.change_type],
+      ...(req.order_id && { order: { id: req.order_id } }),
     };
 
-    const shouldIncrease = [
-      StockChangeType.IN,
-      StockChangeType.ADJUST,
-      StockChangeType.RETURN,
-    ].includes(req.change_type);
-
-    const saved_stock = {
-      ...stock,
-      quantity: shouldIncrease
-        ? stock.quantity + req.quantity
-        : stock.quantity - req.quantity,
-    };
-
-    console.log(saved_stock);
-
-    console.log('have a note?', req.note);
-
-    switch (req.change_type) {
-      case StockChangeType.IN: {
-        console.log(`[STATUS] "IN" ${req.quantity}`);
-        await tx.save(Stock, saved_stock);
-        await tx.save(StockMovement, saved_movement);
-        return;
-      }
-      case StockChangeType.OUT: {
-        console.log(`[STATUS] "${req.change_type}" ${req.quantity}`);
-
-        console.log(stock.quantity);
-        console.log(req.quantity);
-
-        console.log(stock.quantity < req.quantity);
-        if (stock.quantity < req.quantity) {
-          throw new BadRequestException(
-            `stock quantity lass req.quantity ${stock.quantity} < ${req.quantity}`,
-          );
-        }
-
-        await tx.save(Stock, saved_stock);
-        await tx.save(StockMovement, {
-          ...saved_movement,
-          change_type: StockChangeType.OUT,
-          note: `Order #${req.order_id ?? 'unknow order'}`,
-          ...(req.order_id && { order: { id: req.order_id } }),
-        });
-        return;
-      }
-      case StockChangeType.ADJUST: {
-        console.log(`[STATUS] "ADJUST" ${req.quantity}`);
-        await tx.save(Stock, saved_stock);
-        await tx.save(StockMovement, {
-          ...saved_movement,
-          change_type: StockChangeType.ADJUST,
-        });
-        return;
-      }
-      case StockChangeType.RETURN: {
-        console.log(`[STATUS] "RETURN" ${req.quantity}`);
-        await tx.save(Stock, saved_stock);
-        await tx.save(StockMovement, {
-          ...saved_movement,
-          note: `Return Order #${req.order_id ?? 'unknow'}`,
-          change_type: StockChangeType.RETURN,
-        });
-        return;
-      }
-    }
+    await tx.save(Stock, saved_stock);
+    await tx.save(StockMovement, saved_movement);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Stock } from './entities/stock.entity';
 import { StockService } from './stock.service';
@@ -8,7 +8,7 @@ export class StockController {
   constructor(private readonly stockService: StockService) {}
 
   @Get()
-  async test(): Promise<ApiResponse<Stock[]>> {
+  async debug(): Promise<ApiResponse<Stock[]>> {
     const stock = await this.stockService.findAll();
     return {
       message: '',
@@ -26,13 +26,4 @@ export class StockController {
       data: stock,
     };
   }
-
-  // @Delete(':id')
-  // async deleteStock(@Param('id') id: string) {
-  //   await this.stockService.deleteStock(+id);
-  //   return {
-  //     message: '',
-  //     data: null,
-  //   };
-  // }
 }
