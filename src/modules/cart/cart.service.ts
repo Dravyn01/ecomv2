@@ -24,8 +24,8 @@ export class CartService {
     private readonly datasource: DataSource,
   ) {}
 
-  async findAll(req: FindAllCartsDto): Promise<CartsResponse> {
-    const { page, limit, order } = req;
+  async findAll(body: FindAllCartsDto): Promise<CartsResponse> {
+    const { page, limit, order } = body;
 
     const [carts, count] = await this.cartRepo.findAndCount({
       skip: (page - 1) * limit,
@@ -53,9 +53,9 @@ export class CartService {
     return existing;
   }
 
-  async addToCart(req: AddToCartReq): Promise<void> {
-    const user = await this.userService.findOne(req.user_id);
-    const variant = await this.variantService.findOne(req.variant_id);
+  async addToCart(body: AddToCartReq): Promise<void> {
+    const user = await this.userService.findOne(body.user_id);
+    const variant = await this.variantService.findOne(body.variant_id);
 
     await this.datasource.transaction(async (tx) => {
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
@@ -70,13 +70,13 @@ export class CartService {
       });
 
       if (existing_item) {
-        existing_item.quantity += req.quantity;
+        existing_item.quantity += body.quantity;
         await tx.save(existing_item);
       } else {
         const item = tx.create(CartItem, {
           cart: { id: cart.id },
           variant: { id: variant.id },
-          quantity: req.quantity,
+          quantity: body.quantity,
         });
         await tx.save(item);
       }
@@ -89,19 +89,19 @@ export class CartService {
     await this.cartRepo.delete(cart.id);
   }
 
-  async itemAction(req: ActionsCartItemReq): Promise<CartItem> {
-    const cart = await this.findOneByUser(req.user_id);
+  async itemAction(body: ActionsCartItemReq): Promise<CartItem> {
+    const cart = await this.findOneByUser(body.user_id);
     const cart_item = await this.cartItemRepo.findOneBy({
       cart: { id: cart.id },
-      variant: { id: req.variant_id },
+      variant: { id: body.variant_id },
     });
 
     if (!cart_item) throw new NotFoundException('ไม่พบสินค้าที่ต้องการลบ');
 
     if (
-      (cart_item && req.action.toUpperCase() === 'REMOVE') ||
+      (cart_item && body.action.toUpperCase() === 'REMOVE') ||
       (cart_item &&
-        req.action.toUpperCase() === 'DECREASE' &&
+        body.action.toUpperCase() === 'DECREASE' &&
         cart_item.quantity <= 1)
     ) {
       await this.cartItemRepo.delete(cart_item.id);

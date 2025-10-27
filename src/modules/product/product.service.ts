@@ -18,17 +18,12 @@ export class ProductService {
   ) {}
 
   // find all
-  async findAll(req: FindAllProducts): Promise<ProductsResponse> {
-    const { query, page, limit, order } = req;
-
-    let search = query ? { name: ILike(`%${query}%`) } : {};
-    const skip = (page - 1) * limit;
-
-    this.logger.debug(`skip: ${skip}`);
+  async findAll(query: FindAllProducts): Promise<ProductsResponse> {
+    const { search, page, limit, order } = query;
 
     const [products, count] = await this.productRepo.findAndCount({
-      where: search,
-      skip,
+      where: search ? { name: ILike(`%${query}%`) } : {},
+      skip: (page - 1) * limit,
       take: limit,
       order: { created_at: order },
     });
@@ -46,28 +41,24 @@ export class ProductService {
   }
 
   // create product
-  async create(req: CreateProductReq): Promise<Product> {
+  async create(body: CreateProductReq): Promise<Product> {
     const saved_product = this.productRepo.create({
-      name: req.name,
-      description: req.description,
-      base_price: req.base_price,
-      discount_price: req.discount_price,
+      name: body.name,
+      description: body.description,
+      base_price: body.base_price,
+      discount_price: body.discount_price,
     });
 
-    this.logger.debug(`[createProduct]: req=${JSON.stringify(req)}`);
+    // feature have will add category
 
+    this.logger.debug(`[${this.create.name}]: body=${JSON.stringify(body)}`);
     return await this.productRepo.save(saved_product);
   }
 
   // update product
-  async update(
-    product_id: number,
-    updateProductDto: UpdateProductReq,
-  ): Promise<Product> {
+  async update(product_id: number, body: UpdateProductReq): Promise<Product> {
     const existing = await this.findOne(product_id);
-
-    const saved_product = this.productRepo.merge(existing, updateProductDto);
-
+    const saved_product = this.productRepo.merge(existing, body);
     return await this.productRepo.save(saved_product);
   }
 

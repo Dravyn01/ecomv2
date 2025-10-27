@@ -40,9 +40,9 @@ export class ProductVariantService {
   // list product variants by product
   async findAllByProduct(
     product_id: number,
-    req: FindAllQuery,
+    body: FindAllQuery,
   ): Promise<ProductVariantsResponse> {
-    const { page, limit, order } = req;
+    const { page, limit, order } = body;
 
     const [variants, count] = await this.variantRepo.findAndCount({
       where: { product: { id: product_id } },
@@ -66,25 +66,25 @@ export class ProductVariantService {
   }
 
   // create variant
-  async create(req: CreateVariantReq): Promise<ProductVariant> {
-    const product = await this.productService.findOne(req.product_id);
-    const color = await this.colorService.findOne(req.color_id);
-    const size = await this.sizeService.findOne(req.size_id);
+  async create(body: CreateVariantReq): Promise<ProductVariant> {
+    const product = await this.productService.findOne(body.product_id);
+    const color = await this.colorService.findOne(body.color_id);
+    const size = await this.sizeService.findOne(body.size_id);
 
     const product_variant = await this.datasource.transaction(async (tx) => {
       const saved_variant = await tx.save(ProductVariant, {
         size: { id: size.id },
         product: { id: product.id },
         color: { id: color.id },
-        price: req.price,
-        sku: req.sku,
-        image_url: req.image_url,
+        price: body.price,
+        sku: body.sku,
+        image_url: body.image_url,
       });
 
       const dto: CreateMovement = {
         variant_id: saved_variant.id,
         change_type: StockChangeType.IN,
-        quantity: req.quantity,
+        quantity: body.quantity,
       };
 
       console.log(saved_variant);
@@ -101,32 +101,32 @@ export class ProductVariantService {
   // update variant
   async update(
     variant_id: number,
-    req: UpdateVariantReq,
+    body: UpdateVariantReq,
   ): Promise<ProductVariant> {
     const existing_variant = await this.findOne(variant_id);
 
     const product_variant = await this.datasource.transaction(async (tx) => {
       const saved_variant = await tx.save(ProductVariant, {
         id: existing_variant.id,
-        ...req,
-        ...(req.product_id && { product: { id: req.product_id } }),
-        ...(req.size_id && {
-          size: { id: (await this.sizeService.findOne(req.size_id)).id },
+        ...body,
+        ...(body.product_id && { product: { id: body.product_id } }),
+        ...(body.size_id && {
+          size: { id: (await this.sizeService.findOne(body.size_id)).id },
         }),
-        ...(req.color_id && {
-          color: { id: (await this.colorService.findOne(req.color_id)).id },
+        ...(body.color_id && {
+          color: { id: (await this.colorService.findOne(body.color_id)).id },
         }),
       });
 
       console.log('[VariantServivce] saved_variant:', saved_variant);
       await tx.save(ProductVariant, saved_variant);
 
-      if (req.quantity) {
+      if (body.quantity) {
         const dto: CreateMovement = {
           variant_id,
           change_type: StockChangeType.ADJUST,
-          quantity: req.quantity,
-          note: req.note,
+          quantity: body.quantity,
+          note: body.note,
         };
         await this.stockService.createMovement(dto, tx);
       }

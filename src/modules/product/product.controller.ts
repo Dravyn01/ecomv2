@@ -24,19 +24,19 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get()
-  async AllProducts(
-    @Query() req: FindAllProducts,
+  async findAll(
+    @Query() query: FindAllProducts,
   ): Promise<ApiResponse<ProductsResponse>> {
     this.logger.log(
-      `[product.controller.ts]: LOG paramter {q: ${req.query}, page: ${req.page}, limit: ${req.limit}, order: ${req.order}}`,
+      `[product.controller.ts]: LOG paramter {q: ${query.search}, page: ${query.page}, limit: ${query.limit}, order: ${query.order}}`,
     );
-    const products = await this.productService.findAll(req);
+    const products = await this.productService.findAll(query);
     return { message: 'สินค้าทั้งหมด', data: products };
   }
 
-  @Get(':id')
-  async ProductDetails(
-    @Param('id') product_id: number,
+  @Get(':product_id')
+  async findById(
+    @Param('product_id') product_id: number,
   ): Promise<ApiResponse<Product>> {
     const product = await this.productService.findOne(product_id);
     return {
@@ -46,20 +46,20 @@ export class ProductController {
   }
 
   @Post()
-  async CreateProduct(
-    @Body() req: CreateProductReq,
+  async createProduct(
+    @Body() body: CreateProductReq,
   ): Promise<ApiResponse<Product>> {
-    const product = await this.productService.create(req);
+    const product = await this.productService.create(body);
     return {
       message: 'สร้างสินค้าเสร็จสิ้น',
       data: product,
     };
   }
 
-  @Put(':id')
-  async UpdateProduct(
+  @Put(':product_id')
+  async updateProduct(
     @Body() req: UpdateProductReq,
-    @Param('id') product_id: string,
+    @Param('product_id') product_id: string,
   ): Promise<ApiResponse<Product>> {
     const product = await this.productService.update(+product_id, req);
     return {
@@ -68,9 +68,9 @@ export class ProductController {
     };
   }
 
-  @Delete(':id')
-  async DeleteProduct(
-    @Param('id') product_id: string,
+  @Delete(':product_id')
+  async deleteProduct(
+    @Param('product_id') product_id: string,
   ): Promise<ApiResponse<null>> {
     await this.productService.delete(+product_id);
     return {

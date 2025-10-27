@@ -2,9 +2,6 @@ import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
 export class FindAllQuery {
   @IsOptional()
-  query?: string;
-
-  @IsOptional()
   @IsInt()
   @Min(1, { message: 'page ต้องมีค่ามากกว่า 0' })
   page: number = 1;

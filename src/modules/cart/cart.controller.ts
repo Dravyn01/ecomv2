@@ -22,9 +22,9 @@ export class CartController {
 
   @Get()
   async findAllCarts(
-    @Query() req: FindAllCartsDto,
+    @Query() query: FindAllCartsDto,
   ): Promise<ApiResponse<CartsResponse>> {
-    const carts = await this.cartService.findAll(req);
+    const carts = await this.cartService.findAll(query);
     return {
       message: '',
       data: carts,
@@ -32,29 +32,31 @@ export class CartController {
   }
 
   @Post()
-  async addToCart(@Body() req: AddToCartReq): Promise<ApiResponse<null>> {
-    await this.cartService.addToCart(req);
+  async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<null>> {
+    await this.cartService.addToCart(body);
     return {
       message: '',
       data: null,
     };
   }
 
-  @Delete(':id')
-  async deleteCart(@Param('id') cart_id: string): Promise<ApiResponse<null>> {
+  @Delete(':cart_id')
+  async deleteCart(
+    @Param('cart_id') cart_id: string,
+  ): Promise<ApiResponse<null>> {
     await this.cartService.delete(+cart_id);
     return { message: 'delete cart successfully!', data: null };
   }
 
   @Put('/item-action')
   async cartItemAction(
-    @Body() req: ActionsCartItemReq,
+    @Body() body: ActionsCartItemReq,
   ): Promise<ApiResponse<CartItem>> {
-    const result = await this.cartService.itemAction(req);
+    const result = await this.cartService.itemAction(body);
     return {
       message:
-        req.action === 'REMOVE'
-          ? `ลบสินค้าหมายเลข "${req.variant_id}" ออกจากตะกร้าเรียบร้อย`
+        body.action === 'REMOVE'
+          ? `ลบสินค้าหมายเลข "${body.variant_id}" ออกจากตะกร้าเรียบร้อย`
           : 'ลดจำนวนสินค้าลง 1 ซิ้น',
       data: result,
     };

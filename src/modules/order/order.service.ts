@@ -10,6 +10,7 @@ import { StockService } from '../stock/stock.service';
 import { CreateMovement } from '../stock/dto/create-movement.stock';
 import { StockChangeType } from '../stock/enums/stock-change.enum';
 import { OrderStatus } from './enums/order-status.enum';
+import { CreateOrderReq } from './dto/req/create-order.req';
 
 @Injectable()
 export class OrderService {
@@ -27,12 +28,12 @@ export class OrderService {
 
   async findOrderByUser(
     user_id: number,
-    req: FindAllOrdersQuery,
+    query: FindAllOrdersQuery,
   ): Promise<OrdersResponse> {
-    const { page, limit, order } = req;
+    const { page, limit, order, status } = query;
 
     const [orders, count] = await this.orderRepo.findAndCount({
-      where: { user: { id: user_id }, status: req.status },
+      where: { user: { id: user_id }, status },
       skip: (page - 1) * limit,
       take: limit,
       order: { order_date: order },
@@ -51,7 +52,7 @@ export class OrderService {
     return order;
   }
 
-  async checkout(user_id: number): Promise<Order> {
+  async checkout(user_id: number, body: CreateOrderReq): Promise<Order> {
     const user = await this.userService.findOne(user_id);
 
     const order = await this.datasource.transaction(async (tx) => {
@@ -87,6 +88,7 @@ export class OrderService {
           change_type: StockChangeType.OUT,
           variant_id: item.variant.id,
           order_id: order.id,
+          note: body.note,
         };
 
         await this.stockService.createMovement(dto, tx);

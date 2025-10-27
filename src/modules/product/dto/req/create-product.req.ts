@@ -1,11 +1,4 @@
-import {
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  Length,
-  Min,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, Length, Min } from 'class-validator';
 
 export class CreateProductReq {
   @IsNotEmpty({ message: 'กรุนากรอกชื่อสินค้า' })
