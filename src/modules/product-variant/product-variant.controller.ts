@@ -30,51 +30,51 @@ export class ProductVariantController {
     };
   }
 
-  // หา variant ตาม product_id เพื่อดูว่า product นี้มีกี่ variant
-  @Get(':id')
+   // หา variant ด้วย product_id
+  @Get(':product_id')
   async findByVariant(
-    @Param('id') product_variant_id: string,
-    @Query() req: FindAllQuery, // ในอนาตคอาจมีการแยกเป็น FindAllVariants
+    @Param('product_id') product_id: string,
+    @Query() query: FindAllQuery, 
   ): Promise<ApiResponse<ProductVariantsResponse>> {
     const variants = await this.variantService.findAllByProduct(
-      +product_variant_id,
-      req,
+      +product_id,
+      query,
     );
 
     return {
-      message: '',
-      data: variants,
-    };
+  message: `พบ variant ทั้งหมด ${variants.length} รายการของสินค้า ${product_id}`,
+  data: variants,
+};
   }
 
   @Post()
   async create(
-    @Body() req: CreateVariantReq,
+    @Body() body: CreateVariantReq,
   ): Promise<ApiResponse<ProductVariant>> {
-    const variant = await this.variantService.create(req);
+    const variant = await this.variantService.create(body);
     return {
-      message: '',
+      message: `สร้าง variant ของสินค้ารายการ ${body.product_id} สำเร็จ`,
       data: variant,
     };
   }
 
-  @Put(':id')
+  @Put(':variant_id')
   async upate(
-    @Param('id') variant_id: string,
-    @Body() req: UpdateVariantReq,
+    @Param('variant_id') variant_id: string,
+    @Body() body: UpdateVariantReq,
   ): Promise<ApiResponse<ProductVariant>> {
     const variant = await this.variantService.update(+variant_id, req);
     return {
-      message: '',
+      message: `อัพเดท variant หมายเลข ${variant_id} สำเร็จ`,
       data: variant,
     };
   }
 
-  @Delete(':id')
-  async delete(@Param('id') variant_id: number): Promise<ApiResponse<null>> {
-    await this.variantService.delete(variant_id);
+  @Delete(':variant_id')
+  async delete(@Param('variant_id') variant_id: string): Promise<ApiResponse<null>> {
+    await this.variantService.delete(+variant_id);
     return {
-      message: '',
+      message: `ลบ variant หมายเลข ${variant_id} สำเร็จ`,
       data: null,
     };
   }
