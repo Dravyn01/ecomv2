@@ -11,7 +11,7 @@ export class StockController {
   async debug(): Promise<ApiResponse<Stock[]>> {
     const stock = await this.stockService.findAll();
     return {
-      message: '',
+      message: `ข้อมูลสต๊อกทั้งหมด ${stock.count} รายการ`,
       data: stock,
     };
   }
@@ -22,7 +22,7 @@ export class StockController {
   ): Promise<ApiResponse<Stock>> {
     const stock = await this.stockService.findByVariant(+variant_id);
     return {
-      message: '',
+      message: `ข้อมูลสต๊อกของสินค้าหมายเลข ${variant_id}`,
       data: stock,
     };
   }
