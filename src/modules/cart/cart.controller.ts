@@ -26,7 +26,7 @@ export class CartController {
   ): Promise<ApiResponse<CartsResponse>> {
     const carts = await this.cartService.findAll(query);
     return {
-      message: '',
+      message: `พบตะกร้าทั้งหมด ${carts.count} รายการ`,
       data: carts,
     };
   }
@@ -35,17 +35,17 @@ export class CartController {
   async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<null>> {
     await this.cartService.addToCart(body);
     return {
-      message: '',
-      data: null,
+      message: 'เพิ่มสินค้าเข้าตะกร้าเรียบร้อย',
+      data: null, // จะ return cart + cart_item
     };
   }
 
   @Delete(':cart_id')
-  async deleteCart(
+  async delete(
     @Param('cart_id') cart_id: string,
   ): Promise<ApiResponse<null>> {
     await this.cartService.delete(+cart_id);
-    return { message: 'delete cart successfully!', data: null };
+    return { message: `ลบตะกร้าหมายเลข ${cart_id} เรียบร้อย`, data: null };
   }
 
   @Put('/item-action')
