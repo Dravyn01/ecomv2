@@ -12,7 +12,7 @@ import { OrderItem } from 'src/modules/order/entities/order.entity';
 import { Size } from 'src/modules/size/entities/size.entity';
 import { Color } from 'src/modules/color/entities/color.entity';
 import { CartItem } from 'src/modules/cart/entities/cart.entity';
-import { Product } from 'src/config/entities.config';
+import { Product, Review } from 'src/config/entities.config';
 import { Stock } from 'src/modules/stock/entities/stock.entity';
 
 @Entity('product_variants')
@@ -43,6 +43,7 @@ export class ProductVariant {
   // One Product Many Variant
   @ManyToOne(() => Product, (product) => product.variants, {
     onDelete: 'CASCADE',
+    cascade: true,
   })
   @JoinColumn()
   product: Product;
@@ -64,4 +65,8 @@ export class ProductVariant {
   })
   @JoinColumn()
   stock: Stock;
+
+  // One Variant Many Review
+  @OneToMany(() => Review, (review) => review.variant)
+  reviews: Review[];
 }

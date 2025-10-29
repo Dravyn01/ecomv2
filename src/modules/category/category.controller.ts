@@ -21,14 +21,16 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Get()
-  async all(@Query() req: FindAllCategory): Promise<ApiResponse<CategorysRes>> {
-    const result = await this.categoryService.findAll(req);
+  async findAll(
+    @Query() query: FindAllCategory,
+  ): Promise<ApiResponse<CategorysRes>> {
+    const result = await this.categoryService.findAll(query);
     return { message: `พบ "${result.count}" หมวดหมู่`, data: result };
   }
 
-  @Get(':id')
-  async categoryDetails(
-    @Param('id') category_id: string,
+  @Get(':category_id')
+  async findById(
+    @Param('category_id') category_id: string,
   ): Promise<ApiResponse<Category>> {
     return {
       message: `หมวดหมู่หมายเลข: ${category_id}`,
@@ -37,18 +39,16 @@ export class CategoryController {
   }
 
   @Post()
-  async createCategory(
-    @Body() req: CreateCategoryReq,
-  ): Promise<ApiResponse<Category>> {
+  async create(@Body() req: CreateCategoryReq): Promise<ApiResponse<Category>> {
     return {
       message: 'สร้างหมวดหมู่เรีบลร้อย',
       data: await this.categoryService.createCategory(req),
     };
   }
 
-  @Put(':id')
-  async updateCategory(
-    @Param('id') category_id: string,
+  @Put(':category_id')
+  async update(
+    @Param('category_id') category_id: string,
     @Body() req: UpdateCategoryReq,
   ): Promise<ApiResponse<Category>> {
     return {
@@ -57,9 +57,9 @@ export class CategoryController {
     };
   }
 
-  @Delete(':id')
-  async deleteCategory(
-    @Param('id') category_id: string,
+  @Delete(':category_id')
+  async delete(
+    @Param('category_id') category_id: string,
   ): Promise<ApiResponse<void>> {
     return {
       message: 'delete category successfully!',

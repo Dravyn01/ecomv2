@@ -53,11 +53,11 @@ export class CartService {
     return existing;
   }
 
-  async addToCart(body: AddToCartReq): Promise<void> {
+  async addToCart(body: AddToCartReq): Promise<CartItem> {
     const user = await this.userService.findOne(body.user_id);
     const variant = await this.variantService.findOne(body.variant_id);
 
-    await this.datasource.transaction(async (tx) => {
+    const cart = await this.datasource.transaction(async (tx) => {
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
 
       if (!cart) {
@@ -71,16 +71,17 @@ export class CartService {
 
       if (existing_item) {
         existing_item.quantity += body.quantity;
-        await tx.save(existing_item);
+        return await tx.save(existing_item);
       } else {
-        const item = tx.create(CartItem, {
+        return await tx.save(CartItem, {
           cart: { id: cart.id },
           variant: { id: variant.id },
           quantity: body.quantity,
         });
-        await tx.save(item);
       }
     });
+
+    return cart;
   }
 
   async delete(cart_id: number): Promise<void> {

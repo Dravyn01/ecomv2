@@ -19,15 +19,14 @@ export class CategoryService {
 
   async findAll(req: FindAllCategory): Promise<CategorysRes> {
     this.logger.log(
-      `[${this.className}::findAll] called (query=${req.query}, page=${req.page}, limit=${req.limit})`,
+      `[${this.className}::findAll] called (query=${req.search}, page=${req.page}, limit=${req.limit})`,
     );
 
-    const { query, page, limit, order } = req;
-    const whereCondition = query ? { name: ILike(`%${query}%`) } : {};
+    const { search, page, limit, order } = req;
     const skip = (page - 1) * limit;
 
     const [categories, count] = await this.categoryRepo.findAndCount({
-      where: whereCondition,
+      where: search ? { name: ILike(`%${search}%`) } : {},
       skip,
       take: limit,
       order: { created_at: order },

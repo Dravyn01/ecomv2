@@ -1,3 +1,4 @@
+import { Review } from 'src/config/entities.config';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 import {
@@ -29,6 +30,9 @@ export class User {
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 
   @CreateDateColumn()
   created_at: Date;

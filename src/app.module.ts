@@ -12,6 +12,7 @@ import { TypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './modules/order/order.module';
 import { ShipmentsModule } from './modules/shipments/shipments.module';
 import { StockModule } from './modules/stock/stock.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StockModule } from './modules/stock/stock.module';
     OrderModule,
     ShipmentsModule,
     StockModule,
+    ReviewModule,
   ],
 
   controllers: [],

@@ -26,7 +26,7 @@ export class OrderService {
     return orders;
   }
 
-  async findOrderByUser(
+  async findByUser(
     user_id: number,
     query: FindAllOrdersQuery,
   ): Promise<OrdersResponse> {

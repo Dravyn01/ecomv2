@@ -30,11 +30,11 @@ export class ProductVariantController {
     };
   }
 
-   // หา variant ด้วย product_id
+  // หา variant ด้วย product_id
   @Get(':product_id')
   async findByVariant(
     @Param('product_id') product_id: string,
-    @Query() query: FindAllQuery, 
+    @Query() query: FindAllQuery,
   ): Promise<ApiResponse<ProductVariantsResponse>> {
     const variants = await this.variantService.findAllByProduct(
       +product_id,
@@ -42,9 +42,9 @@ export class ProductVariantController {
     );
 
     return {
-  message: `พบ variant ทั้งหมด ${variants.length} รายการของสินค้า ${product_id}`,
-  data: variants,
-};
+      message: `พบ variant ทั้งหมด ${variants.data.length} รายการของสินค้า ${product_id}`,
+      data: variants,
+    };
   }
 
   @Post()
@@ -63,7 +63,7 @@ export class ProductVariantController {
     @Param('variant_id') variant_id: string,
     @Body() body: UpdateVariantReq,
   ): Promise<ApiResponse<ProductVariant>> {
-    const variant = await this.variantService.update(+variant_id, req);
+    const variant = await this.variantService.update(+variant_id, body);
     return {
       message: `อัพเดท variant หมายเลข ${variant_id} สำเร็จ`,
       data: variant,
@@ -71,7 +71,9 @@ export class ProductVariantController {
   }
 
   @Delete(':variant_id')
-  async delete(@Param('variant_id') variant_id: string): Promise<ApiResponse<null>> {
+  async delete(
+    @Param('variant_id') variant_id: string,
+  ): Promise<ApiResponse<null>> {
     await this.variantService.delete(+variant_id);
     return {
       message: `ลบ variant หมายเลข ${variant_id} สำเร็จ`,

@@ -33,7 +33,16 @@ export class ProductService {
 
   // find by id
   async findOne(product_id: number): Promise<Product> {
-    const product = await this.productRepo.findOneBy({ id: product_id });
+    const product = await this.productRepo.findOne({
+      where: {
+        id: product_id,
+      },
+      relations: {
+        variants: {
+          reviews: true,
+        },
+      },
+    });
     if (!product) {
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${product_id}`);
     }

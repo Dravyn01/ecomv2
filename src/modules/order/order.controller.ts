@@ -31,7 +31,7 @@ export class OrderController {
     @Param('user_id') user_id: string,
     @Query() query: FindAllOrdersQuery,
   ): Promise<ApiResponse<OrdersResponse>> {
-    const orders = await this.orderService.findOrderByUser(+user_id, query);
+    const orders = await this.orderService.findByUser(+user_id, query);
     return { message: '', data: orders };
   }
 
