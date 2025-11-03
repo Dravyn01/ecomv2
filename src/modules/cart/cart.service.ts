@@ -57,7 +57,7 @@ export class CartService {
     const user = await this.userService.findOne(body.user_id);
     const variant = await this.variantService.findOne(body.variant_id);
 
-    const cart = await this.datasource.transaction(async (tx) => {
+    const cart_item = await this.datasource.transaction(async (tx) => {
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
 
       if (!cart) {
@@ -71,7 +71,7 @@ export class CartService {
 
       if (existing_item) {
         existing_item.quantity += body.quantity;
-        return await tx.save(existing_item);
+        return await tx.save(CartItem, existing_item);
       } else {
         return await tx.save(CartItem, {
           cart: { id: cart.id },
@@ -81,7 +81,7 @@ export class CartService {
       }
     });
 
-    return cart;
+    return cart_item;
   }
 
   async delete(cart_id: number): Promise<void> {

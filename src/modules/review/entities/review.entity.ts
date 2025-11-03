@@ -1,4 +1,4 @@
-import { ProductVariant, User } from 'src/config/entities.config';
+import { Product, User } from 'src/config/entities.config';
 import {
   Column,
   CreateDateColumn,
@@ -20,12 +20,12 @@ export class Review {
   @JoinColumn()
   user?: User;
 
-  @ManyToOne(() => ProductVariant, (variant) => variant.reviews, {
+  @ManyToOne(() => Product, (product) => product.reviews, {
     nullable: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  variant?: ProductVariant;
+  product?: Product;
 
   @Column()
   rating: number;

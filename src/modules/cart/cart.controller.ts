@@ -32,18 +32,16 @@ export class CartController {
   }
 
   @Post()
-  async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<null>> {
-    await this.cartService.addToCart(body);
+  async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<CartItem>> {
+    const cart_item = await this.cartService.addToCart(body);
     return {
       message: 'เพิ่มสินค้าเข้าตะกร้าเรียบร้อย',
-      data: null, // จะ return cart + cart_item
+      data: cart_item,
     };
   }
 
   @Delete(':cart_id')
-  async delete(
-    @Param('cart_id') cart_id: string,
-  ): Promise<ApiResponse<null>> {
+  async delete(@Param('cart_id') cart_id: string): Promise<ApiResponse<null>> {
     await this.cartService.delete(+cart_id);
     return { message: `ลบตะกร้าหมายเลข ${cart_id} เรียบร้อย`, data: null };
   }

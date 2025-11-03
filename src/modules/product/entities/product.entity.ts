@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
 } from 'typeorm';
-import { Category } from 'src/config/entities.config';
+import { Category, Review } from 'src/config/entities.config';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 
 @Entity('products')
@@ -50,4 +50,7 @@ export class Product {
 
   @ManyToMany(() => Category, (category) => category.products)
   categories: Category[];
+
+  @OneToMany(() => Review, (review) => review.product)
+  reviews: Review[];
 }

@@ -36,6 +36,8 @@ export class ReviewController {
     @Query() query: FindAllQuery,
   ): Promise<ApiResponse<Review[]>> {
     const reviews = await this.reviewService.findByProduct(+product_id, query);
+    console.log(product_id);
+    console.log(reviews);
     return { message: '', data: reviews };
   }
 

@@ -69,7 +69,9 @@ export class OrderItem {
   order: Order;
 
   // Many CartItem One ProductVariant
-  @ManyToOne(() => ProductVariant, (variant) => variant.order_items)
+  @ManyToOne(() => ProductVariant, (variant) => variant.order_items, {
+    onDelete: 'SET NULL',
+  })
   @JoinColumn()
   variant: ProductVariant;
 }
