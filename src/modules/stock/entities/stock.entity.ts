@@ -32,7 +32,7 @@ export class Stock {
   updated_at: Date; // มีการเพิ่มจำนวน ลดจำนวน เมื่อไหร่
 }
 
-@Entity('stock-movements')
+@Entity('stock_movements')
 export class StockMovement {
   @PrimaryGeneratedColumn({ name: 'stock_movement_id' })
   id: number;

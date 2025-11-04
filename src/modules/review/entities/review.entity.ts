@@ -10,7 +10,7 @@ import {
 
 @Entity('reviews')
 export class Review {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'review_id' })
   id: number;
 
   @ManyToOne(() => User, (user) => user.reviews, {

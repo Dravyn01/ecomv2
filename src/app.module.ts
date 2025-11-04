@@ -13,6 +13,7 @@ import { OrderModule } from './modules/order/order.module';
 import { ShipmentsModule } from './modules/shipments/shipments.module';
 import { StockModule } from './modules/stock/stock.module';
 import { ReviewModule } from './modules/review/review.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReviewModule } from './modules/review/review.module';
     ShipmentsModule,
     StockModule,
     ReviewModule,
+    WishlistModule,
   ],
 
   controllers: [],

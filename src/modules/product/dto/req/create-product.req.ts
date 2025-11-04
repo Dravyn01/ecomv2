@@ -21,6 +21,6 @@ export class CreateProductReq {
   @IsOptional()
   @IsNumber({}, { message: 'ราคาหลังลดต้องเป็นตัวเลขเท่านั้น' })
   @Min(1, { message: 'ราคาหลังลดต้องมากกว่า 0 บาท' })
-  discount_price: number;
+  discount_price?: number;
   // discount_price?: number;
 }

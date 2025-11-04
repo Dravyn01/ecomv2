@@ -73,6 +73,16 @@ export class ReviewService {
       const newAverage =
         (oldAverage * oldReviews + body.rating) / (oldReviews + 1);
 
+      // const reviews = await this.reviewRepo.find({
+      //   where: {
+      //     product: { id: product.id },
+      //   },
+      //   select: { rating: true },
+      // });
+      //
+      // const newAvg =
+      //   reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+
       console.log(`newAverage: ${newAverage}`);
 
       // สร้างรีวิวใหม่

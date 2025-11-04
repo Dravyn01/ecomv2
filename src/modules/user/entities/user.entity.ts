@@ -1,6 +1,7 @@
 import { Review } from 'src/config/entities.config';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
+import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import {
   Column,
   CreateDateColumn,
@@ -25,6 +26,13 @@ export class User {
   @Column()
   password: string;
 
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  // # relations
   @OneToOne(() => Cart, (cart) => cart.user)
   cart: Cart;
 
@@ -34,9 +42,6 @@ export class User {
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
 
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+  @OneToMany(() => Wishlist, (wishlist) => wishlist.user)
+  wishlists: Wishlist[];
 }

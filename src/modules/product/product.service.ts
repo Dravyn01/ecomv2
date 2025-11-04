@@ -38,14 +38,11 @@ export class ProductService {
         id: product_id,
       },
       relations: {
-        variants: {
-          reviews: true,
-        },
+        variants: true,
       },
     });
-    if (!product) {
+    if (!product)
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${product_id}`);
-    }
     return product;
   }
 
