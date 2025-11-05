@@ -1,21 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from './entities/order.entity';
+import { Order, OrderItem } from './entities/order.entity';
 import { Repository, DataSource, Not, In } from 'typeorm';
 import { OrdersResponse } from './dto/res/orders.res';
 import { FindAllOrdersQuery } from './dto/req/find-all-orders.query';
 import { UserService } from '../user/user.service';
-import { Cart } from 'src/config/entities.config';
+import { Cart, Product } from 'src/config/entities.config';
 import { StockService } from '../stock/stock.service';
 import { CreateMovement } from '../stock/dto/create-movement.stock';
 import { StockChangeType } from '../stock/enums/stock-change.enum';
 import { OrderStatus } from './enums/order-status.enum';
 import { CreateOrderReq } from './dto/req/create-order.req';
+import { ApiResponse } from 'src/common/dto/res/common-response';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order) private readonly orderRepo: Repository<Order>,
+    @InjectRepository(OrderItem)
+    private readonly orderItemRepo: Repository<OrderItem>,
     private readonly userService: UserService,
     private readonly stockService: StockService,
     private readonly datasource: DataSource,
@@ -46,7 +49,7 @@ export class OrderService {
   async findOne(order_id: number): Promise<Order> {
     const order = await this.orderRepo.findOne({
       where: { id: order_id },
-      relations: ['items'],
+      relations: ['items.variant.product', 'user'],
     });
     if (!order) throw new NotFoundException('not found order');
     return order;
@@ -136,8 +139,45 @@ export class OrderService {
 
   async delete(order_id: number): Promise<void> {
     const order = await this.findOne(order_id);
-    await this.userService.findOne(order.user.id);
-
+    // await this.userService.findOne(order.user.id);
     await this.orderRepo.remove(order);
+  }
+
+  async paid(order_id: number): Promise<Order> {
+    const order = await this.findOne(order_id);
+    console.log(order);
+
+    return await this.datasource.transaction(async (tx) => {
+      order.status = OrderStatus.PAID;
+
+      for (const item of order.items) {
+        const user_id = order.user.id;
+        const product = item.variant.product;
+
+        const hasPreviousPurchase = await tx.exists(OrderItem, {
+          where: {
+            order: {
+              user: { id: user_id },
+              status: OrderStatus.PAID,
+            },
+            variant: { product: { id: product.id } },
+          },
+        });
+
+        console.log('have?:', hasPreviousPurchase);
+
+        if (hasPreviousPurchase) {
+          item.is_repeat = true;
+          await tx.increment(Product, { id: product.id }, 'repeat_count', 1);
+          console.log(`item "${item.id}" is_repeat: true`);
+        }
+
+        await tx.increment(Product, { id: product.id }, 'sales_count', 1);
+        console.log('add sales count');
+      }
+
+      const saved_order = tx.save(Order, order);
+      return saved_order;
+    });
   }
 }

@@ -1,4 +1,4 @@
-// case success
+// success case
 export interface ApiResponseFormat<T> {
   code: number;
   status: string;
@@ -6,7 +6,7 @@ export interface ApiResponseFormat<T> {
   data: T;
 }
 
-// case error
+// error case
 export interface ErrorApiResponse {
   code: number;
   status: string;

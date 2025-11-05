@@ -38,7 +38,6 @@ export class Product {
   updated_at: Date;
 
   // # rating
-  // add type: 'bigint' if large project
   @Column({ default: 0 })
   review_count: number;
 
@@ -49,18 +48,28 @@ export class Product {
   sales_count: number; //
 
   @Column({ default: 0 })
-  recent_sales: number; // ยอดขายในช่วงเวลา
-
-  @Column({ default: 0 })
   wishlist_count: number; //จำนวนที่ถูกเพิ่มเข้า wishlist
-
-  @Column({ default: 0 })
-  return_count: number; // อัตราการคืนสินค้า
 
   @Column({ default: 0 })
   view_count: number; // จำนวนการเข้าชม
 
-  // repeat_purchase_rate // อัตราการสั่งซื้อช้ำ
+  @Column({ default: 0 })
+  return_count: number; // อัตราการคืนสินค้า
+
+  @Column({ type: 'float', default: 0.0 })
+  return_rate: number;
+
+  @Column({ type: 'float', default: 0.0 })
+  repeat_purchase_rate: number; // อัตราการสั่งซื้อช้ำ
+
+  @Column({ default: 0 })
+  repeat_count: number; // จำนวนครั้งที่ผู้ใช้กลับมาซื้อซ้ำ
+
+  @Column({ type: 'float', default: 0.0 })
+  popularity_score: number;
+
+  // @Column({ default: 0 })
+  // recent_sales: number; // ยอดขายในช่วงเวลา
 
   // # relations
   @OneToMany(() => ProductVariant, (variant) => variant.product, {

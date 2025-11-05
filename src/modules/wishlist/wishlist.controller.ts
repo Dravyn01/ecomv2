@@ -6,13 +6,13 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { User } from 'src/config/entities.config';
 import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
 
-@Controller('wishlist')
+@Controller('/admin/wishlist')
 export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
   @Get()
   async findByUser(@GetUser() user: User): Promise<ApiResponse<Wishlist[]>> {
-    console.log(user);
+    console.log('dec$@GetUser()', user);
     const wishlists = await this.wishlistService.findAllByUser(user.id);
     return { message: '', data: wishlists };
   }
@@ -22,7 +22,7 @@ export class WishlistController {
     @GetUser() user: User,
     @Body() body: AddToWishlistDto,
   ): Promise<ApiResponse<Wishlist>> {
-    console.log('created by user', user);
+    console.log('dec$@GetUser()', user);
     const wishlist = await this.wishlistService.create(user.id, body);
     return { message: '', data: wishlist };
   }

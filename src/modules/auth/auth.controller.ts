@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterRequest } from './dto/register.request';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { LocalGuard } from 'src/common/guards/local.guard';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { User } from 'src/modules/user/entities/user.entity';
 
@@ -28,7 +28,7 @@ export class AuthController {
   @Post('/login')
   @UseGuards(LocalGuard)
   async login(
-    @CurrentUser() user: User,
+    @GetUser() user: User,
   ): Promise<ApiResponse<{ accessToken: string }>> {
     this.logger.log(`[POST] /auth/login called for email=${user.email}`);
     const result = await this.authService.login(user);

@@ -34,7 +34,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       message = (exception.getResponse() as any).message || exception.message;
     }
-
     // map error from lib to HttpException
     else if (exception instanceof QueryFailedError) {
       status = 409;

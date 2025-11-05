@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards, Logger } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { UserResponse } from './dto/user.response';
 import { ApiResponse } from 'src/common/dto/res/common-response';
@@ -22,7 +22,7 @@ export class UserController {
   @Get('/profile')
   @UseGuards(JwtGuard)
   async getProfile(
-    @CurrentUser() req: { email: string },
+    @GetUser() req: { email: string },
   ): Promise<ApiResponse<UserResponse>> {
     this.logger.log(`[POST] /user/profile called for email=${req.email}`);
     const user = await this.userService.getProfile(req.email);

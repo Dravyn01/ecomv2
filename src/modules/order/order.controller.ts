@@ -21,11 +21,12 @@ export class OrderController {
 
   // *DEBUG MODE*
   @Get()
-  async debug(): Promise<any> {
+  async allOrders(): Promise<any> {
     const orders = await this.orderService.findAll();
     return { message: '', data: orders };
   }
 
+  // find by user_id
   @Get(':user_id')
   async findByUser(
     @Param('user_id') user_id: string,
@@ -35,6 +36,7 @@ export class OrderController {
     return { message: '', data: orders };
   }
 
+  // checkout
   @Post(':user_id')
   async checkout(
     @Param('user_id') user_id: string,
@@ -44,7 +46,8 @@ export class OrderController {
     return { message: '', data: order };
   }
 
-  @Put(':order_id')
+  // cancel order
+  @Put('/cancel/:order_id')
   async cancel(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<Order>> {
@@ -52,11 +55,21 @@ export class OrderController {
     return { message: 'canceled order successfully!', data: order };
   }
 
+  // delete order(admin contro)
   @Delete(':order_id')
   async delete(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<null>> {
     await this.orderService.delete(+order_id);
     return { message: 'delete order successfully!', data: null };
+  }
+
+  // paid order
+  @Put('/paid/:order_id')
+  async paidOrder(
+    @Param('order_id') order_id: string,
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.orderService.paid(+order_id);
+    return { message: `paid order #${order.id}`, data: order };
   }
 }
