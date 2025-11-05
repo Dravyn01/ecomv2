@@ -31,7 +31,7 @@ export class ProductController {
       `[product.controller.ts]: LOG paramter {q: ${query.search}, page: ${query.page}, limit: ${query.limit}, order: ${query.order}}`,
     );
     const products = await this.productService.findAll(query);
-    return { message: 'สินค้าทั้งหมด', data: products };
+    return { message: `พบสินค้าทั้งหมด ${products.count} รายการ`, data: products };
   }
 
   @Get(':product_id')
@@ -63,7 +63,7 @@ export class ProductController {
   ): Promise<ApiResponse<Product>> {
     const product = await this.productService.update(+product_id, req);
     return {
-      message: 'อัพเดทสินค้าเรียบร้อย',
+      message: 'อัพเดทสินค้าเสร็จสิ้น',
       data: product,
     };
   }
