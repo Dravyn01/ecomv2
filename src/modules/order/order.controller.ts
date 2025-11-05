@@ -23,7 +23,7 @@ export class OrderController {
   @Get()
   async allOrders(): Promise<any> {
     const orders = await this.orderService.findAll();
-    return { message: '', data: orders };
+    return { message: `พบ order ${orders.count} รายการ`, data: orders };
   }
 
   // find by user_id
@@ -33,7 +33,7 @@ export class OrderController {
     @Query() query: FindAllOrdersQuery,
   ): Promise<ApiResponse<OrdersResponse>> {
     const orders = await this.orderService.findByUser(+user_id, query);
-    return { message: '', data: orders };
+    return { message: `พบ order ของผู้ใช้ หมายเลข ${user_id} ทั้งหมด ${orders.length} รายการ`, data: orders };
   }
 
   // checkout
@@ -43,7 +43,7 @@ export class OrderController {
     @Body() body: CreateOrderReq,
   ): Promise<any> {
     const order = await this.orderService.checkout(+user_id, body);
-    return { message: '', data: order };
+    return { message: 'เช็คเอาท์สำเร็จ', data: order };
   }
 
   // cancel order
@@ -52,7 +52,7 @@ export class OrderController {
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<Order>> {
     const order = await this.orderService.cancel(+order_id);
-    return { message: 'canceled order successfully!', data: order };
+    return { message: 'ยกเลิก order แล้ว', data: order };
   }
 
   // delete order(admin contro)
@@ -60,8 +60,8 @@ export class OrderController {
   async delete(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<null>> {
-    await this.orderService.delete(+order_id);
-    return { message: 'delete order successfully!', data: null };
+     const order = await this.orderService.delete(+order_id);
+    return { message: `ลบ order หมายเลข ${order_id} เรียบร้อย`, data: order };
   }
 
   // paid order
