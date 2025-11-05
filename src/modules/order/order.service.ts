@@ -141,6 +141,7 @@ export class OrderService {
     const order = await this.findOne(order_id);
     // await this.userService.findOne(order.user.id);
     await this.orderRepo.remove(order);
+return order;
   }
 
   async paid(order_id: number): Promise<Order> {
