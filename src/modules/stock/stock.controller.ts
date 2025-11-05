@@ -11,7 +11,7 @@ export class StockController {
   async debug(): Promise<ApiResponse<Stock[]>> {
     const stock = await this.stockService.findAll();
     return {
-      message: `ข้อมูลสต๊อกทั้งหมด ${stock.length} รายการ`,
+      message: `พบสต๊อกทั้งหมด ${stock.length} รายการ`,
       data: stock,
     };
   }
