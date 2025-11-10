@@ -38,18 +38,18 @@ export class ReviewController {
     const reviews = await this.reviewService.findByProduct(+product_id, query);
     console.log(product_id);
     console.log(reviews);
-    return { message: '', data: reviews };
+    return { message: `พบรีวิวของสินค้าหมายเลข ${product_id} ทั้งหมด ${reviews.length} รายการ`, data: reviews };
   }
 
   @Post()
   async create(@Body() body: CreateReviewDto): Promise<ApiResponse<Review>> {
     const review = await this.reviewService.create(body);
-    return { message: '', data: review };
+    return { message: 'สร้างรีวิวเรียบร้อย', data: review };
   }
 
   @Delete(':review_id')
   async remove(@Param('review_id') id: string) {
     const review = await this.reviewService.delete(+id);
-    return { message: '', data: review };
+    return { message: 'ลบรีวิวเรียบร้อย', data: review };
   }
 }
