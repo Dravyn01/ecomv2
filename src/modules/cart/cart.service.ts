@@ -49,7 +49,7 @@ export class CartService {
       where: { user: { id: user_id } },
       relations: ['items'],
     });
-    if (!existing) throw new NotFoundException('not found cart');
+    if (!existing) throw new NotFoundException('ไม่พบตะกร้า');
     return existing;
   }
 
@@ -86,7 +86,7 @@ export class CartService {
 
   async delete(cart_id: number): Promise<void> {
     const cart = await this.cartRepo.findOneBy({ id: cart_id });
-    if (!cart) throw new NotFoundException('not found cart');
+    if (!cart) throw new NotFoundException('ไม่พบตะกร้า');
     await this.cartRepo.delete(cart.id);
   }
 
