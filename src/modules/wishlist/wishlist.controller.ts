@@ -14,7 +14,7 @@ export class WishlistController {
   async findByUser(@GetUser() user: User): Promise<ApiResponse<Wishlist[]>> {
     console.log('dec$@GetUser()', user);
     const wishlists = await this.wishlistService.findAllByUser(user.id);
-    return { message: '', data: wishlists };
+    return { message: `พบสินค้่ในรายการโปรดทั้งหมด ${wishlists.length} รายการ`, data: wishlists };
   }
 
   @Post()
@@ -24,7 +24,7 @@ export class WishlistController {
   ): Promise<ApiResponse<Wishlist>> {
     console.log('dec$@GetUser()', user);
     const wishlist = await this.wishlistService.create(user.id, body);
-    return { message: '', data: wishlist };
+    return { message: 'นำสินค้าเข้ารายการโปรดเรียบร้อย', data: wishlist };
   }
 
   @Delete(':wishlist_id')
@@ -33,6 +33,6 @@ export class WishlistController {
     @Param('product_id') product_id: string,
   ): Promise<ApiResponse<null>> {
     await this.wishlistService.remove(user.id, +product_id);
-    return { message: '', data: null };
+    return { message: 'นำสินค้าออกจากรายการโปรดเรียบร้อย', data: null };
   }
 }
