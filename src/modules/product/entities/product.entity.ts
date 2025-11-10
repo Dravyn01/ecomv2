@@ -7,10 +7,12 @@ import {
   UpdateDateColumn,
   ManyToMany,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { Category, Review } from 'src/config/entities.config';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
+import { ProductRepeatSummary } from 'src/modules/analytics/entities/product-repeat-summary.entity';
 
 @Entity('products')
 export class Product {
@@ -85,4 +87,7 @@ export class Product {
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.product)
   wishlists: Wishlist[];
+
+  @OneToOne(() => ProductRepeatSummary, (summary) => summary.product)
+  repeat_summaries: ProductRepeatSummary;
 }

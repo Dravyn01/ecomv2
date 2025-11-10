@@ -23,7 +23,7 @@ export class OrderController {
   @Get()
   async allOrders(): Promise<any> {
     const orders = await this.orderService.findAll();
-    return { message: `พบ order ${orders.count} รายการ`, data: orders };
+    return { message: `พบ order ${orders.length} รายการ`, data: orders };
   }
 
   // find by user_id
@@ -33,7 +33,10 @@ export class OrderController {
     @Query() query: FindAllOrdersQuery,
   ): Promise<ApiResponse<OrdersResponse>> {
     const orders = await this.orderService.findByUser(+user_id, query);
-    return { message: `พบ order ของผู้ใช้ หมายเลข ${user_id} ทั้งหมด ${orders.length} รายการ`, data: orders };
+    return {
+      message: `พบ order ของผู้ใช้ หมายเลข ${user_id} ทั้งหมด ${orders.count} รายการ`,
+      data: orders,
+    };
   }
 
   // checkout
@@ -59,8 +62,8 @@ export class OrderController {
   @Delete(':order_id')
   async delete(
     @Param('order_id') order_id: string,
-  ): Promise<ApiResponse<null>> {
-     const order = await this.orderService.delete(+order_id);
+  ): Promise<ApiResponse<Order>> {
+    const order = await this.orderService.delete(+order_id);
     return { message: `ลบ order หมายเลข ${order_id} เรียบร้อย`, data: order };
   }
 

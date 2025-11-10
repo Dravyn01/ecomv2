@@ -14,6 +14,8 @@ import { ShipmentsModule } from './modules/shipments/shipments.module';
 import { StockModule } from './modules/stock/stock.module';
 import { ReviewModule } from './modules/review/review.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -21,6 +23,9 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // cron job
+    ScheduleModule.forRoot(),
 
     // typeorm config
     TypeOrmModule.forRoot(TypeOrmConfig),
@@ -38,6 +43,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     StockModule,
     ReviewModule,
     WishlistModule,
+    AnalyticsModule,
   ],
 
   controllers: [],

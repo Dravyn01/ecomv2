@@ -63,9 +63,6 @@ export class OrderItem {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number;
 
-  @Column({ default: false })
-  is_repeat: boolean;
-
   // Many CartItem One Order
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinTable()
