@@ -53,7 +53,7 @@ export class OrderService {
       where: { id: order_id },
       relations: ['items.variant.product', 'user'],
     });
-    if (!order) throw new NotFoundException('not found order');
+    if (!order) throw new NotFoundException('ไม่พบ order');
     return order;
   }
 
@@ -67,7 +67,7 @@ export class OrderService {
       });
 
       if (!cart || cart.items.length === 0)
-        throw new NotFoundException('not checkout');
+        throw new NotFoundException('ไม่พบสินค้าสำหรับชำระเงิน');
 
       const total_price = cart.items.reduce(
         (acc, item) => acc + item.variant.price * item.quantity,
@@ -116,7 +116,7 @@ export class OrderService {
       });
 
       if (!order) {
-        throw new NotFoundException('Not Found Order');
+        throw new NotFoundException('ไม่พบ order สำหรับยกเลิก');
       }
 
       // change status
@@ -178,8 +178,8 @@ export class OrderService {
       order.status === OrderStatus.CANCELLED
     ) {
       throw new ConflictException(
-        `order "${order_id}" is ${order.status}. can not PAID again`,
-      );
+  `ไม่สามารถทำรายการได้ เนื่องจากออเดอร์ "${order_id}" อยู่ในสถานะ ${order.status} แล้ว`,
+);
     }
 
     return await this.datasource.transaction(async (tx) => {
