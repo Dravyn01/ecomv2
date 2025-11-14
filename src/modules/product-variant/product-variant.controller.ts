@@ -12,13 +12,14 @@ import { ApiResponse } from 'src/common/dto/res/common-response';
 import { ProductVariant } from './entities/product-variant.entity';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariantService } from './product-variant.service';
-import { CreateVariantReq } from './dto/req/create-variant.req';
-import { UpdateVariantReq } from './dto/req/update-variant.req';
-import { ProductVariantsResponse } from './dto/res/product-variants.res';
+import { CreateVariantDTO } from './dto/create-variant.dto';
+import { UpdateVariantDTO } from './dto/update-variant.dto';
 
 @Controller('/admin/product-variants')
 export class ProductVariantController {
   constructor(private readonly variantService: ProductVariantService) {}
+
+  // TODO: add logger
 
   // *DEBUG MODE*
   @Get()
@@ -35,7 +36,7 @@ export class ProductVariantController {
   async findByVariant(
     @Param('product_id') product_id: string,
     @Query() query: FindAllQuery,
-  ): Promise<ApiResponse<ProductVariantsResponse>> {
+  ): Promise<ApiResponse<DatasResponse<ProductVariant[]>>> {
     const variants = await this.variantService.findAllByProduct(
       +product_id,
       query,
@@ -49,7 +50,7 @@ export class ProductVariantController {
 
   @Post()
   async create(
-    @Body() body: CreateVariantReq,
+    @Body() body: CreateVariantDTO,
   ): Promise<ApiResponse<ProductVariant>> {
     const variant = await this.variantService.create(body);
     return {
@@ -61,7 +62,7 @@ export class ProductVariantController {
   @Put(':variant_id')
   async upate(
     @Param('variant_id') variant_id: string,
-    @Body() body: UpdateVariantReq,
+    @Body() body: UpdateVariantDTO,
   ): Promise<ApiResponse<ProductVariant>> {
     const variant = await this.variantService.update(+variant_id, body);
     return {

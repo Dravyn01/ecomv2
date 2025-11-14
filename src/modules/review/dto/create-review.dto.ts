@@ -1,5 +1,7 @@
 import { IsInt, IsNotEmpty, IsString, Length, Max, Min } from 'class-validator';
 
+// TODO: add message
+
 export class CreateReviewDto {
   @IsNotEmpty({ message: '' })
   @IsInt({ message: '' })

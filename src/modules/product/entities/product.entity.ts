@@ -6,7 +6,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToMany,
-  ManyToOne,
   OneToOne,
 } from 'typeorm';
 import { Category, Review } from 'src/config/entities.config';

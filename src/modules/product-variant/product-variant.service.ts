@@ -5,22 +5,23 @@ import { ColorService } from '../color/color.service';
 import { SizeService } from '../size/size.service';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariant } from './entities/product-variant.entity';
-import { CreateVariantReq } from './dto/req/create-variant.req';
 import { ProductService } from '../product/product.service';
-import { UpdateVariantReq } from './dto/req/update-variant.req';
-import { ProductVariantsResponse } from './dto/res/product-variants.res';
 import { CreateMovement } from '../stock/dto/create-movement.stock';
 import { StockService } from '../stock/stock.service';
 import { StockChangeType } from '../stock/enums/stock-change.enum';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { CreateVariantDTO } from './dto/create-variant.dto';
+import { UpdateVariantDTO } from './dto/update-variant.dto';
 
 @Injectable()
 export class ProductVariantService {
+  // TODO: add logger
+
   constructor(
-    // ProductVariantRepository
     @InjectRepository(ProductVariant)
     private readonly variantRepo: Repository<ProductVariant>,
 
-    // Stock Service
+    // services
     private readonly stockService: StockService,
     private readonly sizeService: SizeService,
     private readonly productService: ProductService,
@@ -41,7 +42,7 @@ export class ProductVariantService {
   async findAllByProduct(
     product_id: number,
     body: FindAllQuery,
-  ): Promise<ProductVariantsResponse> {
+  ): Promise<DatasResponse<ProductVariant[]>> {
     const { page, limit, order } = body;
 
     const [variants, count] = await this.variantRepo.findAndCount({
@@ -65,8 +66,15 @@ export class ProductVariantService {
     return product;
   }
 
-  // create variant
-  async create(body: CreateVariantReq): Promise<ProductVariant> {
+  /*
+   *
+   * create variant
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
+  async create(body: CreateVariantDTO): Promise<ProductVariant> {
     const product = await this.productService.findOne(body.product_id);
     const color = await this.colorService.findOne(body.color_id);
     const size = await this.sizeService.findOne(body.size_id);
@@ -98,10 +106,17 @@ export class ProductVariantService {
     return product_variant;
   }
 
-  // update variant
+  /*
+   *
+   * update variant
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
   async update(
     variant_id: number,
-    body: UpdateVariantReq,
+    body: UpdateVariantDTO,
   ): Promise<ProductVariant> {
     const existing_variant = await this.findOne(variant_id);
 

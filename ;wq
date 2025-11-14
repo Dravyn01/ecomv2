@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserPurchaseHistory } from './entities/user-purchase-history.entity';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Order, OrderItem } from 'src/config/entities.config';
+import { endOfDay, startOfDay } from 'date-fns';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { Between } from 'typeorm';
-import { differenceInDays, endOfDay, startOfDay } from 'date-fns';
+import { differenceInDays, differenceInMonths } from 'date-fns';
+
+process.env.TZ = 'Asia/Bangkok';
 
 @Injectable()
 export class AnalyticsService {
@@ -36,8 +39,6 @@ export class AnalyticsService {
   }> {
     const start = startOfDay(new Date(from));
     const end = to ? endOfDay(new Date(to)) : endOfDay(new Date(from));
-    console.log(start);
-    console.log(end);
 
     const items = await this.orderItemRepo.find({
       select: {
@@ -76,8 +77,8 @@ export class AnalyticsService {
 
     return {
       range: {
-        from: start.toISOString(),
-        to: end.toISOString(),
+        from: start.toString().split('T')[0],
+        to: end.toString().split('T')[0],
       },
       sales_summary: summary.sales_summary,
       average_per_month: summary.average_per_month,
@@ -89,82 +90,7 @@ export class AnalyticsService {
     };
   }
 
-  async getPaidOrderVsCancelOrder(
-    from: string,
-    to?: string,
-  ): Promise<{
-    range: {
-      from: string;
-      to: string;
-    };
-    total_orders_today: number;
-    completed_orders_today: number;
-    canceled_orders_today: number;
-    returned_orders_today: number;
-    total_revenue_today: number;
-    average_order: number;
-  }> {
-    const start = startOfDay(new Date(from));
-    const end = to ? endOfDay(new Date(to)) : endOfDay(new Date(from));
-    const dateRange = { order_date: Between(start, end) };
-
-    const orders_today = await this.orderRepo.find({
-      select: {
-        items: {
-          total_price: true,
-        },
-      },
-      where: {
-        ...dateRange,
-        status: In([
-          OrderStatus.PAID,
-          OrderStatus.CANCELLED,
-          OrderStatus.RETURNED,
-        ]),
-      },
-      relations: ['items'],
-    });
-
-    let total_revenue_today = 0;
-    const count = {
-      completed: 0,
-      canceled: 0,
-      returned: 0,
-    };
-
-    for (const order of orders_today) {
-      switch (order.status) {
-        case OrderStatus.PAID:
-          count.completed++;
-          break;
-        case OrderStatus.CANCELLED:
-          count.canceled++;
-          break;
-        case OrderStatus.RETURNED:
-          count.returned++;
-          break;
-      }
-
-      for (const item of order.items) {
-        total_revenue_today += item.total_price;
-      }
-    }
-
-    const total_orders_today = orders_today.length;
-    const average_order =
-      total_orders_today > 0 ? total_revenue_today / total_orders_today : 0;
-
-    return {
-      range: {
-        from: start.toISOString(),
-        to: end.toISOString(),
-      },
-      total_orders_today,
-      completed_orders_today: count.completed,
-      canceled_orders_today: count.canceled,
-      returned_orders_today: count.returned,
-      total_revenue_today: Number(total_revenue_today.toFixed(2)),
-      average_order: Number(average_order.toFixed(2)),
-    };
+  async getPaidOrder(): Promise<Order[]> {
+    return await this.orderRepo.findBy({ status: OrderStatus.PAID });
   }
 }

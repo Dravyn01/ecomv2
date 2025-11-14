@@ -17,18 +17,14 @@ import { Review } from './entities/review.entity';
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
+  // TODO: add logger
+
   // *DEBUG MODE*
   @Get()
   async findAll(): Promise<ApiResponse<Review[]>> {
     const reviews = await this.reviewService.findAll();
     return { message: '', data: reviews };
   }
-
-  // *DEBUG MODE*
-  // @Get(':user_id')
-  // async findOneByUser(@Param('user_id') user_id: string) {
-  //   return this.reviewService.findOne(+id);
-  // }
 
   @Get(':product_id')
   async findOne(
@@ -38,7 +34,10 @@ export class ReviewController {
     const reviews = await this.reviewService.findByProduct(+product_id, query);
     console.log(product_id);
     console.log(reviews);
-    return { message: `พบรีวิวของสินค้าหมายเลข ${product_id} ทั้งหมด ${reviews.length} รายการ`, data: reviews };
+    return {
+      message: `พบรีวิวของสินค้าหมายเลข ${product_id} ทั้งหมด ${reviews.length} รายการ`,
+      data: reviews,
+    };
   }
 
   @Post()

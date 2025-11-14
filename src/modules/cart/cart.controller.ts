@@ -20,7 +20,7 @@ import { CartItem } from './entities/cart.entity';
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @Get()
+  @Get('/debug')
   async findAllCarts(
     @Query() query: FindAllCartsDto,
   ): Promise<ApiResponse<CartsResponse>> {
@@ -31,7 +31,7 @@ export class CartController {
     };
   }
 
-  @Post()
+  @Post('/add-to-cart')
   async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<CartItem>> {
     const cart_item = await this.cartService.addToCart(body);
     return {

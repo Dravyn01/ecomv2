@@ -65,8 +65,4 @@ export class ProductVariant {
   })
   @JoinColumn()
   stock: Stock;
-
-  // One Variant Many Review
-  // @OneToMany(() => Review, (review) => review.variant)
-  // reviews: Review[];
 }

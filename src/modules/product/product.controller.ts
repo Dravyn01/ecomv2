@@ -12,26 +12,31 @@ import {
 import { Product } from './entities/product.entity';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { ProductService } from './product.service';
-import { ProductsResponse } from './dto/res/products.res';
-import { CreateProductReq } from './dto/req/create-product.req';
-import { UpdateProductReq } from './dto/req/update-product.req';
-import { FindAllProducts } from './dto/req/find-all-products.query';
+import { FindAllProductsQuery } from './dto/find-all-products.query';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { CreateProductDTO } from './dto/create-product.dto';
+import { UpdateProductDTO } from './dto/update-product.dto';
 
 @Controller('/admin/products')
 export class ProductController {
   private readonly logger = new Logger(ProductController.name);
 
+  // TODO: edit and add logger
+
   constructor(private readonly productService: ProductService) {}
 
   @Get()
   async findAll(
-    @Query() query: FindAllProducts,
-  ): Promise<ApiResponse<ProductsResponse>> {
+    @Query() query: FindAllProductsQuery,
+  ): Promise<ApiResponse<DatasResponse<Product[]>>> {
     this.logger.log(
       `[product.controller.ts]: LOG paramter {q: ${query.search}, page: ${query.page}, limit: ${query.limit}, order: ${query.order}}`,
     );
     const products = await this.productService.findAll(query);
-    return { message: `พบสินค้าทั้งหมด ${products.count} รายการ`, data: products };
+    return {
+      message: `พบสินค้าทั้งหมด ${products.count} รายการ`,
+      data: products,
+    };
   }
 
   @Get(':product_id')
@@ -47,7 +52,7 @@ export class ProductController {
 
   @Post()
   async createProduct(
-    @Body() body: CreateProductReq,
+    @Body() body: CreateProductDTO,
   ): Promise<ApiResponse<Product>> {
     const product = await this.productService.create(body);
     return {
@@ -58,7 +63,7 @@ export class ProductController {
 
   @Put(':product_id')
   async updateProduct(
-    @Body() req: UpdateProductReq,
+    @Body() req: UpdateProductDTO,
     @Param('product_id') product_id: string,
   ): Promise<ApiResponse<Product>> {
     const product = await this.productService.update(+product_id, req);

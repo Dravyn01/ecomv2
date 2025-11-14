@@ -7,13 +7,13 @@ import {
 } from 'class-validator';
 
 export class RegisterRequest {
-  @IsString()
   @IsNotEmpty({ message: 'ชื่อผู้ใช้ต้องไม่เป็นค่าว่าง' })
+  @IsString()
   @MaxLength(30, { message: 'ชื่อผู้ใช้ต้องไม่เกิน 30 ตัวอักษร' })
   username: string;
 
-  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
   @IsNotEmpty({ message: 'อีเมลต้องไม่เป็นค่าว่าง' })
+  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
   email: string;
 
   @IsString()

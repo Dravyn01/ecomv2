@@ -3,7 +3,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review } from './entities/review.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { Order, Product, ProductVariant } from 'src/config/entities.config';
+import { Order, Product } from 'src/config/entities.config';
 import { OrderStatus } from '../order/enums/order-status.enum';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { UserService } from '../user/user.service';
@@ -14,11 +14,16 @@ export class ReviewService {
   constructor(
     @InjectRepository(Review)
     private readonly reviewRepo: Repository<Review>,
+
+    // services
     private readonly productService: ProductService,
     private readonly userService: UserService,
     private readonly manager: EntityManager,
   ) {}
 
+  // TODO: add logger
+
+  // DEBUG
   async findAll(): Promise<Review[]> {
     return await this.reviewRepo.find();
   }
@@ -41,6 +46,13 @@ export class ReviewService {
     });
   }
 
+  /*
+   *
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
   async create(body: CreateReviewDto): Promise<Review> {
     const product = await this.productService.findOne(body.variant_id);
     const user = await this.userService.findOne(body.user_id);
@@ -73,18 +85,6 @@ export class ReviewService {
       const newAverage =
         (oldAverage * oldReviews + body.rating) / (oldReviews + 1);
 
-      // const reviews = await this.reviewRepo.find({
-      //   where: {
-      //     product: { id: product.id },
-      //   },
-      //   select: { rating: true },
-      // });
-      //
-      // const newAvg =
-      //   reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-      console.log(`newAverage: ${newAverage}`);
-
       // สร้างรีวิวใหม่
       const newReview = await tx.save(Review, {
         user: { id: body.user_id },
@@ -103,6 +103,13 @@ export class ReviewService {
     return review;
   }
 
+  /*
+   *
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
   async delete(review_id: number): Promise<void> {
     await this.manager.transaction(async (tx) => {
       const review = await tx.findOneBy(Review, { id: review_id });

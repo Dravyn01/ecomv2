@@ -10,8 +10,11 @@ export class UserController {
   private readonly logger = new Logger(UserController.name);
   constructor(private readonly userService: UserService) {}
 
+  // TODO: add logger
+
+  // TODO: add premison just add
   @Get()
-  async allUser(): Promise<ApiResponse<UserResponse[]>> {
+  async findAll(): Promise<ApiResponse<UserResponse[]>> {
     const users = await this.userService.getAllUser();
     return {
       message: '',

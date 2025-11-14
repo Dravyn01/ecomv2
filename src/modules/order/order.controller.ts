@@ -6,14 +6,12 @@ import {
   Delete,
   Query,
   Put,
-  Body,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { ApiResponse } from 'src/common/dto/res/common-response';
-import { OrdersResponse } from './dto/res/orders.res';
-import { FindAllOrdersQuery } from './dto/req/find-all-orders.query';
 import { Order } from './entities/order.entity';
-import { CreateOrderReq } from './dto/req/create-order.req';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { FindAllOrdersQuery } from './dto/find-all-orders.query';
 
 @Controller('/admin/orders')
 export class OrderController {
@@ -31,7 +29,7 @@ export class OrderController {
   async findByUser(
     @Param('user_id') user_id: string,
     @Query() query: FindAllOrdersQuery,
-  ): Promise<ApiResponse<OrdersResponse>> {
+  ): Promise<ApiResponse<DatasResponse<Order[]>>> {
     const orders = await this.orderService.findByUser(+user_id, query);
     return {
       message: `พบ order ของผู้ใช้ หมายเลข ${user_id} ทั้งหมด ${orders.count} รายการ`,
@@ -40,12 +38,9 @@ export class OrderController {
   }
 
   // checkout
-  @Post(':user_id')
-  async checkout(
-    @Param('user_id') user_id: string,
-    @Body() body: CreateOrderReq,
-  ): Promise<any> {
-    const order = await this.orderService.checkout(+user_id, body);
+  @Post('/checkout/:user_id')
+  async checkout(@Param('user_id') user_id: string): Promise<any> {
+    const order = await this.orderService.checkout(+user_id);
     return { message: 'เช็คเอาท์สำเร็จ', data: order };
   }
 

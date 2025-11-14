@@ -20,8 +20,4 @@ import { StockModule } from '../stock/stock.module';
   providers: [ProductVariantService],
   exports: [ProductVariantService],
 })
-export class ProductVariantModule {
-  constructor() {
-    console.log('stockModule', StockModule);
-  }
-}
+export class ProductVariantModule {}

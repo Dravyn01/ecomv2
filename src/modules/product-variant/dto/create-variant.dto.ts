@@ -1,6 +1,8 @@
 import { IsInt, IsNumber, IsString, Length, Min } from 'class-validator';
 
-export class CreateVariantReq {
+// TODO add message
+
+export class CreateVariantDTO {
   @IsInt()
   @Min(1, { message: 'หมายเลขสินค้าไม่ถูกต้อง' })
   product_id: number;

@@ -9,7 +9,9 @@ import {
 } from 'class-validator';
 import { StockChangeType } from '../enums/stock-change.enum';
 
-export class CreateMovement {
+// TODO: add message
+
+export class CreateMovementDTO {
   @IsNotEmpty({ message: '' })
   @Min(1, { message: '' })
   @IsInt({ message: '' })

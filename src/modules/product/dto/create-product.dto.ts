@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsOptional, Length, Min } from 'class-validator';
 
-export class CreateProductReq {
+export class CreateProductDTO {
   @IsNotEmpty({ message: 'กรุนากรอกชื่อสินค้า' })
   @Length(1, 100, {
     message: 'ชื่อสินค้าต้องไม่เกิน 100 ตัว และ ต้องไม่น้อยกว่า 1',

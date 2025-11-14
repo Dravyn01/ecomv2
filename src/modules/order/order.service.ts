@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -57,7 +58,16 @@ export class OrderService {
     return order;
   }
 
-  async checkout(user_id: number, body: CreateOrderReq): Promise<Order> {
+  /*
+   *
+   *
+   *
+   * TODO: add flow logic
+   * TODO: add comment
+   *
+   *
+   * */
+  async checkout(user_id: number): Promise<Order> {
     const user = await this.userService.findOne(user_id);
 
     const order = await this.datasource.transaction(async (tx) => {
@@ -66,14 +76,17 @@ export class OrderService {
         relations: ['items.variant', 'user'],
       });
 
+      //
       if (!cart || cart.items.length === 0)
         throw new NotFoundException('ไม่พบสินค้าสำหรับชำระเงิน');
 
+      //
       const total_price = cart.items.reduce(
         (acc, item) => acc + item.variant.price * item.quantity,
         0,
       );
 
+      //
       const order = await tx.save(Order, {
         user: { id: user_id },
         total_price: total_price,
@@ -85,15 +98,16 @@ export class OrderService {
         })),
       });
 
+      //
       await tx.delete(Cart, cart.id);
 
+      //
       for (const item of cart.items) {
         const dto: CreateMovement = {
           quantity: item.quantity,
           change_type: StockChangeType.OUT,
           variant_id: item.variant.id,
           order_id: order.id,
-          note: body.note,
         };
 
         await this.stockService.createMovement(dto, tx);
@@ -105,8 +119,16 @@ export class OrderService {
     return order;
   }
 
+  /*
+   *
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
   async cancel(order_id: number): Promise<Order> {
     const saved_order = this.datasource.transaction(async (tx) => {
+      //
       const order = await tx.findOne(Order, {
         where: {
           id: order_id,
@@ -118,6 +140,9 @@ export class OrderService {
       if (!order) {
         throw new NotFoundException('ไม่พบ order สำหรับยกเลิก');
       }
+
+      if (order.status === OrderStatus.PAID)
+        throw new BadRequestException(`this order is PAID cannot cancel.`);
 
       // change status
       order.status = OrderStatus.CANCELLED;
@@ -170,6 +195,12 @@ export class OrderService {
     return order;
   }
 
+  /*
+   *
+   *
+   * TODO: add flow logic
+   *
+   * */
   async paid(order_id: number): Promise<Order> {
     const order = await this.findOne(order_id);
 
@@ -178,8 +209,8 @@ export class OrderService {
       order.status === OrderStatus.CANCELLED
     ) {
       throw new ConflictException(
-  `ไม่สามารถทำรายการได้ เนื่องจากออเดอร์ "${order_id}" อยู่ในสถานะ ${order.status} แล้ว`,
-);
+        `ไม่สามารถทำรายการได้ เนื่องจากออเดอร์ "${order_id}" อยู่ในสถานะ ${order.status} แล้ว`,
+      );
     }
 
     return await this.datasource.transaction(async (tx) => {

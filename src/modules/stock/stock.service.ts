@@ -6,9 +6,9 @@ import {
 import { EntityManager, Repository } from 'typeorm';
 import { Stock, StockMovement } from './entities/stock.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateMovement } from './dto/create-movement.stock';
 import { ProductVariant } from 'src/config/entities.config';
 import { StockChangeType } from './enums/stock-change.enum';
+import { CreateMovementDTO } from './dto/create-movement.dto';
 
 @Injectable()
 export class StockService {
@@ -16,6 +16,8 @@ export class StockService {
     @InjectRepository(Stock)
     private readonly stockRepo: Repository<Stock>,
   ) {}
+
+  // TODO: add logger
 
   async findAll(): Promise<Stock[]> {
     return await this.stockRepo.find({
@@ -38,7 +40,22 @@ export class StockService {
     await this.stockRepo.delete(movement_id);
   }
 
-  async createMovement(req: CreateMovement, tx: EntityManager) {
+  async IsOutOfStock(variant_id: number, qty: number): Promise<void> {
+    const stock = await this.stockRepo.findOneBy({
+      variant: { id: variant_id },
+    });
+    if (!stock) throw new NotFoundException('not found variant');
+    if (stock.quantity <= 0 || stock.quantity <= qty)
+      throw new BadRequestException('สินค้าในสต็อกหมดแล้ว');
+  }
+
+  /*
+   *
+   * TODO: add flow logic
+   *
+   *
+   * */
+  async createMovement(req: CreateMovementDTO, tx: EntityManager) {
     console.log('createMovement start');
     console.log('rewq', req);
     const variant = await tx.findOne(ProductVariant, {

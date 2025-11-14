@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cart, CartItem } from 'src/config/entities.config';
 import { UserModule } from '../user/user.module';
 import { ProductVariantModule } from '../product-variant/product-variant.module';
+import { StockModule } from '../stock/stock.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cart, CartItem]),
     UserModule,
     ProductVariantModule,
+    StockModule,
   ],
   controllers: [CartController],
   providers: [CartService],
