@@ -59,96 +59,112 @@ export class OrderService {
   }
 
   /*
-   *
-   *
-   *
-   * TODO: add flow logic
-   * TODO: add comment
-   *
-   *
-   * */
+ * --- Comment By GPT (ขก เขียนเอง แต่ก็ต้องเขียนเองอยู่ดี เพราะแม่งเอ๋อ) ---
+ *
+ * ฟังก์ชันนี้ทำหน้าที่สร้าง order จาก cart ของ user
+ * และลด stock ของสินค้าทุกตัวใน cart
+ *
+ * 1: หา user จาก user_id
+ * 2: เปิด transaction เพื่อให้ทุกขั้นตอนเป็น atomic
+ * 3: โหลด cart ของ user พร้อม items + variant + user
+ * 4: ถ้า cart ไม่มีสินค้า → throw NotFoundException
+ * 5: คำนวณ total_price ของทุก item
+ * 6: สร้าง order ใหม่ พร้อม copy ข้อมูลจาก cart.items
+ * 7: ลบ cart หลังสร้าง order
+ * 8: วนลูป items → create stock movement (OUT)
+ * 9: return order
+ */
   async checkout(user_id: number): Promise<Order> {
-    const user = await this.userService.findOne(user_id);
+  // 1: หา user
+  const user = await this.userService.findOne(user_id);
 
-    const order = await this.datasource.transaction(async (tx) => {
-      const cart = await tx.findOne(Cart, {
-        where: { user: { id: user.id } },
-        relations: ['items.variant', 'user'],
-      });
+  // 2: เปิด transaction
+  const order = await this.datasource.transaction(async (tx) => {
 
-      //
-      if (!cart || cart.items.length === 0)
-        throw new NotFoundException('ไม่พบสินค้าสำหรับชำระเงิน');
-
-      //
-      const total_price = cart.items.reduce(
-        (acc, item) => acc + item.variant.price * item.quantity,
-        0,
-      );
-
-      //
-      const order = await tx.save(Order, {
-        user: { id: user_id },
-        total_price: total_price,
-        items: cart.items.map((item) => ({
-          unit_price: item.variant.price,
-          total_price: item.variant.price * item.quantity,
-          quantity: item.quantity,
-          variant: { id: item.variant.id },
-        })),
-      });
-
-      //
-      await tx.delete(Cart, cart.id);
-
-      //
-      for (const item of cart.items) {
-        const dto: CreateMovement = {
-          quantity: item.quantity,
-          change_type: StockChangeType.OUT,
-          variant_id: item.variant.id,
-          order_id: order.id,
-        };
-
-        await this.stockService.createMovement(dto, tx);
-      }
-
-      return order;
+    // 3: โหลด cart ของ user พร้อม relations
+    const cart = await tx.findOne(Cart, {
+      where: { user: { id: user.id } },
+      relations: ['items.variant', 'user'],
     });
 
+    // 4: ตรวจสอบ cart ว่างหรือไม่
+    if (!cart || cart.items.length === 0)
+      throw new NotFoundException('ไม่พบสินค้าสำหรับชำระเงิน');
+
+    // 5: คำนวณ total_price ของ cart
+    const total_price = cart.items.reduce(
+      (acc, item) => acc + item.variant.price * item.quantity,
+      0,
+    );
+
+    // 6: สร้าง order ใหม่ พร้อมรายการสินค้า
+    const order = await tx.save(Order, {
+      user: { id: user_id },
+      total_price: total_price,
+      items: cart.items.map((item) => ({
+        unit_price: item.variant.price,
+        total_price: item.variant.price * item.quantity,
+        quantity: item.quantity,
+        variant: { id: item.variant.id },
+      })),
+    });
+
+    // 7: ลบ cart หลังสร้าง order
+    await tx.delete(Cart, cart.id);
+
+    // 8: วนลูป items → ลด stock ของสินค้าแต่ละชิ้น
+    for (const item of cart.items) {
+      const dto: CreateMovement = {
+        quantity: item.quantity,
+        change_type: StockChangeType.OUT,
+        variant_id: item.variant.id,
+        order_id: order.id,
+      };
+
+      await this.stockService.createMovement(dto, tx);
+    }
+
+    // 9: return order หลังสร้างเสร็จ
     return order;
-  }
+  });
+
+  return order;
+}
 
   /*
-   *
-   *
-   * TODO: add flow logic
-   *
-   *
-   * */
+ * --- Comment By GPT (ขก เขียนเอง) ---
+ *
+ * ฟังก์ชันนี้ทำหน้าที่ยกเลิก order
+ * คืน stock ของสินค้าทุกตัว และอัปเดต return_count + return_rate
+ *
+ * 1: หา order ที่ยังไม่ถูก cancel/return
+ * 2: ถ้าไม่พบ → throw NotFoundException
+ * 3: เปลี่ยน status เป็น CANCELLED
+ * 4: วนลูป items → create stock movement (RETURN)
+ * 5: คำนวณ return_rate ใหม่
+ * 6: อัปเดต product.return_count + return_rate
+ */
   async cancel(order_id: number): Promise<Order> {
     const saved_order = this.datasource.transaction(async (tx) => {
-      //
+      // 1: หา order ตาม id ที่ส่งมา และ สถานะต้องไม่เป็น cancel || return
       const order = await tx.findOne(Order, {
         where: {
           id: order_id,
-          status: Not(In([OrderStatus.CANCELLED, OrderStatus.RETURNED])),
+          status: Not(In([OrderStatus.CANCELLED, OrderStatus.RETURNED, OrderStatus.PAID])),
         },
         relations: ['items.variant.product'],
       });
 
-      if (!order) {
-        throw new NotFoundException('ไม่พบ order สำหรับยกเลิก');
+      // 2: ถ้าไม่เจอ order ที่ตรงเงื่อนไข
+      if (!order || order.status === OrderStatus.PAID) {
+        throw new NotFoundException('ไม่สามารถยกเลิก order ได้ เนื่องจากไม่ตรงตามเงื่อนไข');
       }
 
-      if (order.status === OrderStatus.PAID)
-        throw new BadRequestException(`this order is PAID cannot cancel.`);
-
-      // change status
+      // 3: เปลี่ยนสถานะ order เป็น Cancel และเชฟ
       order.status = OrderStatus.CANCELLED;
       await tx.save(order);
 
-      // create movement out case
+      // วนลูป itemsเพื่อเตรียมเสร้าง movement
       for (const item of order.items) {
         const product = item.variant.product;
 
@@ -159,16 +175,16 @@ export class OrderService {
           variant_id: item.variant.id,
         };
 
-        // create movement
+        // สร้าง movement (RETURN) และส่ง  tx เพื่อให้อยู่ใน transaction เดียวกัน
         await this.stockService.createMovement(dto, tx);
 
-        // new return rate
+        // 5: คำนวน rate การคืนสินค้าใหม่
         const newReturnRate =
           product.return_count / (product.sales_count + product.return_count);
 
         console.log('new return rate', newReturnRate);
 
-        // update return_count & return_rate
+        // 6: update return_count & return_rate
         const saved_product = await tx.save(Product, {
           id: product.id,
           return_count: product.return_count + 1,
@@ -196,14 +212,48 @@ export class OrderService {
   }
 
   /*
+   * --- Comment By GPT (ขก เขียนเอง แต่ก็ต้องมาแก้ภาษาใหม่อยู่ดี เพราะแม่งเอ๋อ) ---
    *
+   * ฟังก์ชันนี้ทำหน้าที่เปลี่ยนสถานะออเดอร์เป็น "PAID"
+   * และประมวลผลผลลัพธ์ทางธุรกิจทั้งหมดที่เกิดขึ้นหลังการชำระเงินสำเร็จ:
    *
-   * TODO: add flow logic
+   * 1: ตรวจสอบสถานะออเดอร์ก่อน:
+   *        - ถ้าออเดอร์อยู่ในสถานะ PAID หรือ CANCELLED → ห้ามทำซ้ำ
    *
-   * */
+   * 2: เปิด transaction เพื่อให้ทุกกระบวนการเป็น atomic:
+   *        - ถ้าขั้นตอนใดล้มเหลว ระบบจะ rollback อัตโนมัติ
+   *
+   * 3: ตั้งสถานะออเดอร์เป็น PAID
+   *
+   * 4: วนลูปสินค้าแต่ละรายการใน order.items:
+   *
+   *        4.1: โหลด product ที่อยู่ใน order นี้เพื่อเตรียมสร้างประวัติการซื้อสินค้า
+   *
+   *        4.2: สร้าง UserPurchaseHistory (ประวัติการซื้อ):
+   *              - default คือการบันทึกว่า user เคยซื้อสินค้านี้ (is_repeat=false)
+   *              - แต่ต้องเช็กก่อนว่า user เคยซื้อสินค้านี้แบบ PAID มาก่อนหรือไม่
+   *
+   *        4.3: ถ้าเคยซื้อแล้ว (repeat customer):
+   *              - บันทึกประวัติแบบ is_repeat=true
+   *              - เพิ่มค่า repeat_count ของสินค้า
+   *
+   *        4.4: บันทึกประวัติการซื้อครั้งนี้ (first-time history)
+   *
+   *        4.5: เพิ่มยอดขาย (sales_count) ของสินค้า
+   *
+   *        4.6: อัปเดตค่า repeat_purchase_rate:
+   *              - สูตร: repeat_count / sales_count
+   *              - เก็บทศนิยม 2 ตำแหน่ง
+   *
+   * 5: บันทึกสถานะออเดอร์ใหม่ลงฐานข้อมูล
+   *
+   * ผลลัพธ์ทั้งหมดนี้ช่วยให้ระบบเก็บสถิติการซื้อซ้ำ, อัตราซื้อซ้ำ,
+   * ประวัติการซื้อของผู้ใช้ และยอดขายของสินค้าอย่างถูกต้องครบถ้วน
+   */
   async paid(order_id: number): Promise<Order> {
     const order = await this.findOne(order_id);
 
+    // 1: ป้องกันการทำรายการซ้ำหรือทำในสถานะที่ไม่ถูกต้อง
     if (
       order.status === OrderStatus.PAID ||
       order.status === OrderStatus.CANCELLED
@@ -213,15 +263,21 @@ export class OrderService {
       );
     }
 
+    // 2: ใช้ transaction เพื่อความปลอดภัยของข้อมูล
     return await this.datasource.transaction(async (tx) => {
+      // 3: เปลี่ยนสถานะ order เป็น PAID
       order.status = OrderStatus.PAID;
 
+      // 4: วนลูป items
       for (const item of order.items) {
         const user_id = order.user.id;
+
+        // 4.1: หาสินค้า
         const product = await this.productService.findOne(
           item.variant.product.id,
         );
 
+        // 4.2: เตรียมประวัติการซื้อครั้งนี้
         const saved_user_purchase_history = {
           is_repeat: false,
           product: { id: product.id },
@@ -231,6 +287,7 @@ export class OrderService {
           last_purchased_at: new Date(),
         };
 
+        // 4.3: เช็คว่าผู้ใช้เคยซื้อสินค้านี้ และ order PAID มาก่อนหรือไม่
         const hasPurchased = await tx.findOne(OrderItem, {
           where: {
             order: {
@@ -246,19 +303,20 @@ export class OrderService {
         console.log(hasPurchased);
 
         if (hasPurchased) {
-          // insert is_repeat history
+          // บันทึกประวัติแบบ repeat purchase
           await tx.insert(UserPurchaseHistory, {
             ...saved_user_purchase_history,
-            is_repeat: true,
+            is_repeat: true, // แก้ไขค่าจาก false เป็น true
           });
-          // increment repeat_count
+
+          // เพิ่มจำนวน repeat ของสินค้า
           await tx.increment(Product, { id: product.id }, 'repeat_count', 1);
         }
 
-        // create first user purchase history
+        // 4.4: บันทึกประวัติการซื้อครั้งนี้ (first-time history)
         await tx.insert(UserPurchaseHistory, saved_user_purchase_history);
 
-        // update sales_coun
+        // 4.5: อัปเดตยอดขายสินค้า
         await tx.increment(
           Product,
           { id: product.id },
@@ -266,10 +324,9 @@ export class OrderService {
           item.quantity,
         );
 
+        // 4.6: อัปเดตอัตราซื้อซ้ำ
         if (product.sales_count > 0) {
-          const newRate = (product.repeat_count / product.sales_count).toFixed(
-            2,
-          );
+          const newRate = (product.repeat_count / product.sales_count).toFixed(2);
           console.log('newRate', newRate);
           await tx.increment(
             Product,
@@ -280,6 +337,7 @@ export class OrderService {
         }
       }
 
+      // 5: เซฟออเดอร์พร้อมสถานะใหม่
       return await tx.save(Order, order);
     });
   }
