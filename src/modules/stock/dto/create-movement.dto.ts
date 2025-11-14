@@ -1,5 +1,5 @@
 import {
-  IsIn,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -21,8 +21,8 @@ export class CreateMovementDTO {
 
   @IsNotEmpty({ message: 'ต้องระบุ change_type' })
   @Min(1, { message: 'change_type ต้องเป็นค่าที่ถูกต้อง' })
-  @IsIn(Object.values(StockChangeType), {
-    message: `change_type ต้องเป็นหนึ่งในค่า: ${Object.values(StockChangeType).join(', ')}`,
+  @IsEnum(StockChangeType, {
+    message: `change_type ต้องเป็นหนึ่งในค่า: ${StockChangeType}`,
   })
   change_type: StockChangeType;
 
