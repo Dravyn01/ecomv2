@@ -57,48 +57,65 @@ export class CartService {
   }
 
   /*
-   *
-   *
-   * TODO: add flow
-   *
-   *
-   * */
-  async addToCart(body: AddToCartReq): Promise<CartItem> {
-    const user = await this.userService.findOne(body.user_id);
-    const variant = await this.variantService.findOne(body.variant_id);
+ * --- Comment By GPT (ขก เขียนเอง) ---
+ *
+ * ฟังก์ชันนี้ทำหน้าที่เพิ่มสินค้าไปยัง cart ของ user
+ * ตรวจสอบ stock และรวมรายการถ้ามีสินค้าอยู่แล้ว
+ *
+ * 1: หา user จาก body.user_id
+ * 2: หา product variant จาก body.variant_id
+ * 3: เปิด transaction เพื่อให้ทุกขั้นตอนเป็น atomic
+ * 4: ตรวจสอบ stock ของสินค้าว่าพอหรือไม่ → throw ถ้า stock ไม่พอ
+ * 5: โหลด cart ของ user ถ้าไม่มี → สร้าง cart ใหม่
+ * 6: ตรวจสอบว่ามี cart_item เดิมใน cart หรือไม่
+ *      6.1: ถ้ามี → บวกจำนวนเข้าไปใน cart_item เดิม และ save
+ *      6.2: ถ้าไม่มี → สร้าง cart_item ใหม่ และ save
+ * 7: return cart_item
+ */
+async addToCart(body: AddToCartReq): Promise<CartItem> {
+  // 1: หา user
+  const user = await this.userService.findOne(body.user_id);
 
-    const cart_item = await this.datasource.transaction(async (tx) => {
-      // check stock
-      await this.stockService.IsOutOfStock(body.variant_id, body.quantity);
+  // 2: หา variant
+  const variant = await this.variantService.findOne(body.variant_id);
 
-      let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
+  // 3: เปิด transaction
+  const cart_item = await this.datasource.transaction(async (tx) => {
 
-      //
-      if (!cart) {
-        cart = tx.create(Cart, { user: { id: user.id } });
-        await tx.save(cart);
-      }
+    // 4: ตรวจสอบ stock
+    await this.stockService.IsOutOfStock(body.variant_id, body.quantity);
 
-      const existing_item = await tx.findOne(CartItem, {
-        where: { cart: { id: cart.id }, variant: { id: variant.id } },
-      });
+    // 5: โหลด cart ของ user
+    let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
 
-      if (existing_item) {
-        //
-        existing_item.quantity += body.quantity;
-        return await tx.save(CartItem, existing_item);
-      } else {
-        //
-        return await tx.save(CartItem, {
-          cart: { id: cart.id },
-          variant: { id: variant.id },
-          quantity: body.quantity,
-        });
-      }
+    // สร้าง cart ใหม่ถ้าไม่มี
+    if (!cart) {
+      cart = tx.create(Cart, { user: { id: user.id } });
+      await tx.save(cart);
+    }
+
+    // 6: ตรวจสอบ cart_item เดิม
+    const existing_item = await tx.findOne(CartItem, {
+      where: { cart: { id: cart.id }, variant: { id: variant.id } },
     });
 
-    return cart_item;
-  }
+    if (existing_item) {
+      // 6.1: ถ้ามี → เพิ่มจำนวน
+      existing_item.quantity += body.quantity;
+      return await tx.save(CartItem, existing_item);
+    } else {
+      // 6.2: ถ้าไม่มี → สร้าง cart_item ใหม่
+      return await tx.save(CartItem, {
+        cart: { id: cart.id },
+        variant: { id: variant.id },
+        quantity: body.quantity,
+      });
+    }
+  });
+
+  // 7: return cart_item
+  return cart_item;
+}
 
   async delete(cart_id: number): Promise<void> {
     const cart = await this.cartRepo.findOneBy({ id: cart_id });
@@ -107,37 +124,50 @@ export class CartService {
   }
 
   /*
-   *
-   *
-   *
-   *  TODO: add flow logic
-   *
-   *
-   *
-   * */
-  async itemAction(body: ActionsCartItemReq): Promise<CartItem> {
-    const cart = await this.findOneByUser(body.user_id);
-    const cart_item = await this.cartItemRepo.findOneBy({
-      cart: { id: cart.id },
-      variant: { id: body.variant_id },
-    });
+ * --- Comment By GPT (ขก เขียนเอง) ---
+ *
+ * ฟังก์ชันนี้จัดการ action ของ cart_item ได้แก่:
+ *  - REMOVE → ลบสินค้าออกจาก cart
+ *  - DECREASE → ลดจำนวนสินค้า 1 ชิ้น
+ *
+ * 1: หา cart ของ user
+ * 2: หา cart_item ที่ตรงกับ variant_id
+ *      - ถ้าไม่เจอ → throw NotFoundException
+ * 3: เช็ค action:
+ *      3.1: ถ้า action === 'REMOVE' → ลบ cart_item และ return status 'deleted'
+ *      3.2: ถ้า action === 'DECREASE' และ quantity <= 1 → ลบ cart_item และ return status 'deleted'
+ * 4: ถ้า DECREASE แล้ว quantity > 1 → ลด quantity ลง 1 และ save
+ * 5: return cart_item พร้อม status 'updated' หรือ 'deleted'
+ */
+async itemAction(body: ActionsCartItemReq): Promise<{ cart_item: CartItem; status: 'updated' | 'deleted' }> {
+  // 1: หา cart ของ user
+  const cart = await this.findOneByUser(body.user_id);
 
-    if (!cart_item) throw new NotFoundException('ไม่พบสินค้าที่ต้องการลบ');
+  // 2: หา cart_item
+  const cart_item = await this.cartItemRepo.findOneBy({
+    cart: { id: cart.id },
+    variant: { id: body.variant_id },
+  });
 
-    //
-    if (
-      (cart_item && body.action.toUpperCase() === 'REMOVE') ||
-      (cart_item &&
-        body.action.toUpperCase() === 'DECREASE' &&
-        cart_item.quantity <= 1)
-    ) {
-      await this.cartItemRepo.delete(cart_item.id);
-      return cart_item;
-    }
+  if (!cart_item) throw new NotFoundException('ไม่พบสินค้าที่ต้องการลบ');
 
-    //
-    cart_item.quantity -= 1;
-
-    return await this.cartItemRepo.save(cart_item);
+  // 3: ตรวจสอบ action
+  if (
+    (cart_item && body.action.toUpperCase() === 'REMOVE') ||
+    (cart_item &&
+      body.action.toUpperCase() === 'DECREASE' &&
+      cart_item.quantity <= 1)
+  ) {
+    await this.cartItemRepo.delete(cart_item.id);
+    // 3.1-3.2: return status 'deleted'
+    return { cart_item, status: 'deleted' };
   }
+
+  // 4: DECREASE quantity > 1
+  cart_item.quantity -= 1;
+
+  // 5: return status 'updated'
+  const updated_cart_item = await this.cartItemRepo.save(cart_item);
+  return { cart_item: updated_cart_item, status: 'updated' };
+}
 }
