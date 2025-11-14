@@ -50,52 +50,80 @@ export class StockService {
   }
 
   /*
+   * function นี้จัดการการเปลี่ยนแปลงจำนวนสินค้าในสต็อกทั้งหมด:
+   *   1) โหลดข้อมูล variant พร้อม stock
+   *   2) ปรับจำนวนสินค้าใน stock ตาม change_type
+   *   3) ป้องกันค่า stock ผิดปกติ เช่น ติดลบ หรือหายไป
+   *   4) บันทึกการเปลี่ยนแปลงลงใน stock movement log
    *
-   * TODO: add flow logic
+   * --- Logic ตามประเภท change_type ---
    *
+   *  - IN / RETURN:
+   *        เพิ่มจำนวนสินค้าเข้าสต็อกตามจำนวนที่รับมา
    *
-   * */
+   *  - OUT:
+   *        ลดจำนวนสินค้าออกจากสต็อก
+   *        ต้องตรวจสอบก่อนว่าจำนวนใน stock เพียงพอหรือไม่
+   *        ถ้า stock < จำนวนที่ต้องการตัด → หยุดและแจ้ง error ทันที
+   *
+   *  - ADJUST:
+   *        เอาจำนวนในสต็อกปัจจุบัน + quantity
+   *        ถ้าค่าที่ได้เป็นค่าติดลบ → ให้บังคับเป็น 0 เพื่อป้องกันค่าสต็อกผิดปกติ
+   *
+   * หลังประมวลผลทุกเคส:
+   *   - อัปเดตจำนวนใหม่ลง stock table
+   *   - บันทึก movement log เพื่อเก็บประวัติ
+   */
   async createMovement(req: CreateMovementDTO, tx: EntityManager) {
     console.log('createMovement start');
-    console.log('rewq', req);
+    console.log('req', req);
+
+    // 1) โหลดข้อมูล variant พร้อม stock
     const variant = await tx.findOne(ProductVariant, {
       where: { id: req.variant_id },
       relations: ['stock'],
     });
-    if (!variant) throw new NotFoundException('not found product');
+    if (!variant) throw new NotFoundException('ไม่พบสินค้า');
 
-    let stock = variant.stock;
+    const stock = variant.stock;
     if (!stock) {
-      // create if no existing stock
-      stock = await tx.save(Stock, {
-        variant: { id: req.variant_id },
-        quantity: 0,
-      });
+      // กัน edge case: ไม่พบ stock ของสินค้านี้
+      throw new NotFoundException('ไม่พบข้อมูลสต็อกของสินค้านี้');
     }
 
     let newQuantity = stock.quantity;
 
+    // 2) ปรับจำนวนตามประเภทของ change_type
     if (
       req.change_type === StockChangeType.IN ||
       req.change_type === StockChangeType.RETURN
     ) {
       console.log('CASE IN OR RETURN');
       newQuantity += req.quantity;
+
     } else if (req.change_type === StockChangeType.OUT) {
-      newQuantity -= req.quantity;
       console.log('CASE OUT');
-      if (stock.quantity < req.quantity)
+
+      // ตรวจสอบว่าสต็อกพอต่อการตัดหรือไม่
+      if (stock.quantity < req.quantity) {
         throw new BadRequestException(
-          `stock quantity lass req.quantity ${stock.quantity} < ${req.quantity}`,
+          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${req.quantity} ชิ้น)`
         );
+      }
+
+      newQuantity -= req.quantity;
+
     } else if (req.change_type === StockChangeType.ADJUST) {
       console.log('CASE ADJUST');
+
+      // ปรับจำนวนแบบเพิ่ม/ลดตรง ๆ
       newQuantity += req.quantity;
+
+      // ถ้าติดลบให้บังคับเป็น 0 เพื่อป้องกันค่าสต็อกผิดปกติ
       if (newQuantity < 0) newQuantity = 0;
     }
 
-    console.log(`END OF CASE "${req.change_type}"`);
-
+    // 3) สร้าง note เริ่มต้นตามประเภท movement
     const defaultNote = {
       [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${variant.id}`,
       [StockChangeType.OUT]: `Order #${req.order_id}`,
@@ -103,6 +131,7 @@ export class StockService {
       [StockChangeType.RETURN]: `Import product #${variant.id}, quantity: ${variant.id}`,
     };
 
+    // 4) เตรียมข้อมูลสำหรับบันทึก stock + movement
     const saved_stock = { ...stock, quantity: newQuantity };
 
     const saved_movement = {
@@ -113,6 +142,7 @@ export class StockService {
       ...(req.order_id && { order: { id: req.order_id } }),
     };
 
+    // 5) บันทึกลงฐานข้อมูล
     await tx.save(Stock, saved_stock);
     await tx.save(StockMovement, saved_movement);
   }
