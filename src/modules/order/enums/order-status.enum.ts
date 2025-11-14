@@ -6,6 +6,5 @@ export enum OrderStatus {
   DELIVERED = 'DELIVERED', // ผู้ใช้ได้รับสินค้าแล้ว
   CANCELLED = 'CANCELLED', // ออเดอร์ถูกยกเลิก (อาจเพราะลูกค้าหรือระบบ)
   REFUNDED = 'REFUNDED', // มีการคืนเงิน (หลังจาก Cancel หรือ Return)
-  RETURN_REQUESTED = 'RETURN_REQUESTED', // ลูกค้าส่งคำขอคืนสินค้า
   RETURNED = 'RETURNED', // คืนสินค้าเสร็จสิ้น
 }
