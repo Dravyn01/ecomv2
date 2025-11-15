@@ -13,8 +13,6 @@ import {
 } from 'typeorm';
 import { OrderStatus } from '../enums/order-status.enum';
 
-// TODO: add comment
-
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn({ name: 'order_id' })
@@ -57,13 +55,13 @@ export class OrderItem {
   id: number;
 
   @Column()
-  quantity: number;
+  quantity: number; // จำนวนสินค้า
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
-  unit_price: number; //
+  unit_price: number; // ราคาต่อซิ้น
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
-  total_price: number; //
+  total_price: number; // ราคาสินค้า * จำนวน
 
   // Many CartItem One Order
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
