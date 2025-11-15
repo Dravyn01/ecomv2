@@ -22,9 +22,6 @@ export class AuthService {
    * เส้นสมัครสมาชิก
    * รับข้อมูลผู้ใช้มา -> hash รหัสผ่านของผู้ใช้
    * บันทึกลงฐานข้อมูล
-   *
-   * TODO:
-   * - เช็คว่าบัญชีนี้มีอยู่ในระบบหรือป่าว
    */
   async register(req: RegisterRequest): Promise<UserResponse> {
     this.logger.log('[AuthService][register] - Start process');
