@@ -6,6 +6,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 export interface JwtPayload {
   sub: number;
   email: string;
+  role: string;
   iat: number;
   exp: number;
   iss: string;
@@ -21,9 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<{ email: string }> {
+  async validate(
+    payload: JwtPayload,
+  ): Promise<{ sub: number; email: string; role: string }> {
     console.log('[jwt.strategy.ts]:', payload);
-    return { email: payload.email };
+    return { sub: payload.sub, email: payload.email, role: payload.role };
   }
 }
 

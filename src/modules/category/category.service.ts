@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { ILike, In, Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -26,6 +31,12 @@ export class CategoryService {
     const skip = (page - 1) * limit;
 
     const [categories, count] = await this.categoryRepo.findAndCount({
+      select: {
+        products: {
+          id: true,
+          name: true,
+        },
+      },
       where: search ? { name: ILike(`%${search}%`) } : {},
       skip,
       take: limit,
@@ -138,5 +149,17 @@ export class CategoryService {
 
   async deleteCategory(category_id: number): Promise<void> {
     await this.categoryRepo.remove(await this.findOne(category_id));
+  }
+
+  async validateIds(category_ids: number[]): Promise<Category[]> {
+    const categories = await this.categoryRepo.findBy({
+      id: In(category_ids),
+    });
+
+    if (categories.length !== category_ids.length) {
+      throw new BadRequestException('Some category IDs do not exist');
+    }
+
+    return categories;
   }
 }

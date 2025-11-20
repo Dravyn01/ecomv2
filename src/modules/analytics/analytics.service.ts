@@ -6,38 +6,35 @@ import { Order, OrderItem } from 'src/config/entities.config';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { Between } from 'typeorm';
 import { differenceInDays, endOfDay, startOfDay } from 'date-fns';
+import { DateQueryDTO } from './dto/date.query';
 
 @Injectable()
 export class AnalyticsService {
   constructor(
     @InjectRepository(UserPurchaseHistory)
-    private readonly purchaseRepo: Repository<UserPurchaseHistory>,
+    private readonly userPurchaseRepo: Repository<UserPurchaseHistory>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
   ) {}
 
-  async showPurchaseHistory() {
-    const purchase = await this.purchaseRepo.find();
-    console.log(purchase.length);
-    return purchase;
+  async getHistory() {
+    return await this.userPurchaseRepo.find({
+      relations: ['product', 'user', 'order'],
+    });
   }
 
-  async getSalesSummary(
-    from: string,
-    to?: string,
-  ): Promise<{
+  async getSalesSummary(query: DateQueryDTO): Promise<{
     range: { from: string; to: string };
     sales_summary: number;
     average_per_month: number;
     total_order: number;
     charts: Record<string, string | number>[];
   }> {
-    const start = startOfDay(new Date(from));
+    const { from, to } = query;
+    const start = startOfDay(new Date(query.from));
     const end = to ? endOfDay(new Date(to)) : endOfDay(new Date(from));
-    console.log(start);
-    console.log(end);
 
     const items = await this.orderItemRepo.find({
       select: {
@@ -89,10 +86,7 @@ export class AnalyticsService {
     };
   }
 
-  async getPaidOrderVsCancelOrder(
-    from: string,
-    to?: string,
-  ): Promise<{
+  async getPaidOrderVsCancelOrder(query: DateQueryDTO): Promise<{
     range: {
       from: string;
       to: string;
@@ -104,6 +98,7 @@ export class AnalyticsService {
     total_revenue_today: number;
     average_order: number;
   }> {
+    const { from, to } = query;
     const start = startOfDay(new Date(from));
     const end = to ? endOfDay(new Date(to)) : endOfDay(new Date(from));
     const dateRange = { order_date: Between(start, end) };
@@ -165,6 +160,61 @@ export class AnalyticsService {
       returned_orders_today: count.returned,
       total_revenue_today: Number(total_revenue_today.toFixed(2)),
       average_order: Number(average_order.toFixed(2)),
+    };
+  }
+
+  async getNewUser(query: DateQueryDTO) {
+    const { from, to } = query;
+    const start = startOfDay(from);
+    const end = to ? endOfDay(to) : endOfDay(from);
+
+    const orderCondtion = {
+      select: {
+        id: true,
+        user: { id: true },
+      },
+      where: {
+        status: OrderStatus.PAID,
+        order_date: Between(start, end),
+      },
+      relations: ['user'],
+    };
+
+    const orders = await this.orderRepo.find({ ...orderCondtion });
+    const userIds = [...new Set(orders.map((order) => order.user.id))];
+
+    const firstPaidOrders = await this.orderRepo.find({
+      ...orderCondtion,
+      where: {
+        ...orderCondtion.where,
+        user: { id: In(userIds) },
+      },
+    });
+
+    const firstOrderMap = new Map();
+    for (const o of firstPaidOrders) {
+      if (!firstOrderMap.has(o.user.id)) {
+        firstOrderMap.set(o.user.id, o.id);
+      }
+    }
+
+    let newUser = 0;
+    let repeatUser = 0;
+
+    for (const order of orders) {
+      const firstId = firstOrderMap.get(order.user.id);
+
+      if (firstId === order.id) newUser++;
+      else repeatUser++;
+    }
+
+    return {
+      range: {
+        from: start,
+        to: end,
+      },
+      new_user: newUser,
+      repeat_user: repeatUser,
     };
   }
 }

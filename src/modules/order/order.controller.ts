@@ -13,11 +13,13 @@ import { Order } from './entities/order.entity';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { FindAllOrdersQuery } from './dto/find-all-orders.query';
 
+// add @UseGuard(JwtGuard)
+
 @Controller('/admin/orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  // *DEBUG MODE*
+  // # DEBUG METHOD
   @Get()
   async allOrders(): Promise<any> {
     const orders = await this.orderService.findAll();
@@ -37,7 +39,7 @@ export class OrderController {
     };
   }
 
-  // checkout
+  // checkout by user_id
   @Post('/checkout/:user_id')
   async checkout(@Param('user_id') user_id: string): Promise<any> {
     const order = await this.orderService.checkout(+user_id);

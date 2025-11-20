@@ -82,8 +82,10 @@ export class ReviewService {
       );
 
       // คำนวนค่าฉะเสี่ยใหม่
-      const newAverage =
-        (oldAverage * oldReviews + body.rating) / (oldReviews + 1);
+      const newAverage = (
+        (oldAverage * oldReviews + body.rating) /
+        (oldReviews + 1)
+      ).toFixed(2);
 
       // สร้างรีวิวใหม่
       const newReview = await tx.save(Review, {
@@ -92,7 +94,7 @@ export class ReviewService {
         rating: body.rating,
         product: {
           id: product.id,
-          avg_rating: Number(newAverage.toFixed(2)),
+          avg_rating: Number(newAverage),
           review_count: oldReviews + 1,
         },
       });

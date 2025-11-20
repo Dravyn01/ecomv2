@@ -6,7 +6,6 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  JoinTable,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -65,7 +64,7 @@ export class OrderItem {
 
   // Many CartItem One Order
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
-  @JoinTable()
+  @JoinColumn()
   order: Order;
 
   // Many CartItem One ProductVariant

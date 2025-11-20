@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   OneToOne,
+  JoinTable,
 } from 'typeorm';
 import { Category, Review } from 'src/config/entities.config';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
@@ -69,16 +70,22 @@ export class Product {
   @Column({ type: 'float', default: 0.0 })
   popularity_score: number;
 
-  // @Column({ default: 0 })
-  // recent_sales: number; // ยอดขายในช่วงเวลา
-
   // # relations
   @OneToMany(() => ProductVariant, (variant) => variant.product, {
     onDelete: 'CASCADE', // Delete Product Delete all Variant
   })
   variants: ProductVariant[];
 
-  @ManyToMany(() => Category, (category) => category.products)
+  @ManyToMany(() => Category, (category) => category.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
+  @JoinTable({
+    name: 'product_categories', // ชื่อตารางกลาง
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
+  })
   categories: Category[];
 
   @OneToMany(() => Review, (review) => review.product)

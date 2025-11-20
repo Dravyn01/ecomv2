@@ -10,6 +10,5 @@ export * from '../modules/shipments/entities/shipment.entity';
 export * from '../modules/stock/entities/stock.entity';
 export * from '../modules/review/entities/review.entity';
 export * from '../modules/wishlist/entities/wishlist.entity';
-export * from '../modules/analytics/entities/daily-repeat-summary.entity';
 export * from '../modules/analytics/entities/product-repeat-summary.entity';
 export * from '../modules/analytics/entities/user-purchase-history.entity';

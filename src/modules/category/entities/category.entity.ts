@@ -4,7 +4,6 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -21,11 +20,6 @@ export class Category {
   name: string;
 
   @ManyToMany(() => Product, (product) => product.categories)
-  @JoinTable({
-    name: 'product_categories', // ชื่อตารางกลาง
-    joinColumn: { name: 'category_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'product_id', referencedColumnName: 'id' },
-  })
   products: Product[];
 
   // เก็บ array ของ Category ที่มาเชื่อม

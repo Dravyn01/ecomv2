@@ -14,6 +14,7 @@ import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariantService } from './product-variant.service';
 import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
 
 @Controller('/admin/product-variants')
 export class ProductVariantController {

@@ -7,3 +7,4 @@ export class FindAllOrdersQuery extends FindAllQuery {
   @IsEnum(OrderStatus, { message: `สถานะต้องเป็นหนี่งใน: ${OrderStatus}` })
   status?: OrderStatus = OrderStatus.PENDING;
 }
+

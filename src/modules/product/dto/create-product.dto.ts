@@ -1,4 +1,15 @@
-import { IsNotEmpty, IsNumber, IsOptional, Length, Min } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  Length,
+  Min,
+} from 'class-validator';
+
+// TODO: add message for field category_ids
 
 export class CreateProductDTO {
   @IsNotEmpty({ message: 'กรุนากรอกชื่อสินค้า' })
@@ -22,5 +33,10 @@ export class CreateProductDTO {
   @IsNumber({}, { message: 'ราคาหลังลดต้องเป็นตัวเลขเท่านั้น' })
   @Min(1, { message: 'ราคาหลังลดต้องมากกว่า 0 บาท' })
   discount_price?: number;
-  // discount_price?: number;
+
+  @IsOptional()
+  @IsArray({ message: '' })
+  @IsInt({ each: true, message: '' })
+  @IsPositive({ each: true, message: '' })
+  category_ids: number[] = [];
 }

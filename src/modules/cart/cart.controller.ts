@@ -53,10 +53,10 @@ export class CartController {
     const result = await this.cartService.itemAction(body);
     return {
       message:
-        body.action === 'REMOVE'
+        result.status === 'deleted'
           ? `ลบสินค้าหมายเลข "${body.variant_id}" ออกจากตะกร้าเรียบร้อย`
           : 'ลดจำนวนสินค้าลง 1 ซิ้น',
-      data: result,
+      data: result.cart_item,
     };
   }
 }

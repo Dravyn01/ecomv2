@@ -100,19 +100,17 @@ export class StockService {
     ) {
       console.log('CASE IN OR RETURN');
       newQuantity += req.quantity;
-
     } else if (req.change_type === StockChangeType.OUT) {
       console.log('CASE OUT');
 
       // ตรวจสอบว่าสต็อกพอต่อการตัดหรือไม่
       if (stock.quantity < req.quantity) {
         throw new BadRequestException(
-          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${req.quantity} ชิ้น)`
+          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${req.quantity} ชิ้น)`,
         );
       }
 
       newQuantity -= req.quantity;
-
     } else if (req.change_type === StockChangeType.ADJUST) {
       console.log('CASE ADJUST');
 
@@ -128,7 +126,7 @@ export class StockService {
       [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${variant.id}`,
       [StockChangeType.OUT]: `Order #${req.order_id}`,
       [StockChangeType.ADJUST]: `Adjust product #${variant.id}, quantity: ${variant.id}`,
-      [StockChangeType.RETURN]: `Import product #${variant.id}, quantity: ${variant.id}`,
+      [StockChangeType.RETURN]: `Return product #${variant.id}, quantity: ${variant.id}`,
     };
 
     // 4) เตรียมข้อมูลสำหรับบันทึก stock + movement

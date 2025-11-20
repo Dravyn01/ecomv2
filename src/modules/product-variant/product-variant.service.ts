@@ -6,12 +6,12 @@ import { SizeService } from '../size/size.service';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariant } from './entities/product-variant.entity';
 import { ProductService } from '../product/product.service';
-import { CreateMovement } from '../stock/dto/create-movement.stock';
 import { StockService } from '../stock/stock.service';
 import { StockChangeType } from '../stock/enums/stock-change.enum';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
+import { CreateMovementDTO } from '../stock/dto/create-movement.dto';
 
 @Injectable()
 export class ProductVariantService {
@@ -87,9 +87,12 @@ export class ProductVariantService {
         price: body.price,
         sku: body.sku,
         image_url: body.image_url,
+        stock: {
+          quantity: 0,
+        },
       });
 
-      const dto: CreateMovement = {
+      const dto: CreateMovementDTO = {
         variant_id: saved_variant.id,
         change_type: StockChangeType.IN,
         quantity: body.quantity,
@@ -137,7 +140,7 @@ export class ProductVariantService {
       await tx.save(ProductVariant, saved_variant);
 
       if (body.quantity) {
-        const dto: CreateMovement = {
+        const dto: CreateMovementDTO = {
           variant_id,
           change_type: StockChangeType.ADJUST,
           quantity: body.quantity,
