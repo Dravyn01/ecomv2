@@ -6,7 +6,6 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { SizeModule } from '../size/size.module';
 import { ProductModule } from '../product/product.module';
 import { ColorModule } from '../color/color.module';
-import { StockModule } from '../stock/stock.module';
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { StockModule } from '../stock/stock.module';
     ProductModule,
     ColorModule,
     SizeModule,
-    StockModule,
   ],
   controllers: [ProductVariantController],
   providers: [ProductVariantService],

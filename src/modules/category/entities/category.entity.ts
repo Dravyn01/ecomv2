@@ -11,6 +11,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum CategoryStatus {
+  ACTIVE,
+  INACTIVE,
+  DELETED,
+}
+
 @Entity('categories')
 export class Category {
   @PrimaryGeneratedColumn({ name: 'category_id' })

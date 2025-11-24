@@ -15,6 +15,13 @@ import { CartItem } from 'src/modules/cart/entities/cart.entity';
 import { Product } from 'src/config/entities.config';
 import { Stock } from 'src/modules/stock/entities/stock.entity';
 
+export enum ProductVariantStatus {
+  ACTIVE,
+  INACTIVE,
+  OUT_OF_STOCK,
+  DELETED,
+}
+
 @Entity('product_variants')
 export class ProductVariant {
   @PrimaryGeneratedColumn({ name: 'product_variant_id' })
@@ -29,18 +36,25 @@ export class ProductVariant {
   @Column({ type: 'text' })
   image_url: string;
 
+  @Column({
+    type: 'enum',
+    enum: ProductVariantStatus,
+    default: ProductVariantStatus.INACTIVE,
+  })
+  status: ProductVariantStatus;
+
   @CreateDateColumn()
   created_at: Date;
 
-  // One ProductVariatn Many OrderItem
+  // One Variant Many OrderItem
   @OneToMany(() => OrderItem, (orderItem) => orderItem.variant)
   order_items: OrderItem[];
 
-  // One ProductVariant Many CartItem
+  // One Variant Many CartItem
   @OneToMany(() => CartItem, (cartItem) => cartItem.variant)
   cart_items: CartItem[];
 
-  // One Product Many Variant
+  // Many Variant One Product
   @ManyToOne(() => Product, (product) => product.variants, {
     onDelete: 'CASCADE',
     cascade: true,
@@ -48,20 +62,20 @@ export class ProductVariant {
   @JoinColumn()
   product: Product;
 
-  // One Variant One Color
+  // Many Variant One Color
   @ManyToOne(() => Color, (color) => color.variant)
   @JoinColumn()
   color: Color;
 
-  // One Variant One Size
+  // Many Variant One Size
   @ManyToOne(() => Size, (size) => size.variant)
   @JoinColumn()
   size: Size;
 
-  // One Variant One Size
+  // One Variant One Stock
   @OneToOne(() => Stock, (stock) => stock.variant, {
     cascade: true,
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE',
   })
   @JoinColumn()
   stock: Stock;

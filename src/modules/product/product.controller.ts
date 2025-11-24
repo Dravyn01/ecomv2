@@ -43,7 +43,7 @@ export class ProductController {
   }
 
   @Get(':product_id')
-  async findById(
+  async findOne(
     @Param('product_id') product_id: number,
   ): Promise<ApiResponse<Product>> {
     this.logger.log(
@@ -70,8 +70,8 @@ export class ProductController {
 
   @Put(':product_id')
   async update(
-    @Body() body: UpdateProductDTO,
     @Param('product_id') product_id: string,
+    @Body() body: UpdateProductDTO,
   ): Promise<ApiResponse<Product>> {
     this.logger.log(
       `[${this.className}::update] update a exists product with object=${JSON.stringify(body)}`,

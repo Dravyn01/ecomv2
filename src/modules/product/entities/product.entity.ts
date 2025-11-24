@@ -9,10 +9,18 @@ import {
   OneToOne,
   JoinTable,
 } from 'typeorm';
-import { Category, Review } from 'src/config/entities.config';
+import { Category } from 'src/modules/category/entities/category.entity';
+import { Review } from 'src/modules/review/entities/review.entity';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import { ProductRepeatSummary } from 'src/modules/analytics/entities/product-repeat-summary.entity';
+
+export enum ProductStatus {
+  DRAFT,
+  ACTIVE,
+  INACTIVE,
+  DELETED,
+}
 
 @Entity('products')
 export class Product {
@@ -30,7 +38,10 @@ export class Product {
   base_price: number;
 
   @Column({ type: 'numeric', precision: 10, scale: 2, nullable: true })
-  discount_price?: number | null;
+  discount_price?: number;
+
+  @Column({ type: 'enum', enum: ProductStatus, default: ProductStatus.ACTIVE })
+  status: ProductStatus;
 
   // # time stamp
   @CreateDateColumn()
@@ -71,11 +82,13 @@ export class Product {
   popularity_score: number;
 
   // # relations
+  // One Product Many Variant
   @OneToMany(() => ProductVariant, (variant) => variant.product, {
     onDelete: 'CASCADE', // Delete Product Delete all Variant
   })
   variants: ProductVariant[];
 
+  // Many Product Many Category
   @ManyToMany(() => Category, (category) => category.products, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -88,12 +101,15 @@ export class Product {
   })
   categories: Category[];
 
+  // One Product Many Review
   @OneToMany(() => Review, (review) => review.product)
   reviews: Review[];
 
+  // One Product Many Wishlist
   @OneToMany(() => Wishlist, (wishlist) => wishlist.product)
   wishlists: Wishlist[];
 
+  // One Product One ProductRepeatSummary
   @OneToOne(() => ProductRepeatSummary, (summary) => summary.product)
   repeat_summaries: ProductRepeatSummary;
 }

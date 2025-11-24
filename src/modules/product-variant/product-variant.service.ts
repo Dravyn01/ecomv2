@@ -1,36 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ColorService } from '../color/color.service';
 import { SizeService } from '../size/size.service';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ProductVariant } from './entities/product-variant.entity';
 import { ProductService } from '../product/product.service';
-import { StockService } from '../stock/stock.service';
-import { StockChangeType } from '../stock/enums/stock-change.enum';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
-import { CreateMovementDTO } from '../stock/dto/create-movement.dto';
 
 @Injectable()
 export class ProductVariantService {
-  // TODO: add logger
+  private readonly logger = new Logger(ProductVariantService.name);
 
   constructor(
     @InjectRepository(ProductVariant)
     private readonly variantRepo: Repository<ProductVariant>,
 
-    // services
-    private readonly stockService: StockService,
     private readonly sizeService: SizeService,
     private readonly productService: ProductService,
     private readonly colorService: ColorService,
-    private readonly datasource: EntityManager,
   ) {}
 
-  // *DEBUG MODE*
-  async listDevmode() {
+  // # DEBUG
+  async findAll() {
     return await this.variantRepo.find({
       relations: {
         product: true,
@@ -38,11 +32,13 @@ export class ProductVariantService {
     });
   }
 
-  // list product variants by product
   async findAllByProduct(
     product_id: number,
     body: FindAllQuery,
   ): Promise<DatasResponse<ProductVariant[]>> {
+    this.logger.log(
+      `[product-variant.service::findAllByProduct] service called!`,
+    );
     const { page, limit, order } = body;
 
     const [variants, count] = await this.variantRepo.findAndCount({
@@ -52,17 +48,28 @@ export class ProductVariantService {
       order: { created_at: order },
     });
 
+    this.logger.log(
+      `[product-variant.service::findAllByProduct] total variants "${count}"`,
+    );
+
     return { data: variants, count };
   }
 
-  // find by id
   async findOne(variant_id: number): Promise<ProductVariant> {
+    this.logger.log(`[product-variant.service::findOne] service called!`);
     const product = await this.variantRepo.findOne({
       where: { id: variant_id },
       relations: ['product', 'color', 'size'],
     });
-    if (!product)
+    if (!product) {
+      this.logger.log(
+        `[product-variant.service::findOne] not found variant with variant_id=${variant_id}`,
+      );
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
+    }
+    this.logger.log(
+      `[product-variant.service::findOne] found variant with variant_id=${variant_id}`,
+    );
     return product;
   }
 
@@ -75,38 +82,29 @@ export class ProductVariantService {
    *
    * */
   async create(body: CreateVariantDTO): Promise<ProductVariant> {
+    this.logger.log('[product-variant.service::create] service called!');
+
     const product = await this.productService.findOne(body.product_id);
     const color = await this.colorService.findOne(body.color_id);
     const size = await this.sizeService.findOne(body.size_id);
 
-    const product_variant = await this.datasource.transaction(async (tx) => {
-      const saved_variant = await tx.save(ProductVariant, {
-        size: { id: size.id },
-        product: { id: product.id },
-        color: { id: color.id },
-        price: body.price,
-        sku: body.sku,
-        image_url: body.image_url,
-        stock: {
-          quantity: 0,
-        },
-      });
-
-      const dto: CreateMovementDTO = {
-        variant_id: saved_variant.id,
-        change_type: StockChangeType.IN,
-        quantity: body.quantity,
-      };
-
-      console.log(saved_variant);
-      console.log(dto);
-
-      await tx.save(ProductVariant, saved_variant);
-      await this.stockService.createMovement(dto, tx);
-      return saved_variant;
+    const newVariant = await this.variantRepo.save({
+      size: { id: size.id },
+      product: { id: product.id },
+      color: { id: color.id },
+      price: body.price,
+      sku: body.sku,
+      image_url: body.image_url,
+      stock: {
+        quantity: 0,
+      },
     });
 
-    return product_variant;
+    this.logger.log(
+      '[product-varinat.service::create] created variant success',
+    );
+
+    return newVariant;
   }
 
   /*
@@ -121,43 +119,39 @@ export class ProductVariantService {
     variant_id: number,
     body: UpdateVariantDTO,
   ): Promise<ProductVariant> {
+    this.logger.log('[product-variant.service::update] service called!');
+
     const existing_variant = await this.findOne(variant_id);
 
-    const product_variant = await this.datasource.transaction(async (tx) => {
-      const saved_variant = await tx.save(ProductVariant, {
-        id: existing_variant.id,
-        ...body,
-        ...(body.product_id && { product: { id: body.product_id } }),
-        ...(body.size_id && {
-          size: { id: (await this.sizeService.findOne(body.size_id)).id },
-        }),
-        ...(body.color_id && {
-          color: { id: (await this.colorService.findOne(body.color_id)).id },
-        }),
-      });
-
-      console.log('[VariantServivce] saved_variant:', saved_variant);
-      await tx.save(ProductVariant, saved_variant);
-
-      if (body.quantity) {
-        const dto: CreateMovementDTO = {
-          variant_id,
-          change_type: StockChangeType.ADJUST,
-          quantity: body.quantity,
-          note: body.note,
-        };
-        await this.stockService.createMovement(dto, tx);
-      }
-
-      return saved_variant;
+    const updated_variant = await this.variantRepo.save({
+      id: existing_variant.id,
+      ...body,
+      ...(body.product_id && { product: { id: body.product_id } }),
+      ...(body.size_id && {
+        size: { id: (await this.sizeService.findOne(body.size_id)).id },
+      }),
+      ...(body.color_id && {
+        color: { id: (await this.colorService.findOne(body.color_id)).id },
+      }),
     });
 
-    return product_variant;
+    this.logger.log(
+      `[product-variant.service::update] variant_id=${variant_id} has updated!`,
+    );
+
+    return updated_variant;
   }
 
-  // delete variant
-  async delete(variant_id: number): Promise<void> {
-    const existing = await this.findOne(variant_id);
-    await this.variantRepo.remove(existing);
+  async delete(variant_id: number): Promise<ProductVariant> {
+    this.logger.log('[product-variant.service::delete] service called!');
+
+    const variant = await this.findOne(variant_id);
+
+    await this.variantRepo.remove(variant);
+    this.logger.log(
+      `[product-variant.service::delete] variant_id=${variant_id} has deleted`,
+    );
+
+    return variant;
   }
 }
