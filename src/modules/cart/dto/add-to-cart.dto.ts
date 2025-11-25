@@ -4,11 +4,11 @@ export class AddToCartDTO {
   @IsPositive()
   user_id: number; // can use jwtGuard and @Role()
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
+  @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
   variant_id: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
+  @IsPositive({ message: 'จำนวนต้องเป็นตัวเลขที่มากกว่า 0' })
   quantity: number;
 }
