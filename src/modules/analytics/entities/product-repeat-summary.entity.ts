@@ -10,7 +10,7 @@ import { Product } from 'src/modules/product/entities/product.entity';
 
 /*
  *
- *
+ * ว่าจะเปลี่ยนเป็น stats สำหรับแต่ละ product แทนการบันทักการซื้อช้ำ
  *
  * */
 
