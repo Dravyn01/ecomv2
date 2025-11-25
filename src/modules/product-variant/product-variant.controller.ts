@@ -19,14 +19,14 @@ import { DatasResponse } from 'src/common/dto/res/datas.response';
 
 @Controller('/admin/product-variants')
 export class ProductVariantController {
+  private readonly className = 'product-variant.controller';
   private readonly logger = new Logger(ProductVariantController.name);
 
   constructor(private readonly variantService: ProductVariantService) {}
 
-  // # DEBUG
   @Get()
   async findAll(): Promise<ApiResponse<any>> {
-    this.logger.log(`[product-variant.controller::findAll]`);
+    this.logger.log(`[${this.className}::findAll]`);
     const variants = await this.variantService.findAll();
     return {
       message: '',
@@ -34,15 +34,17 @@ export class ProductVariantController {
     };
   }
 
-  // หา variant ด้วย product_id
   @Get(':product_id')
   async findOne(
     @Param('product_id') product_id: string,
     @Query() query: FindAllQuery,
   ): Promise<ApiResponse<DatasResponse<ProductVariant[]>>> {
     this.logger.log(
-      `[product-variant.controller::findOne] find product with product_id=${product_id} query=${JSON.stringify(query)}`,
+      `[${this.className}::findOne] find product with product_id=${product_id} query=${JSON.stringify(
+        query,
+      )}`,
     );
+
     const variants = await this.variantService.findAllByProduct(
       +product_id,
       query,
@@ -59,7 +61,9 @@ export class ProductVariantController {
     @Body() body: CreateVariantDTO,
   ): Promise<ApiResponse<ProductVariant>> {
     this.logger.log(
-      `[product-variant.controller::create] create product with data=${JSON.stringify(body)}`,
+      `[${this.className}::create] create product with data=${JSON.stringify(
+        body,
+      )}`,
     );
     const variant = await this.variantService.create(body);
     return {
@@ -74,7 +78,9 @@ export class ProductVariantController {
     @Body() body: UpdateVariantDTO,
   ): Promise<ApiResponse<ProductVariant>> {
     this.logger.log(
-      `[product-variant.controller::update] update product with data=${JSON.stringify(body)} variant_id=${variant_id}`,
+      `[${this.className}::update] update product with data=${JSON.stringify(
+        body,
+      )} variant_id=${variant_id}`,
     );
     const variant = await this.variantService.update(+variant_id, body);
     return {
@@ -88,7 +94,7 @@ export class ProductVariantController {
     @Param('variant_id') variant_id: string,
   ): Promise<ApiResponse<ProductVariant>> {
     this.logger.log(
-      `[product-variant.controller::delete] delete product with product_id=${variant_id}`,
+      `[${this.className}::delete] delete product with product_id=${variant_id}`,
     );
     const variant = await this.variantService.delete(+variant_id);
     return {
