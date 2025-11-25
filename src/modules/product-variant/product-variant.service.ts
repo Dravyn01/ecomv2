@@ -12,6 +12,7 @@ import { UpdateVariantDTO } from './dto/update-variant.dto';
 
 @Injectable()
 export class ProductVariantService {
+  private readonly className = 'product-variant.service';
   private readonly logger = new Logger(ProductVariantService.name);
 
   constructor(
@@ -36,9 +37,8 @@ export class ProductVariantService {
     product_id: number,
     body: FindAllQuery,
   ): Promise<DatasResponse<ProductVariant[]>> {
-    this.logger.log(
-      `[product-variant.service::findAllByProduct] service called!`,
-    );
+    this.logger.log(`[${this.className}::findAllByProduct] service called!`);
+
     const { page, limit, order } = body;
 
     const [variants, count] = await this.variantRepo.findAndCount({
@@ -49,27 +49,31 @@ export class ProductVariantService {
     });
 
     this.logger.log(
-      `[product-variant.service::findAllByProduct] total variants "${count}"`,
+      `[${this.className}::findAllByProduct] total variants "${count}"`,
     );
 
     return { data: variants, count };
   }
 
   async findOne(variant_id: number): Promise<ProductVariant> {
-    this.logger.log(`[product-variant.service::findOne] service called!`);
+    this.logger.log(`[${this.className}::findOne] service called!`);
+
     const product = await this.variantRepo.findOne({
       where: { id: variant_id },
       relations: ['product', 'color', 'size'],
     });
+
     if (!product) {
       this.logger.log(
-        `[product-variant.service::findOne] not found variant with variant_id=${variant_id}`,
+        `[${this.className}::findOne] not found variant with variant_id=${variant_id}`,
       );
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
     }
+
     this.logger.log(
-      `[product-variant.service::findOne] found variant with variant_id=${variant_id}`,
+      `[${this.className}::findOne] found variant with variant_id=${variant_id}`,
     );
+
     return product;
   }
 
@@ -82,7 +86,7 @@ export class ProductVariantService {
    *
    * */
   async create(body: CreateVariantDTO): Promise<ProductVariant> {
-    this.logger.log('[product-variant.service::create] service called!');
+    this.logger.log(`[${this.className}::create] service called!`);
 
     const product = await this.productService.findOne(body.product_id);
     const color = await this.colorService.findOne(body.color_id);
@@ -101,7 +105,7 @@ export class ProductVariantService {
     });
 
     this.logger.log(
-      '[product-varinat.service::create] created variant success',
+      `[${this.className}::create] created variant success`,
     );
 
     return newVariant;
@@ -119,7 +123,7 @@ export class ProductVariantService {
     variant_id: number,
     body: UpdateVariantDTO,
   ): Promise<ProductVariant> {
-    this.logger.log('[product-variant.service::update] service called!');
+    this.logger.log(`[${this.className}::update] service called!`);
 
     const existing_variant = await this.findOne(variant_id);
 
@@ -136,20 +140,21 @@ export class ProductVariantService {
     });
 
     this.logger.log(
-      `[product-variant.service::update] variant_id=${variant_id} has updated!`,
+      `[${this.className}::update] variant_id=${variant_id} has updated!`,
     );
 
     return updated_variant;
   }
 
   async delete(variant_id: number): Promise<ProductVariant> {
-    this.logger.log('[product-variant.service::delete] service called!');
+    this.logger.log(`[${this.className}::delete] service called!`);
 
     const variant = await this.findOne(variant_id);
 
     await this.variantRepo.remove(variant);
+
     this.logger.log(
-      `[product-variant.service::delete] variant_id=${variant_id} has deleted`,
+      `[${this.className}::delete] variant_id=${variant_id} has deleted`,
     );
 
     return variant;
