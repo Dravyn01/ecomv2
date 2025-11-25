@@ -19,10 +19,12 @@ export class Cart {
   @CreateDateColumn()
   created_at: Date;
 
+  // One Cart One User
   @OneToOne(() => User, (user) => user.cart, { nullable: true })
   @JoinColumn()
   user: User;
 
+  // One Cart Many CartItem
   @OneToMany(() => CartItem, (cartItem) => cartItem.cart)
   items: CartItem[];
 }
@@ -38,11 +40,13 @@ export class CartItem {
   @CreateDateColumn()
   created_at: number;
 
+  // Many CartItem One Cart
   @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
   @JoinColumn()
-  cart: Cart; // One Cart Many CartItem
+  cart: Cart;
 
+  // Many CartItem One ProductVariant
   @ManyToOne(() => ProductVariant, (variant) => variant.cart_items)
   @JoinColumn()
-  variant: ProductVariant; // One ProductVariant One CartItem
+  variant: ProductVariant;
 }

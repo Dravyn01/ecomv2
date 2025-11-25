@@ -16,7 +16,7 @@ import { Product } from 'src/modules/product/entities/product.entity';
 
 @Entity('product_repeat_summary')
 export class ProductRepeatSummary {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'product_stats_id' })
   id: number;
 
   @ManyToOne(() => Product, (product) => product.repeat_summaries, {

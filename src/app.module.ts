@@ -16,7 +16,6 @@ import { ReviewModule } from './modules/review/review.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { ProductGroupModule } from './product-group/product-group.module';
 
 @Module({
   imports: [
@@ -45,7 +44,6 @@ import { ProductGroupModule } from './product-group/product-group.module';
     ReviewModule,
     WishlistModule,
     AnalyticsModule,
-    ProductGroupModule,
   ],
 
   controllers: [],

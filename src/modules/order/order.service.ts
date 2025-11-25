@@ -73,28 +73,25 @@ export class OrderService {
    * 9: return order
    */
   async checkout(user_id: number): Promise<Order> {
-    // 1: หา user
     const user = await this.userService.findOne(user_id);
 
-    // 2: เปิด transaction
     const order = await this.datasource.transaction(async (tx) => {
-      // 3: โหลด cart ของ user พร้อม relations
       const cart = await tx.findOne(Cart, {
         where: { user: { id: user.id } },
         relations: ['items.variant', 'user'],
       });
 
-      // 4: ตรวจสอบ cart ว่างหรือไม่
+      // ตรวจสอบ cart ว่างหรือไม่
       if (!cart || cart.items.length === 0)
         throw new NotFoundException('ไม่พบสินค้าสำหรับชำระเงิน');
 
-      // 5: คำนวณ total_price ของ cart
+      // คำนวณ total_price ของ cart
       const total_price = cart.items.reduce(
         (acc, item) => acc + item.variant.price * item.quantity,
         0,
       );
 
-      // 6: สร้าง order ใหม่ พร้อมรายการสินค้า
+      // สร้าง order ใหม่ พร้อมรายการสินค้า
       const order = await tx.save(Order, {
         user: { id: user_id },
         total_price: total_price,
@@ -106,10 +103,10 @@ export class OrderService {
         })),
       });
 
-      // 7: ลบ cart หลังสร้าง order
+      // ลบ cart หลังสร้าง order
       await tx.delete(Cart, cart.id);
 
-      // 8: วนลูป items → ลด stock ของสินค้าแต่ละชิ้น
+      // วนลูป items → ลด stock ของสินค้าแต่ละชิ้น
       for (const item of cart.items) {
         const dto: CreateMovementDTO = {
           quantity: item.quantity,
@@ -121,7 +118,6 @@ export class OrderService {
         await this.stockService.createMovement(dto, tx);
       }
 
-      // 9: return order หลังสร้างเสร็จ
       return order;
     });
 
@@ -154,7 +150,7 @@ export class OrderService {
         relations: ['items.variant.product'],
       });
 
-      // 2: ถ้าไม่เจอ order ที่ตรงเงื่อนไข
+      // ถ้าไม่เจอ order ที่ตรงเงื่อนไข
       if (!order || order.status === OrderStatus.PAID) {
         throw new NotFoundException(
           'ไม่สามารถยกเลิก order ได้ เนื่องจากไม่ตรงตามเงื่อนไข',

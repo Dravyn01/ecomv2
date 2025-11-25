@@ -54,54 +54,32 @@ export class CartService {
     return existing;
   }
 
-  /*
-   * --- Comment By GPT (ขก เขียนเอง) ---
-   *
-   * ฟังก์ชันนี้ทำหน้าที่เพิ่มสินค้าไปยัง cart ของ user
-   * ตรวจสอบ stock และรวมรายการถ้ามีสินค้าอยู่แล้ว
-   *
-   * 1: หา user จาก body.user_id
-   * 2: หา product variant จาก body.variant_id
-   * 3: เปิด transaction เพื่อให้ทุกขั้นตอนเป็น atomic
-   * 4: ตรวจสอบ stock ของสินค้าว่าพอหรือไม่ → throw ถ้า stock ไม่พอ
-   * 5: โหลด cart ของ user ถ้าไม่มี → สร้าง cart ใหม่
-   * 6: ตรวจสอบว่ามี cart_item เดิมใน cart หรือไม่
-   *      6.1: ถ้ามี → บวกจำนวนเข้าไปใน cart_item เดิม และ save
-   *      6.2: ถ้าไม่มี → สร้าง cart_item ใหม่ และ save
-   * 7: return cart_item
-   */
   async addToCart(body: AddToCartReq): Promise<CartItem> {
     this.logger.log(
       `[cart.service::addToCart] START addToCart user=${body.user_id}, variant=${body.variant_id}, qty=${body.quantity}`,
     );
 
-    // 1: หา user
     const user = await this.userService.findOne(body.user_id);
     this.logger.log(`[cart.service::addToCart] Loaded user id=${user.id}`);
 
-    // 2: หา variant
     const variant = await this.variantService.findOne(body.variant_id);
     this.logger.log(
       `[cart.service::addToCart] Loaded variant id=${variant.id}`,
     );
 
-    // 3: เปิด transaction
     const cart_item = await this.datasource.transaction(async (tx) => {
       this.logger.log('[cart.service::addToCart] Transaction started');
 
-      // 4: ตรวจสอบ stock
       await this.stockService.IsOutOfStock(body.variant_id, body.quantity);
       this.logger.log(
         `[cart.service::addToCart] Stock validated variant=${body.variant_id}, qty=${body.quantity}`,
       );
 
-      // 5: โหลด cart ของ user
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
       this.logger.log(
         `[cart.service::addToCart] Cart loaded: ${cart ? `cartId=${cart.id}` : 'none'}`,
       );
 
-      // สร้าง cart ใหม่ถ้าไม่มี
       if (!cart) {
         this.logger.log(
           `[cart.service::addToCart] Creating new cart for user=${user.id}`,
@@ -113,7 +91,6 @@ export class CartService {
         );
       }
 
-      // 6: ตรวจสอบ cart_item เดิม
       const existing_item = await tx.findOne(CartItem, {
         where: { cart: { id: cart.id }, variant: { id: variant.id } },
       });

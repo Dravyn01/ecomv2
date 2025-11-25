@@ -1,14 +1,12 @@
-import { IsIn, IsInt, IsNotEmpty } from 'class-validator';
+import { IsIn, IsNotEmpty, IsPositive } from 'class-validator';
 
-// TODO: add message
-
-export class ActionsCartItemReq {
+export class ActionsCartItemDTO {
   @IsNotEmpty({ message: '' })
-  @IsInt({ message: '' })
+  @IsPositive({ message: '' })
   user_id: number;
 
   @IsNotEmpty({ message: '' })
-  @IsInt({ message: '' })
+  @IsPositive({ message: '' })
   variant_id: number;
 
   @IsNotEmpty({ message: '' })
