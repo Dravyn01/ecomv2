@@ -7,14 +7,14 @@ import {
 import { ILike, In, Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindAllCategory } from './dto/req/find-all-category.query';
-import { CategorysRes } from './dto/res/categorys.res';
-import { CreateCategoryReq } from './dto/req/create-category.req';
-import { UpdateCategoryReq } from './dto/req/update-category.req';
+import { FindAllCategory } from './dto/find-all-category.query';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { CreateCategoryDTO } from './dto/create-category.dto';
+import { UpdateCategoryDTO } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoryService {
-  private readonly className = this.constructor.name;
+  private readonly className = 'category.service';
   private readonly logger = new Logger(this.className);
 
   constructor(
@@ -22,42 +22,34 @@ export class CategoryService {
     private readonly categoryRepo: Repository<Category>,
   ) {}
 
-  async findAll(req: FindAllCategory): Promise<CategorysRes> {
-    this.logger.log(
-      `[${this.className}::findAll] called (query=${req.search}, page=${req.page}, limit=${req.limit})`,
-    );
+  async findAll(req: FindAllCategory): Promise<DatasResponse<Category[]>> {
+    this.logger.log(`[${this.className}::findAll] service called!`);
 
     const { search, page, limit, order } = req;
-    const skip = (page - 1) * limit;
 
     const [categories, count] = await this.categoryRepo.findAndCount({
-      select: {
-        products: {
-          id: true,
-          name: true,
-        },
-      },
       where: search ? { name: ILike(`%${search}%`) } : {},
-      skip,
+      skip: (page - 1) * limit,
       take: limit,
       order: { created_at: order },
       relations: {
         parent: true,
         children: true,
-        products: true,
       },
     });
 
-    this.logger.debug(`[${this.className}:findAll] found ${count} categories`);
+    this.logger.debug(`[${this.className}:findAll] found "${count}"`);
     return { data: categories, count };
   }
 
   async findOne(category_id: number): Promise<Category> {
-    this.logger.log(`[${this.className}::findOne] called (id=${category_id})`);
+    this.logger.log(
+      `[${this.className}::findOne] service called! (category_id=${category_id})`,
+    );
 
     const category = await this.categoryRepo.findOne({
       where: { id: category_id },
-      relations: ['children'],
+      relations: ['children', 'parent'],
     });
 
     if (!category) {
@@ -67,23 +59,21 @@ export class CategoryService {
       throw new NotFoundException(`ไม่พบหมวดหมู่หมายเลขนี้: ${category_id}`);
     }
 
-    this.logger.debug(
-      `[${this.className}::findOne] found category id=${category_id}`,
+    this.logger.log(
+      `[${this.className}::findOne] category_id=${category_id} exists`,
     );
 
     return category;
   }
 
-  async createCategory(req: CreateCategoryReq): Promise<Category> {
-    this.logger.log(
-      `[${this.className}::createCategory] creating category name="${req.name}"`,
-    );
+  async create(req: CreateCategoryDTO): Promise<Category> {
+    this.logger.log(`[${this.className}::create] service called!`);
 
     const saved_category = this.categoryRepo.create({ name: req.name });
 
     if (req.category_ids?.length) {
       this.logger.debug(
-        `[${this.className}::createCategory] has children ids=[${req.category_ids.join(', ')}]`,
+        `[${this.className}::create] has children ids=[${req.category_ids.join(', ')}]`,
       );
       const categories = await this.categoryRepo.findBy({
         id: In(req.category_ids),
@@ -93,70 +83,61 @@ export class CategoryService {
 
     const result = await this.categoryRepo.save(saved_category);
     this.logger.log(
-      `[${this.className}::createCategory] created successfully id=${result.id}`,
+      `[${this.className}::create] created successfully id=${result.id}`,
     );
     return result;
   }
 
-  async updateCategory(
-    category_id: number,
-    req: UpdateCategoryReq,
-  ): Promise<Category> {
+  async update(category_id: number, req: UpdateCategoryDTO): Promise<Category> {
     this.logger.log(
-      `[${this.className}::updateCategory] updating id=${category_id}`,
-    );
-    this.logger.log(
-      `[${this.className}::updateCategory] req=${JSON.stringify(req)}`,
+      `[${this.className}::update] service called (category_id=${category_id})`,
     );
 
     const existing = await this.findOne(category_id);
-
     this.logger.debug(
-      `[${this.className}::updateCategory] existing data=${JSON.stringify(existing)}`,
+      `[${this.className}::update] existing data=${JSON.stringify(existing)}`,
     );
 
-    const category_instant = this.categoryRepo.create({ name: req.name });
+    let saved_category: any = { name: req.name };
 
     if (req.category_ids?.length) {
       const existing_category = await this.categoryRepo.find({
         where: { id: In(req.category_ids) },
       });
-      category_instant.children = existing_category;
+      saved_category.children = existing_category;
 
-      this.logger.debug(
-        `[${this.className}::updateCategory] found sub category ${existing_category.length}`,
+      this.logger.log(
+        `[${this.className}::update] found sub category "${existing_category.length}"`,
       );
     }
 
-    this.logger.debug(
-      `[${this.className}::updateCategory] instant data=${JSON.stringify(category_instant)}`,
-    );
-
-    // merge data
-    const merge_category = this.categoryRepo.merge(existing, category_instant);
-
-    this.logger.debug(
-      `[${this.className}::updateCategory] merge data=${JSON.stringify(merge_category)}`,
-    );
-
-    const result = await this.categoryRepo.save(merge_category);
+    const result = await this.categoryRepo.save(saved_category);
 
     this.logger.log(
-      `[${this.className}::updateCategory] updated successfully id=${result.id}`,
+      `[${this.className}::update] updated successfully id=${result.id}`,
     );
     return result;
   }
 
-  async deleteCategory(category_id: number): Promise<void> {
+  async delete(category_id: number): Promise<void> {
+    this.logger.log(
+      `[${this.className}::delete] service called! (category_id=${category_id})`,
+    );
     await this.categoryRepo.remove(await this.findOne(category_id));
   }
 
   async validateIds(category_ids: number[]): Promise<Category[]> {
+    this.logger.log(
+      `[${this.className}::validateIds] service called! (category_ids=${category_ids.join(', ')})`,
+    );
     const categories = await this.categoryRepo.findBy({
       id: In(category_ids),
     });
 
     if (categories.length !== category_ids.length) {
+      this.logger.warn(
+        `[${this.className}::validateIds] some category_ids do not exist`,
+      );
       throw new BadRequestException('Some category IDs do not exist');
     }
 

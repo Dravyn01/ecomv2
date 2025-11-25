@@ -1,8 +1,8 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class LoginRequest {
-  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
   @IsNotEmpty({ message: 'อีเมลต้องไม่เป็นค่าว่าง' })
+  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
   email: string;
 
   @IsString()

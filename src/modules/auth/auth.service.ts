@@ -10,6 +10,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
+  private readonly className = 'auth.service';
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -24,34 +25,30 @@ export class AuthService {
    * บันทึกลงฐานข้อมูล
    */
   async register(req: RegisterRequest): Promise<UserResponse> {
-    this.logger.log('[AuthService][register] - Start process');
+    this.logger.log(`[${this.className}::register] service called!`);
 
-    const is_existing = await this.userRepo.existsBy({ email: req.email });
-
-    if (is_existing) {
+    const user = await this.userRepo.existsBy({ email: req.email });
+    if (user) {
+      this.logger.log(
+        `[${this.className}::register] not found user by email=${req.email}`,
+      );
       throw new ConflictException('existing email');
     }
 
     const hash_password = await bcrypt.hash(req.password, 10);
-    this.logger.debug('[AuthService][register] - Hashed password generated');
+    this.logger.log(`[${this.className}::register] hashed password`);
 
-    const user = this.userRepo.create({
+    const newUser = await this.userRepo.save({
       username: req.username,
       email: req.email,
       password: hash_password,
     });
 
-    this.logger.debug(
-      `[AuthService][register] - User entity created: ${JSON.stringify(user)}`,
-    );
-
-    const saved_user = await this.userRepo.save(user);
-
     this.logger.log(
-      `[AuthService][register] - User registered successfully: ${saved_user.email}`,
+      `[${this.className}::register] register email=${req.email} success`,
     );
 
-    return toUserResponse(user);
+    return toUserResponse(newUser);
   }
 
   /*
@@ -60,7 +57,7 @@ export class AuthService {
    * ถ้าตรงหมดออก token ให้
    */
   async login(user: User): Promise<{ accessToken: string }> {
-    this.logger.log('[AuthService][login] - Start process');
+    this.logger.log(`[${this.className}::login] service called!`);
 
     const payload = {
       sub: user.id,
@@ -68,12 +65,8 @@ export class AuthService {
       role: 'admin',
     };
 
-    this.logger.debug(
-      `[AuthService][login] - Payload for token: ${JSON.stringify(payload)}`,
-    );
-
     const token = this.jwtService.sign(payload);
-    this.logger.debug(`[AuthService][login] - Token generated`);
+    this.logger.debug(`[${this.className}::login] accessToken generated`);
 
     return { accessToken: token };
   }

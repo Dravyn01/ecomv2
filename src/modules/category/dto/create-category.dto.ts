@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
@@ -6,19 +5,18 @@ import {
   IsOptional,
   IsString,
   Length,
-  Min,
+  IsPositive,
 } from 'class-validator';
 
-export class CreateCategoryReq {
-  @IsString()
+export class CreateCategoryDTO {
+  @IsString({ message: '' })
   @IsNotEmpty({ message: 'ชื่อหมวดหมู่ต้องไม่เป็นค่าว่าง' })
   @Length(1, 30, { message: 'ชื่อหมวดหมู่ต้องไม่เกิน 30 ตัว' })
   name: string;
 
   @IsOptional()
-  @IsArray() // ดูว่าเป็ฯ array ไหม(ไม่ได้ดู elm)
-  @Type(() => Number) // แปลงค่า "1" -> 1
-  @Min(1, { each: true, message: '' })
+  @IsArray({ message: '' }) // ดูว่าเป็ฯ array ไหม(ไม่ได้ดู elm)
   @IsInt({ each: true, message: 'หมายเลขหมวดหมู่ต้องเป็นตัวเลขเท่านั้น' }) // each: true ดู elm ทุกตัวว่าเป็น int ไหม
+  @IsPositive({ message: '' })
   category_ids?: number[];
 }
