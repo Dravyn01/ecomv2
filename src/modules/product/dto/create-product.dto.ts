@@ -38,12 +38,11 @@ export class CreateProductDTO {
   discount_price?: number;
 
   @IsOptional()
-  @IsEnum(ProductVariantStatus, { message: '' })
+  @IsEnum(ProductVariantStatus, { message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductStatus เท่านั้น' })
   status: ProductVariantStatus = ProductVariantStatus.ACTIVE;
 
   @IsOptional()
   @IsArray({ message: 'หมวดหมู่สินค้าต้องเป็นอาเรย์ของตัวเลข' })
-  @IsInt({ each: true, message: 'หมวดหมู่สินค้าต้องเป็นจำนวนเต็มเท่านั้น' })
   @IsPositive({
     each: true,
     message: 'หมวดหมู่แต่ละรายการต้องเป็นตัวเลขที่มากกว่า 0',
