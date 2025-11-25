@@ -12,7 +12,7 @@ import { Order } from 'src/modules/order/entities/order.entity';
 
 /*
  *
- *
+ * entity สำหรับบันทึกว่า user ซื้อสินค้าซิ้นนี้ไปกี่ครั้งแล้ว
  *
  * */
 
