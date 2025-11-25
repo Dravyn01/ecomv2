@@ -11,39 +11,28 @@ import {
 } from 'class-validator';
 import { ProductVariantStatus } from '../entities/product-variant.entity';
 
-// TODO add message
 export class CreateVariantDTO {
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
+  @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
   product_id: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกสี' })
+  @IsPositive({ message: 'รหัสสีต้องเป็นตัวเลขที่มากกว่า 0' })
   color_id: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกไชส์' })
+  @IsPositive({ message: 'รหัสไชส์ต้องเป็นตัวเลขที่มากกว่า 0' })
   size_id: number;
 
-  @IsNotEmpty({ message: '' })
+  @IsNotEmpty({ message: 'กรุณากรอกราคาสินค้า' })
   @IsNumber({}, { message: 'ราคาต้องเป็นตัวเลข' })
-  @Min(1, { message: 'หมายเลขไซส์ไม่ถูกต้อง' })
+  @Min(1, { message: 'ราคาสินค้าต้องมากกว่า 1 บาท' })
   price: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsString({ message: '' })
-  @Length(1, 100, { message: '' })
-  sku: string;
-
-  @IsNotEmpty({ message: '' })
-  @IsUrl({ require_protocol: true }, { message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกรูปภาพ' })
   image_url: string;
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
-  quantity: number;
-
   @IsOptional()
-  @IsEnum(ProductVariantStatus, { message: '' })
+  @IsEnum(ProductVariantStatus, { message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductVariantStatus' })
   status?: ProductVariantStatus = ProductVariantStatus.INACTIVE;
 }
