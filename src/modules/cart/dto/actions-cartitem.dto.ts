@@ -10,6 +10,6 @@ export class ActionsCartItemDTO {
   variant_id: number;
 
   @IsNotEmpty({ message: 'กรุณาระบุ action' })
-  @IsIn(['DECREASE', 'REMOVE'], { message: 'action type สามารถเป็นได้แค่ ลดจำนวนลง 1 หรือ นำสินค้าออก' })
+  @IsIn(['DECREASE', 'REMOVE'], { message: 'action type สามารถเป็นได้แค่ DECREASE หรือ REMOVE' })
   action: 'DECREASE' | 'REMOVE';
 }
