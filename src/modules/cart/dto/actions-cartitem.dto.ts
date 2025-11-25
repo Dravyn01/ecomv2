@@ -5,11 +5,11 @@ export class ActionsCartItemDTO {
   @IsPositive({ message: '' })
   user_id: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsPositive({ message: '' })
+  @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการแก้ไข' })
+  @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
   variant_id: number;
 
-  @IsNotEmpty({ message: '' })
-  @IsIn(['DECREASE', 'REMOVE'], { message: '' })
+  @IsNotEmpty({ message: 'กรุณาระบุ action' })
+  @IsIn(['DECREASE', 'REMOVE'], { message: 'action type สามารถเป็นได้แค่ ลดจำนวนลง 1 หรือ นำสินค้าออก' })
   action: 'DECREASE' | 'REMOVE';
 }
