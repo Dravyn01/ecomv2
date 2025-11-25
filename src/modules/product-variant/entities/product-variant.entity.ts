@@ -30,7 +30,8 @@ export class ProductVariant {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'varchar', length: 100 }) // sku should be unique
+  /* example: PD-BLK-XL-003 */
+  @Column({ type: 'varchar', length: 100 }) // should be unique
   sku: string;
 
   @Column({ type: 'text' })
