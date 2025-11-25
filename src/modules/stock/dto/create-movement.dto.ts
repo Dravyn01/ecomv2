@@ -1,38 +1,37 @@
 import {
-  IsEnum,
-  IsInt,
   IsNotEmpty,
+  IsPositive,
+  IsEnum,
   IsOptional,
-  IsString,
   Length,
-  Min,
+  IsString,
+  IsInt,
 } from 'class-validator';
-import { StockChangeType } from '../enums/stock-change.enum';
 
 export class CreateMovementDTO {
-  @IsNotEmpty({ message: 'ต้องระบุ variant_id' })
-  @Min(1, { message: 'variant_id ต้องมีค่ามากกว่า 0' })
-  @IsInt({ message: 'variant_id ต้องเป็นตัวเลขจำนวนเต็ม' })
-  variant_id: number;
+  @IsNotEmpty({ message: 'กรุณาเลือกตัวเลือกสินค้า' })
+@IsInt({ message: 'รหัสตัวเลือกสินค้าต้องเป็นจำนวนเต็ม' })
+@IsPositive({ message: 'รหัสตัวเลือกสินค้าต้องมากกว่า 0' })
+variant_id: number;
 
-  @IsNotEmpty({ message: 'ต้องระบุ quantity' })
-  @IsInt({ message: 'quantity ต้องเป็นตัวเลขจำนวนเต็ม' })
-  quantity: number;
+ @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
+@IsInt({ message: 'จำนวนต้องเป็นจำนวนเต็ม' })
+@IsPositive({ message: 'จำนวนต้องมากกว่า 0' })
+quantity: number;
 
-  @IsNotEmpty({ message: 'ต้องระบุ change_type' })
-  @Min(1, { message: 'change_type ต้องเป็นค่าที่ถูกต้อง' })
+  @IsNotEmpty({ message: 'กรุณาเลือกประเภทการเปลี่ยนแปลง (change_type)' })
   @IsEnum(StockChangeType, {
-    message: `change_type ต้องเป็นหนึ่งในค่า: ${StockChangeType}`,
+    message: `change_type ต้องเป็นหนึ่งในค่า: ${Object.values(StockChangeType)}`,
   })
   change_type: StockChangeType;
 
   @IsOptional()
-  @Length(1, 255, { message: 'note ต้องมีความยาว 1 ถึง 255 ตัวอักษร' })
-  @IsString({ message: 'note ต้องเป็น string' })
+  @Length(1, 255, { message: 'โน้ตต้องมีความยาวระหว่าง 1 ถึง 255 ตัวอักษร' })
+  @IsString({ message: 'โน้ตต้องเป็นข้อความ (string)' })
   note?: string;
 
   @IsOptional()
-  @IsInt({ message: 'order_id ต้องเป็นตัวเลขจำนวนเต็ม' })
-  @Min(1, { message: 'order_id ต้องมีค่ามากกว่า 0' })
+  @IsInt({ message: 'รหัส order ต้องเป็นตัวเลขจำนวนเต็ม' })
+  @IsPositive({ message: 'รหัส order ต้องเป็นจำนวนเต็มบวก' })
   order_id?: number;
 }
