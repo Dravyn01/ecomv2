@@ -70,24 +70,25 @@ export class ProductService {
       description: body.description,
       base_price: body.base_price,
       discount_price: body.discount_price,
+      image_url: body.image_url,
       categories: body.category_ids.map((id) => ({ id })),
     });
   }
 
   // update product
   async update(product_id: number, body: UpdateProductDTO): Promise<Product> {
-    let existingProduct = await this.findOne(product_id);
+    let exists_product = await this.findOne(product_id);
 
     // validate and set category
     if (body.category_ids) {
       const categories = await this.categoryService.validateIds(
         body.category_ids,
       );
-      existingProduct.categories = categories;
+      exists_product.categories = categories;
     }
 
-    const saved_product = this.productRepo.merge(existingProduct, body);
-    return await this.productRepo.save(saved_product);
+    const updated_product = this.productRepo.merge(exists_product, body as any);
+    return await this.productRepo.save(updated_product);
   }
 
   // delete product

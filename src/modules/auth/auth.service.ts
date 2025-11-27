@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
-import { RegisterRequest } from './dto/register.request';
+import { RegisterDTO } from './dto/register.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -24,7 +24,7 @@ export class AuthService {
    * รับข้อมูลผู้ใช้มา -> hash รหัสผ่านของผู้ใช้
    * บันทึกลงฐานข้อมูล
    */
-  async register(req: RegisterRequest): Promise<UserResponse> {
+  async register(req: RegisterDTO): Promise<UserResponse> {
     this.logger.log(`[${this.className}::register] service called!`);
 
     const user = await this.userRepo.existsBy({ email: req.email });

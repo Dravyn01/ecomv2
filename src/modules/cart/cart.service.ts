@@ -1,14 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cart, CartItem } from 'src/config/entities.config';
-import { FindAllCartsDto } from './dto/req/find-all-carts.query';
-import { CartsResponse } from './dto/res/carts.res';
 import { Repository, DataSource } from 'typeorm';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { UserService } from '../user/user.service';
-import { AddToCartReq } from './dto/req/add-to-cart.req';
-import { ActionsCartItemReq } from './dto/req/actions-cartitem.req';
 import { StockService } from '../stock/stock.service';
+import { FindAllCartsDto } from './dto/find-all-carts.query';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { AddToCartDTO } from './dto/add-to-cart.dto';
+import { ActionsCartItemDTO } from './dto/actions-cartitem.dto';
 
 @Injectable()
 export class CartService {
@@ -25,7 +25,7 @@ export class CartService {
   ) {}
 
   // # DEBUG METHOD
-  async findAll(body: FindAllCartsDto): Promise<CartsResponse> {
+  async findAll(body: FindAllCartsDto): Promise<DatasResponse<Cart[]>> {
     const { page, limit, order } = body;
 
     const [carts, count] = await this.cartRepo.findAndCount({
@@ -42,7 +42,7 @@ export class CartService {
 
     this.logger.log(`[cart.service::findAll] found carts "${count}"`);
 
-    return { data: carts, count } as CartsResponse;
+    return { data: carts, count } as DatasResponse<Cart[]>;
   }
 
   async findOneByUser(user_id: number): Promise<Cart> {
@@ -54,7 +54,7 @@ export class CartService {
     return existing;
   }
 
-  async addToCart(body: AddToCartReq): Promise<CartItem> {
+  async addToCart(body: AddToCartDTO): Promise<CartItem> {
     this.logger.log(
       `[cart.service::addToCart] START addToCart user=${body.user_id}, variant=${body.variant_id}, qty=${body.quantity}`,
     );
@@ -158,7 +158,7 @@ export class CartService {
    * 5: return cart_item พร้อม status 'updated' หรือ 'deleted'
    */
   async itemAction(
-    body: ActionsCartItemReq,
+    body: ActionsCartItemDTO,
   ): Promise<{ cart_item: CartItem; status: 'updated' | 'deleted' }> {
     this.logger.log(
       `[cart.service::itemAction] START user=${body.user_id}, variant=${body.variant_id}, action=${body.action}`,

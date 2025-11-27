@@ -16,6 +16,7 @@ import { ReviewModule } from './modules/review/review.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     ReviewModule,
     WishlistModule,
     AnalyticsModule,
+    UploadModule,
   ],
 
   controllers: [],

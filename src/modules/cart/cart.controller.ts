@@ -9,12 +9,12 @@ import {
   Put,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
-import { FindAllCartsDto } from './dto/req/find-all-carts.query';
 import { ApiResponse } from 'src/common/dto/res/common-response';
-import { CartsResponse } from './dto/res/carts.res';
-import { AddToCartReq } from './dto/req/add-to-cart.req';
-import { ActionsCartItemReq } from './dto/req/actions-cartitem.req';
-import { CartItem } from './entities/cart.entity';
+import { Cart, CartItem } from './entities/cart.entity';
+import { FindAllCartsDto } from './dto/find-all-carts.query';
+import { DatasResponse } from 'src/common/dto/res/datas.response';
+import { AddToCartDTO } from './dto/add-to-cart.dto';
+import { ActionsCartItemDTO } from './dto/actions-cartitem.dto';
 
 @Controller('/admin/carts')
 export class CartController {
@@ -23,7 +23,7 @@ export class CartController {
   @Get('/debug')
   async findAllCarts(
     @Query() query: FindAllCartsDto,
-  ): Promise<ApiResponse<CartsResponse>> {
+  ): Promise<ApiResponse<DatasResponse<Cart[]>>> {
     const carts = await this.cartService.findAll(query);
     return {
       message: `พบตะกร้าทั้งหมด ${carts.count} รายการ`,
@@ -32,7 +32,7 @@ export class CartController {
   }
 
   @Post('/add-to-cart')
-  async addToCart(@Body() body: AddToCartReq): Promise<ApiResponse<CartItem>> {
+  async addToCart(@Body() body: AddToCartDTO): Promise<ApiResponse<CartItem>> {
     const cart_item = await this.cartService.addToCart(body);
     return {
       message: 'เพิ่มสินค้าเข้าตะกร้าเรียบร้อย',
@@ -48,7 +48,7 @@ export class CartController {
 
   @Put('/item-action')
   async cartItemAction(
-    @Body() body: ActionsCartItemReq,
+    @Body() body: ActionsCartItemDTO,
   ): Promise<ApiResponse<CartItem>> {
     const result = await this.cartService.itemAction(body);
     return {

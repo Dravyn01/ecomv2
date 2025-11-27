@@ -31,7 +31,7 @@ export class ProductVariant {
   price: number;
 
   /* example: PD-BLK-XL-003 */
-  @Column({ type: 'varchar', length: 100 }) // should be unique
+  @Column({ type: 'varchar', length: 100, nullable: true }) // should be unique
   sku: string;
 
   @Column({ type: 'text' })

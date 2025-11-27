@@ -7,21 +7,22 @@ import {
   IsString,
   IsInt,
 } from 'class-validator';
+import { StockChangeType } from '../enums/stock-change.enum';
 
 export class CreateMovementDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกตัวเลือกสินค้า' })
-@IsInt({ message: 'รหัสตัวเลือกสินค้าต้องเป็นจำนวนเต็ม' })
-@IsPositive({ message: 'รหัสตัวเลือกสินค้าต้องมากกว่า 0' })
-variant_id: number;
+  @IsInt({ message: 'รหัสตัวเลือกสินค้าต้องเป็นจำนวนเต็ม' })
+  @IsPositive({ message: 'รหัสตัวเลือกสินค้าต้องมากกว่า 0' })
+  variant_id: number;
 
- @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
-@IsInt({ message: 'จำนวนต้องเป็นจำนวนเต็ม' })
-@IsPositive({ message: 'จำนวนต้องมากกว่า 0' })
-quantity: number;
+  @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
+  @IsInt({ message: 'จำนวนต้องเป็นจำนวนเต็ม' })
+  @IsPositive({ message: 'จำนวนต้องมากกว่า 0' })
+  quantity: number;
 
   @IsNotEmpty({ message: 'กรุณาเลือกประเภทการเปลี่ยนแปลง (change_type)' })
   @IsEnum(StockChangeType, {
-    message: `change_type ต้องเป็นหนึ่งในค่า: ${Object.values(StockChangeType)}`,
+    message: `change_type ต้องเป็นหนึ่งในค่า ${StockChangeType}`,
   })
   change_type: StockChangeType;
 
@@ -35,3 +36,4 @@ quantity: number;
   @IsPositive({ message: 'รหัส order ต้องเป็นจำนวนเต็มบวก' })
   order_id?: number;
 }
+

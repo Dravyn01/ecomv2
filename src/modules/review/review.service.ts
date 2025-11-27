@@ -7,6 +7,7 @@ import { Order, Product } from 'src/config/entities.config';
 import { OrderStatus } from '../order/enums/order-status.enum';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { UserService } from '../user/user.service';
+import { ProductVariantService } from '../product-variant/product-variant.service';
 import { ProductService } from '../product/product.service';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ReviewService {
 
     // services
     private readonly productService: ProductService,
+    private readonly variantService: ProductVariantService,
     private readonly userService: UserService,
     private readonly manager: EntityManager,
   ) {}
@@ -54,7 +56,7 @@ export class ReviewService {
    *
    * */
   async create(body: CreateReviewDto): Promise<Review> {
-    const product = await this.productService.findOne(body.variant_id);
+    const variant = await this.variantService.findOne(body.variant_id);
     const user = await this.userService.findOne(body.user_id);
 
     const review = this.manager.transaction(async (tx) => {
@@ -74,8 +76,8 @@ export class ReviewService {
         );
 
       // ค่าฉะเสี่ยและ review ทั้งหมดของรอบก่อน
-      const oldAverage = product.avg_rating;
-      const oldReviews = product.review_count;
+      const oldAverage = variant.product.avg_rating;
+      const oldReviews = variant.product.review_count;
 
       console.log(
         `oldAverage&oldReviews: ${oldAverage}, oldReviews: ${oldReviews}`,
@@ -92,8 +94,9 @@ export class ReviewService {
         user: { id: body.user_id },
         comment: body.comment,
         rating: body.rating,
+        image_url: body.image_url,
         product: {
-          id: product.id,
+          id: variant.product.id,
           avg_rating: Number(newAverage),
           review_count: oldReviews + 1,
         },

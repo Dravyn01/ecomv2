@@ -33,6 +33,9 @@ export class Product {
   @Column({ type: 'varchar', length: 255 })
   description: string;
 
+  @Column({ type: 'text' })
+  image_url: string;
+
   // # price
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   base_price: number;

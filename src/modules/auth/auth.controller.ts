@@ -1,6 +1,6 @@
 import { Body, Controller, Logger, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterRequest } from './dto/register.request';
+import { RegisterDTO } from './dto/register.dto';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { LocalGuard } from 'src/common/guards/local.guard';
 import { UserResponse } from 'src/modules/user/dto/user.response';
@@ -15,7 +15,7 @@ export class AuthController {
 
   @Post('/register')
   async register(
-    @Body() body: RegisterRequest,
+    @Body() body: RegisterDTO,
   ): Promise<ApiResponse<UserResponse>> {
     this.logger.log(
       `[${this.className}::register] register with username=${body.username} email=${body.email}`,

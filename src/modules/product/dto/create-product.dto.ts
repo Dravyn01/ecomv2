@@ -9,6 +9,7 @@ import {
   IsString,
   Length,
   Min,
+  IsUrl,
 } from 'class-validator';
 import { ProductVariantStatus } from 'src/config/entities.config';
 
@@ -27,6 +28,14 @@ export class CreateProductDTO {
   })
   description: string;
 
+  @IsNotEmpty({ message: '' })
+  @IsString({ message: '' })
+  @IsUrl(
+    { require_host: true, protocols: ['http', 'https'], require_tld: true },
+    { message: '' },
+  )
+  image_url: string;
+
   @IsNotEmpty({ message: 'กรุณากรอกราคาพื้นฐานของสินค้า' })
   @IsNumber({}, { message: 'ราคาพื้นฐานต้องเป็นตัวเลขเท่านั้น' })
   @Min(1, { message: 'ราคาพื้นฐานต้องมากกว่า 0 บาท' })
@@ -38,11 +47,14 @@ export class CreateProductDTO {
   discount_price?: number;
 
   @IsOptional()
-  @IsEnum(ProductVariantStatus, { message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductStatus เท่านั้น' })
+  @IsEnum(ProductVariantStatus, {
+    message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductStatus เท่านั้น',
+  })
   status: ProductVariantStatus = ProductVariantStatus.ACTIVE;
 
   @IsOptional()
   @IsArray({ message: 'หมวดหมู่สินค้าต้องเป็นอาเรย์ของตัวเลข' })
+  @IsInt({ each: true, message: '' })
   @IsPositive({
     each: true,
     message: 'หมวดหมู่แต่ละรายการต้องเป็นตัวเลขที่มากกว่า 0',

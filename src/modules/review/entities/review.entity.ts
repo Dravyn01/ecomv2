@@ -27,6 +27,9 @@ export class Review {
   @JoinColumn()
   product?: Product;
 
+  @Column({ type: 'text', nullable: true })
+  image_url?: string;
+
   @Column()
   rating: number; //
 

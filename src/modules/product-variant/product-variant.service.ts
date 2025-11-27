@@ -97,16 +97,13 @@ export class ProductVariantService {
       product: { id: product.id },
       color: { id: color.id },
       price: body.price,
-      sku: body.sku,
       image_url: body.image_url,
       stock: {
         quantity: 0,
       },
     });
 
-    this.logger.log(
-      `[${this.className}::create] created variant success`,
-    );
+    this.logger.log(`[${this.className}::create] created variant success`);
 
     return newVariant;
   }
