@@ -36,4 +36,3 @@ export class CreateMovementDTO {
   @IsPositive({ message: 'รหัส order ต้องเป็นจำนวนเต็มบวก' })
   order_id?: number;
 }
-

@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserResponse } from './dto/user.response';
 import { toUserResponse } from 'src/common/mapper/user.mapper';
-import { User } from './entities/user.entity';
+import { Role, User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -56,6 +56,7 @@ export class UserService {
       where: { id: user_id },
       relations: ['cart', 'orders'],
     });
+    console.log('user', user);
     if (!user) throw new NotFoundException('not found user');
     return user;
   }
@@ -64,5 +65,26 @@ export class UserService {
     this.logger.log(`getProfile called with email=${email}`);
     const user = await this.findByEmail(email);
     return toUserResponse(user);
+  }
+
+  async checkRole(user_id: number, role: Role): Promise<Boolean> {
+    const user = await this.userRepo.findOneBy({ id: user_id });
+    if (!user) throw new NotFoundException('not found user');
+    if (user.role === role) {
+      return true;
+    }
+    return false;
+  }
+
+  async findConversation(user_id: number): Promise<string> {
+    const exists = await this.userRepo.findOne({
+      where: {
+        id: user_id,
+      },
+      relations: ['conversation'],
+    });
+    if (!exists)
+      throw new NotFoundException('not found conversation by this user');
+    return exists.conversation.id;
   }
 }

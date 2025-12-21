@@ -1,0 +1,290 @@
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Socket, Server } from 'socket.io';
+import { Logger, NotFoundException, UseGuards } from '@nestjs/common';
+import { WsJwtGuard } from 'src/common/guards/ws-jwt.guard';
+import { Conversation, Inbox, Message, Role } from 'src/config/entities.config';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { WsCheckRole } from 'src/common/guards/ws-role.guard';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ChatService } from './chat.service';
+import { CheckRoleGuard } from 'src/common/guards/role.guard';
+import { NotificationService } from '../notification/notification.service';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
+import { MessageService } from '../message/message.service';
+import { CreateMessageDTO } from '../message/dto/create-message.dto';
+import { UpdateMessageDTO } from '../message/dto/update-message.dto';
+import { DeleteMessageDTO } from '../message/dto/delete-message.dto';
+import { ReadMessageDTO } from '../message/dto/read-message.dto';
+import { LoadMessages } from '../message/dto/load-messages.dto';
+
+/*
+ * NOTE:
+ * ทุก event ยังไม่ได้มีการเทสเกิดขี้น เนื่องจากเขียน api ตัวนี้บนมือถือ และ ไม่มี tools ให้เทส
+ * */
+@WebSocketGateway({
+  cors: { origin: '*' },
+})
+@UseGuards(WsJwtGuard)
+export class ChatGateway {
+  @WebSocketServer()
+  readonly server: Server;
+
+  private readonly logger = new Logger(ChatGateway.name);
+  private readonly className = 'chat.gateway';
+
+  constructor(
+    @InjectRepository(Inbox) private readonly inboxRepo: Repository<Inbox>,
+    @InjectRepository(Conversation)
+    private readonly conversationRepo: Repository<Conversation>,
+    @InjectRepository(Message)
+    private readonly messageRepo: Repository<Message>,
+    private readonly chatService: ChatService,
+    private readonly notifyService: NotificationService,
+    private readonly messageService: MessageService,
+  ) {}
+
+  /**
+   * เมื่อผู้ใช้กด "คุยกับแอดมิน" จะสร้างห้องสนทนาใหม่(if no found conversation)และให้ client join
+   * @returns conversation_id สำหรับผูกห้องของลูกค้า
+   */
+  @SubscribeMessage('JOIN_ROOM')
+  async onJoinRoom(@ConnectedSocket() client: Socket) {
+    const user_id = client.data.user.sub;
+
+    this.logger.log(
+      `[${this.className}::createConversation] cateway called! (user_id=${user_id})`,
+    );
+
+    const exists = await this.conversationRepo.findOne({
+      where: { user: { id: user_id } },
+    });
+
+    if (exists) return exists.id;
+
+    this.logger.log(
+      `[${this.className}::createConversation] no conversation found for user_id=${user_id}. create a new one successfully!`,
+    );
+
+    const saved = await this.conversationRepo.save({ user: { id: user_id } });
+
+    client.join(`ROOM_${saved.id}`);
+    return saved.id;
+  }
+
+  /**
+   * รับข้อความจาก user แล้วบันทึก และกระจายให้ผู้ฟังในห้องสนทนา
+   * NOTE: Client ควรมี Event NEW_MESSAGE สำหรับรับ message จาก server
+   */
+  @Roles(Role.USER, Role.SUPPORT)
+  @UseGuards(WsCheckRole)
+  @SubscribeMessage('SEND_MESSAGE')
+  async onSendMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    dto: CreateMessageDTO,
+  ) {
+    this.logger.log(
+      `[${this.className}::SEND_MESSAGE] called event! (body=${JSON.stringify(
+        dto,
+      )}, sub=${client.data.user.sub}`,
+    );
+
+    const user: JwtPayload = client.data.user;
+
+    const message = await this.messageService.createMessage(user, dto);
+    const newNotification = await this.notifyService.createNotification(
+      user,
+      message,
+    );
+    await this.chatService.createInbox(user.sub, dto.conversation_id);
+
+    // Notification: ส่งแจ้งเตือนหาผู้ใช้
+    if (user.role === Role.SUPPORT) {
+      this.server.to(`SUPPORT_ROOM`).emit('NEW_NOTIFICATION', newNotification);
+    } else {
+      this.server
+        .to(`USER_${message.sender.id}`)
+        .emit('NEW_NOTIFICATION', newNotification);
+    }
+
+    // Message: ส่งข้อความไปยังห้องสนทนาของผู้ใช้และ support ที่เกี่ยวข้อง
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('NEW_MESSAGE', message);
+
+    // Inbox: แจ้ง support room ว่ามี inbox ใหม่
+    // WARNING: message.sender อาจมีแค่ field id เนื่องจากทำการ  save ด้วย id
+    this.server.to('SUPPORT_ROOM').emit('NEW_INBOX', {
+      conversation_id: dto.conversation_id,
+      user: message.sender,
+    });
+
+    this.logger.debug(`[${this.className}::SEND_MESSAGE] done! have no error`);
+  }
+
+  @SubscribeMessage('UPDATE_MESSAGE')
+  async onUpdateMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: UpdateMessageDTO,
+  ) {
+    await this.messageService.updateMessage(client.data.user.sub, dto);
+
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('MESSAGE_UPDATED', {
+      message_id: dto.message_id,
+      text: dto.text,
+      edit_at: new Date(),
+    });
+  }
+
+  @SubscribeMessage('DELETE_MESSAGE')
+  async onDeleteMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: DeleteMessageDTO,
+  ) {
+    await this.messageService.deleteMessage(client.data.user.sub, dto);
+
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('DELETE_MESSAGE', {
+      message_id: dto.message_id,
+    });
+  }
+
+  @SubscribeMessage('DELETE_IMAGE_MESSAGE')
+  async onDeleteImageMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: DeleteMessageDTO,
+  ) {
+    await this.messageService.deleteImage(client.data.user.sub, dto);
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('IMAGE_DELETED', {
+      message_id: dto.message_id,
+    });
+  }
+
+  /**
+   * ให้พนักงาน support join ห้องของลูกค้า หลังผ่านการตรวจสอบสิทธิ์แล้ว
+   */
+  @Roles(Role.SUPPORT)
+  @UseGuards(WsCheckRole)
+  @SubscribeMessage('SUPPORT_JOIN_USER_ROOM')
+  async onSupportJoinUserRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() conversation_id: string,
+  ) {
+    if (!(await this.chatService.existsConversation(conversation_id))) {
+      throw new NotFoundException('ไม่พบห้องสนทนานี้');
+    }
+
+    const existsInbox = await this.inboxRepo.findOneBy({
+      conversation: { id: conversation_id },
+    });
+
+    // mark ว่าเปิด inbox แล้ว
+    if (existsInbox && !existsInbox.is_open) {
+      existsInbox.is_open = true;
+      existsInbox.open_at = new Date();
+      await this.inboxRepo.save(existsInbox);
+    }
+    client.join(`ROOM_${conversation_id}`);
+  }
+
+  /**
+   * อ่านกลุ่มข้อความและ broadcast ให้ผู้ฟังในห้องรู้ว่ามีข้อความถูกอ่านแล้ว
+   */
+  @Roles(Role.SUPPORT, Role.USER)
+  @UseGuards(CheckRoleGuard)
+  @SubscribeMessage('READ_MESSAGES')
+  async onReadMessage(
+    @MessageBody() dto: ReadMessageDTO,
+    @ConnectedSocket() client: Socket,
+  ) {
+    await this.messageService.readMessage(client.data.user.sub, dto);
+
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('MESSAGES_READ', {
+      message_ids: dto.message_ids,
+      conversation_id: dto.conversation_id,
+    });
+  }
+
+  @SubscribeMessage('READ_ONE_NOTIFICATION')
+  async onReadOneNotification(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() notification_id: string,
+  ) {
+    await this.notifyService.markOneNotificationAsRead(
+      client.data.user.sub,
+      notification_id,
+    );
+
+    this.server.to(`USER_${client.data.user.sub}`).emit('NOTIFICATION_READ', {
+      notification_id,
+    });
+  }
+
+  @SubscribeMessage('READ_ALL_NOTIFICATION')
+  async onReadAllNotify(@ConnectedSocket() client: Socket) {
+    await this.notifyService.markAllNotificationsAsRead(client.data.user.sub);
+    // TODO: emit to client
+  }
+
+  @SubscribeMessage('DELETE_ONE_NOTIFICATION')
+  async onDeleteOneNotification(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() notification_id: string,
+  ) {
+    await this.notifyService.deleteOneNotification(
+      client.data.user.sub,
+      notification_id,
+    );
+  }
+
+  @SubscribeMessage('DELETE_ALL_NOTIFICATION')
+  async onDeleteAllNotification(@ConnectedSocket() client: Socket) {
+    await this.notifyService.deleteAllUnreadNotifications(client.data.user.sub);
+  }
+
+  /**
+   * โหลดประวัติข้อความของห้องเมื่อเปิดแชท และ เวลาเลื่อนขี้นสุด
+   */
+  @Roles(Role.USER, Role.SUPPORT)
+  @UseGuards(WsCheckRole)
+  @SubscribeMessage('LOAD_MESSAGE')
+  async onLoadMessages(
+    @MessageBody() dto: LoadMessages,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const newMessages = await this.messageService.loadMessage(
+      client.data.user.sub,
+      dto,
+    );
+
+    // ส่ง 10 message ล่าสุดกลับไป
+    this.server
+      .to(`ROOM_${dto.conversation_id}`)
+      .emit('LOADING_MESSAGE', newMessages);
+  }
+
+  /**
+   * เมื่อ Support, User, Admin login > จะ join เข้าห้องของตัวเอง
+   */
+  @Roles(Role.SUPPORT, Role.USER, Role.ADMIN)
+  @UseGuards(WsCheckRole)
+  @SubscribeMessage('JOIN_INTO_ROOM')
+  async onAuthorization(@ConnectedSocket() client: Socket) {
+    const user = client.data.user;
+    switch (user.role) {
+      case Role.SUPPORT: {
+        client.join('SUPPORT_ROOM');
+      }
+      case Role.USER: {
+        client.join(`USER_${client.data.user.sub}`);
+      }
+      case Role.ADMIN: {
+        client.join(`ADMIN_ROOM`);
+      }
+    }
+  }
+}

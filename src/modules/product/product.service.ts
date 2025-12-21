@@ -8,6 +8,9 @@ import { UpdateProductDTO } from './dto/update-product.dto';
 import { DeleteResult } from 'typeorm/browser';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CategoryService } from '../category/category.service';
+import { ProductView } from '../analytics/entities/product-view.entity';
+import { type Request } from 'express';
+import { User } from 'src/config/entities.config';
 
 @Injectable()
 export class ProductService {
@@ -18,6 +21,9 @@ export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+
+    @InjectRepository(ProductView)
+    private readonly viewRepo: Repository<ProductView>,
     private readonly categoryService: CategoryService,
   ) {}
 
@@ -54,6 +60,7 @@ export class ProductService {
         variants: true,
       },
     });
+
     if (!product)
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${product_id}`);
     return product;
@@ -96,13 +103,53 @@ export class ProductService {
     return await this.productRepo.delete(product_id);
   }
 
-  // top 5 popular product
-  async getPopularProduct(): Promise<Product[]> {
-    return await this.productRepo.find({
-      order: {
-        popularity_score: 'DESC',
-      },
-      take: 5,
+  // view product
+  async view(product_id: number, req: Request): Promise<Product> {
+    this.logger.log(
+      `[product.service::view] called! (product_id=${product_id}, user=${JSON.stringify(req.user)})`,
+    );
+    const product = await this.findOne(product_id);
+    const user = (req.user as User | null) || null;
+    const now = new Date();
+    let newData;
+
+    const item = await this.viewRepo.findOne({
+      where: user
+        ? {
+            user: { id: user.id },
+            product: { id: product.id },
+          }
+        : {
+            ip_address: req.ip,
+            user_agent: req.headers['user-agent'],
+            product: { id: product.id },
+          },
     });
+
+    if (item) {
+      // update
+      newData = {
+        id: item.id,
+        last_view_at: now,
+        total_view: item.total_view + 1,
+      };
+    } else {
+      // insert
+      newData = {
+        product: { id: product_id },
+        user: user ? { id: user.id } : {},
+        ip_address: req.ip,
+        user_agent: req.headers['user-agent'],
+        last_view_at: now,
+        total_view: 1,
+      };
+    }
+
+    // if (isBefore(now, addMinutes(new Date(saved_view.last_view_at), 1)))
+    //   return product;
+
+    console.log('item', item);
+    await this.viewRepo.save(newData);
+    return product;
   }
 }

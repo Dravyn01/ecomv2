@@ -60,25 +60,12 @@ export class CartService {
     );
 
     const user = await this.userService.findOne(body.user_id);
-    this.logger.log(`[cart.service::addToCart] Loaded user id=${user.id}`);
-
     const variant = await this.variantService.findOne(body.variant_id);
-    this.logger.log(
-      `[cart.service::addToCart] Loaded variant id=${variant.id}`,
-    );
 
     const cart_item = await this.datasource.transaction(async (tx) => {
-      this.logger.log('[cart.service::addToCart] Transaction started');
-
       await this.stockService.IsOutOfStock(body.variant_id, body.quantity);
-      this.logger.log(
-        `[cart.service::addToCart] Stock validated variant=${body.variant_id}, qty=${body.quantity}`,
-      );
 
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
-      this.logger.log(
-        `[cart.service::addToCart] Cart loaded: ${cart ? `cartId=${cart.id}` : 'none'}`,
-      );
 
       if (!cart) {
         this.logger.log(
@@ -93,6 +80,7 @@ export class CartService {
 
       const existing_item = await tx.findOne(CartItem, {
         where: { cart: { id: cart.id }, variant: { id: variant.id } },
+        relations: ['variant'],
       });
 
       if (existing_item) {
@@ -102,6 +90,11 @@ export class CartService {
 
         // เพิ่มจำนวน
         existing_item.quantity += body.quantity;
+
+        await this.stockService.IsOutOfStock(
+          existing_item.variant.id,
+          existing_item.quantity,
+        );
 
         this.logger.log(
           `[cart.service::addToCart] Updated quantity itemId=${existing_item.id}, newQty=${existing_item.quantity}`,

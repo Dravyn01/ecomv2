@@ -17,6 +17,9 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { ProductView } from './config/entities.config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -30,6 +33,11 @@ import { UploadModule } from './modules/upload/upload.module';
 
     // typeorm config
     TypeOrmModule.forRoot(TypeOrmConfig),
+
+    // Event Emitter
+    EventEmitterModule.forRoot({
+      global: true,
+    }),
 
     // modules
     AuthModule,
@@ -46,6 +54,8 @@ import { UploadModule } from './modules/upload/upload.module';
     WishlistModule,
     AnalyticsModule,
     UploadModule,
+    ChatModule,
+    ProductView,
   ],
 
   controllers: [],

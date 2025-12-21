@@ -21,11 +21,10 @@ export class Review {
   user?: User;
 
   @ManyToOne(() => Product, (product) => product.reviews, {
-    nullable: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  product?: Product;
+  product: Product;
 
   @Column({ type: 'text', nullable: true })
   image_url?: string;

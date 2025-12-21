@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, Length, MinLength } from 'class-validator';
+import { Role } from 'src/config/entities.config';
 
 export class RegisterDTO {
   @IsNotEmpty({ message: 'ชื่อผู้ใช้ต้องไม่เป็นค่าว่าง' })
@@ -12,4 +13,7 @@ export class RegisterDTO {
   @IsNotEmpty({ message: 'รหัสผ่านต้องไม่เป็นค่าว่าง' })
   @MinLength(6, { message: 'รหัสผ่านต้องยาวกว่าหรือเท่ากับ 6 ตัวอักษร' })
   password: string;
+
+  @IsNotEmpty()
+  role: Role;
 }

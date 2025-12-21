@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { toUserResponse } from 'src/common/mapper/user.mapper';
 import { User } from 'src/modules/user/entities/user.entity';
+import { LoginHistory } from './entities/login-history.entity';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(LoginHistory)
+    private readonly logHistory: Repository<LoginHistory>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -42,6 +45,7 @@ export class AuthService {
       username: req.username,
       email: req.email,
       password: hash_password,
+      role: req.role,
     });
 
     this.logger.log(
@@ -59,10 +63,33 @@ export class AuthService {
   async login(user: User): Promise<{ accessToken: string }> {
     this.logger.log(`[${this.className}::login] service called!`);
 
+    this.logger.debug(
+      `[${this.className}::login] check user by user_id=${user.id}`,
+    );
+
+    //
+    const existsHistory = await this.logHistory.findOne({
+      where: {
+        user: { id: user.id },
+      },
+      order: { last_login_at: 'DESC' },
+    });
+
+    this.logger.debug(
+      `[${this.className}::login] ${existsHistory ? `founded user (data=${JSON.stringify(existsHistory)})` : `not found history of user_id=${user.id}. will insert first history`}`,
+    );
+
+    //
+    await this.logHistory.save({
+      user: { id: user.id },
+      count: existsHistory ? existsHistory.count + 1 : 1,
+      last_login_at: new Date(),
+    });
+
     const payload = {
       sub: user.id,
       email: user.email,
-      role: 'admin',
+      role: user.role,
     };
 
     const token = this.jwtService.sign(payload);

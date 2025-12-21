@@ -21,7 +21,7 @@ export class WishlistService {
     const product = await this.productService.findOne(body.product_id);
     return await this.wishlistRepo.save({
       user: { id: user_id },
-      product: { id: product.id, wishlist_count: product.wishlist_count + 1 },
+      product: { id: product.id },
     });
   }
 
@@ -29,7 +29,7 @@ export class WishlistService {
     const product = await this.productService.findOne(product_id);
     await this.wishlistRepo.delete({
       user: { id: user_id },
-      product: { id: product.id, wishlist_count: product.wishlist_count - 1 },
+      product: { id: product.id },
     });
   }
 }

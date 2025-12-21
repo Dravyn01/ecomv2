@@ -12,6 +12,12 @@ import {
 } from 'typeorm';
 import { StockChangeType } from '../enums/stock-change.enum';
 
+export enum StockStatus {
+  NONE = 'NONE',
+  OUT = 'OUT',
+  LOW = 'LOW',
+}
+
 @Entity('stocks')
 export class Stock {
   @PrimaryGeneratedColumn({ name: 'stock_id' })
@@ -19,6 +25,9 @@ export class Stock {
 
   @OneToOne(() => ProductVariant, (variant) => variant.stock)
   variant: ProductVariant;
+
+  @Column({ type: 'enum', enum: StockStatus, default: StockStatus.NONE })
+  status: StockStatus;
 
   @Column('int')
   quantity: number;

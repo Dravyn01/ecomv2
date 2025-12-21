@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
-import { renameFile } from 'src/utils/rename-file';
 
 @Controller('/api')
 export class UploadController {
@@ -39,8 +38,6 @@ export class UploadController {
         'No file uploaded or file too large (max 5MB)',
       );
     }
-
-    const newFile = renameFile(file.originalname);
 
     const result = await this.uploadService.uploadImage(file.buffer, folder);
 

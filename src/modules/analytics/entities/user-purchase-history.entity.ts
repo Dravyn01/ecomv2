@@ -10,12 +10,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Product } from 'src/modules/product/entities/product.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 
-/*
- *
- * entity สำหรับบันทึกว่า user ซื้อสินค้าซิ้นนี้ไปกี่ครั้งแล้ว
- *
- * */
-
+// entity สำหรับบันทึกว่า user ซื้อสินค้าซิ้นนี้ไปกี่ครั้งแล้ว
 @Entity('user_purchase_history')
 export class UserPurchaseHistory {
   @PrimaryGeneratedColumn({ name: 'user_purchase_id' })

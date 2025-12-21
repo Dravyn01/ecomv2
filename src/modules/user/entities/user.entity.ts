@@ -1,5 +1,7 @@
-import { Review } from 'src/config/entities.config';
+import { Conversation, Review } from 'src/config/entities.config';
+import { LoginHistory } from 'src/modules/auth/entities/login-history.entity';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
+import { Message } from 'src/modules/message/entities/message.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import {
@@ -11,6 +13,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+export enum Role {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  SUPPORT = 'SUPPORT',
+}
 
 @Entity('users')
 export class User {
@@ -25,6 +34,9 @@ export class User {
 
   @Column()
   password: string;
+
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  role: Role;
 
   @CreateDateColumn()
   created_at: Date;
@@ -44,4 +56,13 @@ export class User {
 
   @OneToMany(() => Wishlist, (wishlist) => wishlist.user)
   wishlists: Wishlist[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  messages: Message[];
+
+  @OneToOne(() => Conversation, (con) => con.user)
+  conversation: Conversation;
+
+  @OneToMany(() => LoginHistory, (hi) => hi.user)
+  logined_history: LoginHistory;
 }

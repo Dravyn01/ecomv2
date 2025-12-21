@@ -6,11 +6,10 @@ import { UserPurchaseHistory } from './entities/user-purchase-history.entity';
 import {
   Order,
   OrderItem,
-  Product,
-  ProductRepeatSummary,
+  ProductStats,
+  ProductView,
 } from 'src/config/entities.config';
-import { PopularProductJob } from './job/popular-product.job';
-import { RepeatRateCron } from './job/repeat-rate.job';
+import { ProductsScoreCron } from './job/products-score.job';
 
 @Module({
   imports: [
@@ -18,11 +17,11 @@ import { RepeatRateCron } from './job/repeat-rate.job';
       UserPurchaseHistory,
       Order,
       OrderItem,
-      ProductRepeatSummary,
-      Product,
+      ProductStats,
+      ProductView,
     ]),
   ],
   controllers: [AnalyticsController],
-  providers: [AnalyticsService, PopularProductJob, RepeatRateCron],
+  providers: [AnalyticsService, ProductsScoreCron],
 })
 export class AnalyticsModule {}

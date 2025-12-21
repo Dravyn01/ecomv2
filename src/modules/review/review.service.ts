@@ -3,12 +3,10 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review } from './entities/review.entity';
 import { EntityManager, Repository } from 'typeorm';
-import { Order, Product } from 'src/config/entities.config';
+import { Order } from 'src/config/entities.config';
 import { OrderStatus } from '../order/enums/order-status.enum';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { UserService } from '../user/user.service';
-import { ProductVariantService } from '../product-variant/product-variant.service';
-import { ProductService } from '../product/product.service';
 
 @Injectable()
 export class ReviewService {
@@ -16,16 +14,13 @@ export class ReviewService {
     @InjectRepository(Review)
     private readonly reviewRepo: Repository<Review>,
 
-    // services
-    private readonly productService: ProductService,
-    private readonly variantService: ProductVariantService,
     private readonly userService: UserService,
     private readonly manager: EntityManager,
   ) {}
 
   // TODO: add logger
 
-  // DEBUG
+  // # DEBUG
   async findAll(): Promise<Review[]> {
     return await this.reviewRepo.find();
   }
@@ -56,7 +51,6 @@ export class ReviewService {
    *
    * */
   async create(body: CreateReviewDto): Promise<Review> {
-    const variant = await this.variantService.findOne(body.variant_id);
     const user = await this.userService.findOne(body.user_id);
 
     const review = this.manager.transaction(async (tx) => {
@@ -75,34 +69,13 @@ export class ReviewService {
           `not found order Status Paid by user ${user.id}`,
         );
 
-      // ค่าฉะเสี่ยและ review ทั้งหมดของรอบก่อน
-      const oldAverage = variant.product.avg_rating;
-      const oldReviews = variant.product.review_count;
-
-      console.log(
-        `oldAverage&oldReviews: ${oldAverage}, oldReviews: ${oldReviews}`,
-      );
-
-      // คำนวนค่าฉะเสี่ยใหม่
-      const newAverage = (
-        (oldAverage * oldReviews + body.rating) /
-        (oldReviews + 1)
-      ).toFixed(2);
-
       // สร้างรีวิวใหม่
-      const newReview = await tx.save(Review, {
+      return await tx.save(Review, {
         user: { id: body.user_id },
         comment: body.comment,
         rating: body.rating,
         image_url: body.image_url,
-        product: {
-          id: variant.product.id,
-          avg_rating: Number(newAverage),
-          review_count: oldReviews + 1,
-        },
       });
-
-      return newReview;
     });
 
     return review;
@@ -116,34 +89,35 @@ export class ReviewService {
    *
    * */
   async delete(review_id: number): Promise<void> {
-    await this.manager.transaction(async (tx) => {
-      const review = await tx.findOneBy(Review, { id: review_id });
-      if (!review) throw new NotFoundException('');
-
-      if (!review.product) {
-        throw new NotFoundException('not found review or product');
-      }
-
-      const product = await this.productService.findOne(review.product.id);
-
-      const oldAverage = product.avg_rating;
-      const oldReviews = product.review_count;
-
-      const newAverage =
-        (oldAverage * oldReviews + review.rating) / (oldReviews - 1);
-
-      console.log('deleteAverage', newAverage);
-
-      await tx.save(Product, {
-        id: product.id,
-        product: {
-          id: product.id,
-          avg_rating: newAverage,
-          review_count: oldReviews - 1,
-        },
-      });
-
-      await tx.delete(Review, review_id);
-    });
+    // await this.manager.transaction(async (tx) => {
+    //   const review = await tx.findOneBy(Review, { id: review_id });
+    //   if (!review) throw new NotFoundException('');
+    //
+    //   if (!review.product) {
+    //     throw new NotFoundException('not found review or product');
+    //   }
+    //
+    //   const product = await this.productService.findOne(review.product.id);
+    //
+    //   const oldAverage = product.avg_rating;
+    //   const oldReviews = product.review_count;
+    //
+    //   const newAverage =
+    //     (oldAverage * oldReviews + review.rating) / (oldReviews - 1);
+    //
+    //   console.log('deleteAverage', newAverage);
+    //
+    //   await tx.save(Product, {
+    //     id: product.id,
+    //     product: {
+    //       id: product.id,
+    //       avg_rating: newAverage,
+    //       review_count: oldReviews - 1,
+    //     },
+    //   });
+    //
+    //   await tx.delete(Review, review_id);
+    // });
+    await this.reviewRepo.delete(review_id);
   }
 }

@@ -32,9 +32,9 @@ export class CheckRoleGuard implements CanActivate {
       `[guard::${this.className}] user=${JSON.stringify(user)}`,
     );
 
-    const includeRole = requiredRoles.includes(user.role);
-    this.logger.log(`[guard::${this.className}] has role?: ${includeRole}`);
+    const hasRole = requiredRoles.includes(user.role);
+    this.logger.log(`[guard::${this.className}] has role?: ${hasRole}`);
 
-    return includeRole;
+    return hasRole;
   }
 }

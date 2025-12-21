@@ -10,6 +10,8 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { Product } from './entities/product.entity';
 import { ApiResponse } from 'src/common/dto/res/common-response';
@@ -18,8 +20,10 @@ import { FindAllProductsQuery } from './dto/find-all-products.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateProductDTO } from './dto/create-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
+import { OptionalIdentityStrategy } from 'src/common/strategies/optional-identity.strategy';
+import { type Request } from 'express';
 
-@Controller('/admin/products')
+@Controller('/api/products')
 export class ProductController {
   private readonly className = ProductController.name;
   private readonly logger = new Logger(ProductController.name);
@@ -42,14 +46,16 @@ export class ProductController {
     };
   }
 
+  @UseGuards(OptionalIdentityStrategy)
   @Get(':product_id')
   async findOne(
     @Param('product_id') product_id: number,
+    @Req() req: Request,
   ): Promise<ApiResponse<Product>> {
     this.logger.log(
       `[${this.className}::findById] search product with product_id=${product_id}`,
     );
-    const product = await this.productService.findOne(product_id);
+    const product = await this.productService.view(product_id, req);
     return {
       message: `ข้อมูลสินค้าหมายเลข ${product_id}`,
       data: product,

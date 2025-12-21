@@ -5,6 +5,7 @@ import { ApiResponse } from 'src/common/dto/res/common-response';
 import { LocalGuard } from 'src/common/guards/local.guard';
 import { UserResponse } from 'src/modules/user/dto/user.response';
 import { User } from 'src/modules/user/entities/user.entity';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
 
 @Controller('/api/auth')
 export class AuthController {
@@ -35,4 +36,8 @@ export class AuthController {
     const result = await this.authService.login(req.user);
     return { message: 'login success', data: result };
   }
+
+  @UseGuards(JwtGuard)
+  @Post('/reset-password')
+  async reset_password() {}
 }
