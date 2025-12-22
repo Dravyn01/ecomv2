@@ -6,18 +6,18 @@ import { ProductStats } from '../entities/product-stats.entity';
 import { Wishlist } from 'src/config/entities.config';
 import { ProductView } from '../entities/product-view.entity';
 import { getDate } from 'src/utils/get-date';
+import { AnalyticsService } from '../analytics.service';
 
 @Injectable()
 export class ProductsEngagementCron {
   constructor(
     @InjectRepository(ProductStats)
     private readonly productStatsRepo: Repository<ProductStats>,
-
     @InjectRepository(ProductView)
     private readonly productViewRepo: Repository<ProductView>,
-
     @InjectRepository(Wishlist)
     private readonly wishlistRepo: Repository<Wishlist>,
+    private readonly analyticService: AnalyticsService,
   ) {}
 
   // รันทุก 6 ชั่วโมง
@@ -32,39 +32,41 @@ export class ProductsEngagementCron {
     });
 
     // wishlist วันนี้
-    const wishlist = await this.wishlistRepo.find({
+    const wishlists = await this.wishlistRepo.find({
       where: { created_at: Between(start, end) },
       relations: ['product'],
     });
 
-    // ใช้ map grouping
-    const grouped = new Map<number, { views: number; wishlist: number }>();
+    this.analyticService.aggregateByProduct<Wishlist, { wishlist: 0; view: 0 }>(
+      wishlists,
+      (v) => v.product.id,
+      (acc, _) => {
+        acc.wishlist++;
+      },
+      () => ({ wishlist: 0, view: 0 }),
+    );
 
-    // รวม views
-    for (const v of views) {
-      const id = v.product.id;
-      if (!grouped.has(id)) {
-        grouped.set(id, { views: 0, wishlist: 0 });
-      }
-      grouped.get(id)!.views++;
-    }
+    const grouped = this.analyticService.aggregateByProduct<
+      ProductView,
+      { wishlist: 0; view: 0 }
+    >(
+      views,
+      (v) => v.product.id,
+      (acc, _) => {
+        acc.view++;
+      },
+      () => ({ wishlist: 0, view: 0 }),
+    );
 
-    // รวม wishlist
-    for (const w of wishlist) {
-      const id = w.product.id;
-      if (!grouped.has(id)) {
-        grouped.set(id, { views: 0, wishlist: 0 });
-      }
-      grouped.get(id)!.wishlist++;
-    }
+    console.log('cron.engagement', grouped);
 
     // update stats
     for (const [product_id, data] of grouped.entries()) {
-      const { views, wishlist } = data;
+      const { view, wishlist } = data;
 
       await this.productStatsRepo.save({
         product: { id: product_id },
-        view_count: views,
+        view_count: view,
         wishlist_count: wishlist,
       });
     }

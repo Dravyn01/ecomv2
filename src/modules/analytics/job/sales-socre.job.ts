@@ -6,6 +6,7 @@ import { Between, Repository } from 'typeorm';
 import { OrderItem } from 'src/config/entities.config';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
+import { AnalyticsService } from '../analytics.service';
 
 @Injectable()
 export class SalesScoreCron {
@@ -14,6 +15,7 @@ export class SalesScoreCron {
     private readonly productStatsRepo: Repository<ProductStats>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
+    private readonly analyticService: AnalyticsService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR) // ทุก 1 ชม
@@ -30,27 +32,20 @@ export class SalesScoreCron {
       relations: ['variant.product'],
     });
 
-    const grouped = new Map<
-      number,
-      { total_orders: number; qty: number; revenue: number }
-    >();
-
-    for (const item of items) {
-      const product_id = item.variant.product.id;
-
-      if (!grouped.has(product_id)) {
-        grouped.set(product_id, {
-          qty: 0,
-          revenue: 0,
-          total_orders: 0,
-        });
-      }
-
-      const stat = grouped.get(product_id)!;
-      stat.total_orders += 0;
-      stat.qty += item.quantity;
-      stat.revenue += item.total_price;
-    }
+    const grouped = this.analyticService.aggregateByProduct(
+      items,
+      (i) => i.variant.product.id,
+      (acc, item) => {
+        acc.total_orders += 1;
+        acc.qty += item.quantity;
+        acc.revenue += item.total_price;
+      },
+      () => ({
+        qty: 0,
+        revenue: 0,
+        total_orders: 0,
+      }),
+    );
 
     for (const [productId, stat] of grouped.entries()) {
       await this.productStatsRepo.save({

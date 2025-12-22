@@ -6,6 +6,7 @@ import { Order, OrderItem } from 'src/config/entities.config';
 import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
+import { AnalyticsService } from '../analytics.service';
 
 @Injectable()
 export class ReturnsScoreCron {
@@ -16,10 +17,11 @@ export class ReturnsScoreCron {
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
+    private readonly analyticService: AnalyticsService,
   ) {}
 
   @Cron('0 */2 * * *') // ทุก 2 ชม
-  async handleReturn(): Promise<void> {
+  async handleIncrementReturnScore(): Promise<void> {
     const { start, end } = getDate();
 
     const items = await this.orderItemRepo.find({
@@ -34,28 +36,22 @@ export class ReturnsScoreCron {
 
     if (items.length === 0) return;
 
-    const grouped = new Map<
-      number,
-      { total: number; qty: number; amount: number; rate: number }
-    >();
+    const grouped = this.analyticService.aggregateByProduct(
+      items,
+      (i) => i.variant.product.id,
+      (acc, item) => {
+        acc.total++;
+        acc.qty += item.quantity;
+        acc.amount += item.total_price;
+      },
+      () => ({
+        total: 0,
+        qty: 0,
+        amount: 0.0,
+      }),
+    );
 
-    for (const item of items) {
-      const product_id = item.variant.product.id;
-
-      if (!grouped.has(product_id)) {
-        grouped.set(product_id, {
-          total: 0,
-          qty: 0,
-          amount: 0.0,
-          rate: 0.0,
-        });
-      }
-
-      const stat = grouped.get(product_id)!;
-      stat.total++;
-      stat.qty += item.quantity;
-      stat.amount += item.total_price;
-    }
+    console.log('cron.return', grouped);
 
     for (const [product_id, data] of grouped.entries()) {
       const paidCount = await this.orderRepo.countBy({
