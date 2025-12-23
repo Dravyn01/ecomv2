@@ -4,12 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { Message, Role, StockStatus } from 'src/config/entities.config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 
+/*
+ * WARNING: อาจมีเคสที่กด delete all notification แล้วไม่มี notification ให้ลบแล้วโดน throw error มาให้
+ * */
 @Injectable()
 export class NotificationService {
   constructor(
@@ -41,7 +44,6 @@ export class NotificationService {
       message: message.text,
       sender: { id: user.sub },
       conversation: { id: message.conversation.id },
-      is_read: false,
       receiver:
         user.role !== Role.SUPPORT
           ? { id: message.conversation.user.id }
@@ -58,7 +60,6 @@ export class NotificationService {
       title: status === StockStatus.OUT ? 'สต็อกหมดแล้ว' : 'สต็อกใกล์หมดแล้ว',
       type: NotificationType.STOCK_ALERT,
       message: `สินค้า "${variant_id}" ${status === StockStatus.OUT ? 'หมดสต็อกแล้ว' : 'ใกล์สต็อกแล้ว'}`,
-      is_read: false,
     });
 
     console.log('[StockAlert]:', newNotification);
@@ -76,17 +77,20 @@ export class NotificationService {
     if (deleteResult.affected === 0) {
       throw new ForbiddenException();
     }
+    // TODO: return affected count to gateway
   }
 
-  async deleteAllUnreadNotifications(senderId: number) {
+  async deleteAllReadNotifications(senderId: number) {
     const deleteResult = await this.notifyRepo.delete({
       sender: { id: senderId },
-      is_read: false,
+      read_at: Not(IsNull()),
     });
 
     if (deleteResult.affected === 0) {
       throw new ForbiddenException();
     }
+
+    return deleteResult.affected;
   }
 
   async markOneNotificationAsRead(senderId: number, notificationId: string) {
@@ -94,10 +98,9 @@ export class NotificationService {
       {
         id: notificationId,
         sender: { id: senderId },
-        is_read: false,
+        read_at: undefined,
       },
       {
-        is_read: true,
         read_at: new Date(),
       },
     );
@@ -107,16 +110,22 @@ export class NotificationService {
     }
   }
 
-  async markAllNotificationsAsRead(senderId: number) {
-    await this.notifyRepo.update(
+  async markAllNotificationsAsRead(sender_id: number) {
+    const updatedResult = await this.notifyRepo.update(
       {
-        sender: { id: senderId },
-        is_read: false,
+        receiver: { id: sender_id },
+        read_at: undefined,
       },
       {
-        is_read: true,
         read_at: new Date(),
       },
     );
+
+    if (updatedResult.affected === 0) throw new ForbiddenException();
+
+    return await this.notifyRepo.countBy({
+      receiver: { id: sender_id },
+      read_at: undefined,
+    });
   }
 }

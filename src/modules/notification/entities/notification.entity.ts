@@ -59,12 +59,6 @@ export class Notification {
   message: string;
 
   /**
-   * สถานะอ่านแล้วหรือยัง
-   */
-  @Column({ default: false })
-  is_read: boolean;
-
-  /**
    * เวลาอ่าน (optional)
    */
   @Column({ type: 'timestamp', nullable: true })

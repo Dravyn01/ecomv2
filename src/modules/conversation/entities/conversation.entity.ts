@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Inbox, User } from 'src/config/entities.config';
 import { Message } from 'src/modules/message/entities/message.entity';
+import { Replies } from 'src/modules/message/entities/reply.entity';
 
 @Entity('conversations')
 export class Conversation {
@@ -24,6 +25,10 @@ export class Conversation {
   @OneToMany(() => Message, (msg) => msg.conversation)
   @JoinColumn()
   messages: Message[];
+
+  @OneToMany(() => Message, (msg) => msg.conversation)
+  @JoinColumn()
+  replies: Replies[];
 
   // ถ้าต้องการระบบปิดเคส (เช่น ปิดการสนทนา)
   @Column({ default: false })

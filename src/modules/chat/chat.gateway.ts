@@ -8,7 +8,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import { Logger, NotFoundException, UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from 'src/common/guards/ws-jwt.guard';
-import { Conversation, Inbox, Message, Role } from 'src/config/entities.config';
+import { Conversation, Inbox, Role } from 'src/config/entities.config';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { WsCheckRole } from 'src/common/guards/ws-role.guard';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,6 +23,8 @@ import { UpdateMessageDTO } from '../message/dto/update-message.dto';
 import { DeleteMessageDTO } from '../message/dto/delete-message.dto';
 import { ReadMessageDTO } from '../message/dto/read-message.dto';
 import { LoadMessages } from '../message/dto/load-messages.dto';
+import { CreateReplyDTO } from '../message/dto/create-reply.dto';
+import { ConversationService } from '../conversation/conversation.service';
 
 /*
  * NOTE:
@@ -43,11 +45,10 @@ export class ChatGateway {
     @InjectRepository(Inbox) private readonly inboxRepo: Repository<Inbox>,
     @InjectRepository(Conversation)
     private readonly conversationRepo: Repository<Conversation>,
-    @InjectRepository(Message)
-    private readonly messageRepo: Repository<Message>,
     private readonly chatService: ChatService,
     private readonly notifyService: NotificationService,
     private readonly messageService: MessageService,
+    private readonly conversationService: ConversationService,
   ) {}
 
   /**
@@ -80,7 +81,6 @@ export class ChatGateway {
 
   /**
    * รับข้อความจาก user แล้วบันทึก และกระจายให้ผู้ฟังในห้องสนทนา
-   * NOTE: Client ควรมี Event NEW_MESSAGE สำหรับรับ message จาก server
    */
   @Roles(Role.USER, Role.SUPPORT)
   @UseGuards(WsCheckRole)
@@ -141,6 +141,21 @@ export class ChatGateway {
     });
   }
 
+  @SubscribeMessage('REPLY_MESSAGE')
+  async onReplyMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateReplyDTO,
+  ) {
+    const newReply = await this.messageService.createReplyMessage(
+      client.data.user.sub,
+      dto,
+    );
+
+    this.server.to(`ROOM_${dto.conversation_id}`).emit('NEW_REPLY', {
+      newReply,
+    });
+  }
+
   @SubscribeMessage('DELETE_MESSAGE')
   async onDeleteMessage(
     @ConnectedSocket() client: Socket,
@@ -174,7 +189,7 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() conversation_id: string,
   ) {
-    if (!(await this.chatService.existsConversation(conversation_id))) {
+    if (!(await this.conversationService.existsConversation(conversation_id))) {
       throw new NotFoundException('ไม่พบห้องสนทนานี้');
     }
 
@@ -226,8 +241,14 @@ export class ChatGateway {
 
   @SubscribeMessage('READ_ALL_NOTIFICATION')
   async onReadAllNotify(@ConnectedSocket() client: Socket) {
-    await this.notifyService.markAllNotificationsAsRead(client.data.user.sub);
-    // TODO: emit to client
+    const unread_count = await this.notifyService.markAllNotificationsAsRead(
+      client.data.user.sub,
+    );
+    this.server
+      .to(`USER_${client.data.user.sub}`)
+      .emit('NOTIFICATION_ALL_READED', {
+        unread_count,
+      });
   }
 
   @SubscribeMessage('DELETE_ONE_NOTIFICATION')
@@ -239,11 +260,25 @@ export class ChatGateway {
       client.data.user.sub,
       notification_id,
     );
+
+    this.server
+      .to(`USER_${client.data.user.sub}`)
+      .emit('NOTIFICATION_DELETED', {
+        notification_id,
+      });
   }
 
   @SubscribeMessage('DELETE_ALL_NOTIFICATION')
   async onDeleteAllNotification(@ConnectedSocket() client: Socket) {
-    await this.notifyService.deleteAllUnreadNotifications(client.data.user.sub);
+    const affected = await this.notifyService.deleteAllReadNotifications(
+      client.data.user.sub,
+    );
+
+    this.server
+      .to(`USER_${client.data.user.sub}`)
+      .emit('ALL_NOTIFICATION_DELETED', {
+        affected,
+      });
   }
 
   /**

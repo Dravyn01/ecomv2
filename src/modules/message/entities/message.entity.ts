@@ -6,8 +6,10 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
-import { Conversation } from '../conversation/conversation.entity';
+import { Conversation } from 'src/config/entities.config';
+import { Reply } from './reply.entity';
 
 @Entity('messages')
 export class Message {
@@ -25,14 +27,18 @@ export class Message {
   @Column({ type: 'text' })
   text: string;
 
-  @Column({ type: 'boolean', default: false })
-  is_read: boolean;
-
-  @Column({ type: 'text' })
+  @Column({ type: 'text', array: true })
   image_urls: string[];
 
+  @OneToMany(() => Reply, (r) => r.message, { nullable: true })
+  @JoinColumn()
+  replies: Reply[];
+
+  @Column({ type: 'timestamp', nullable: true })
+  read_at?: Date;
+
   @Column({ nullable: true })
-  edit_at?: Date;
+  updated_at?: Date;
 
   @CreateDateColumn()
   createdAt: Date;

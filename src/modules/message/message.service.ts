@@ -1,8 +1,8 @@
 import { ForbiddenException } from '@nestjs/common';
 import { CreateMessageDTO } from './dto/create-message.dto';
-import { Message, Role } from 'src/config/entities.config';
+import { Message, Role, User } from 'src/config/entities.config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { ChatService } from '../chat/chat.service';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 import { Injectable } from '@nestjs/common';
@@ -10,12 +10,17 @@ import { UpdateMessageDTO } from './dto/update-message.dto';
 import { DeleteMessageDTO } from './dto/delete-message.dto';
 import { ReadMessageDTO } from './dto/read-message.dto';
 import { LoadMessages } from './dto/load-messages.dto';
+import { Reply } from './entities/reply.entity';
+import { CreateReplyDTO } from './dto/create-reply.dto';
+import { DeleteReplyDTO } from './dto/delete-reply.dto';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectRepository(Message)
     private readonly messageRepo: Repository<Message>,
+    @InjectRepository(Reply)
+    private readonly replyRepo: Repository<Reply>,
     private readonly chatService: ChatService,
   ) {}
 
@@ -29,8 +34,8 @@ export class MessageService {
         if (user.role !== Role.SUPPORT) {
           // ถ้าไม่ใช่ SUPPORT เช็คว่าเป็นเจ้าของห้องไหม
           const isOwner = await this.chatService.checkOwnerConversation(
-            dto.conversation_id,
             user.sub,
+            dto.conversation_id,
           );
           if (!isOwner)
             throw new ForbiddenException('คุณไม่มีสิทธิ์ส่งข้อความในห้องนี้');
@@ -41,7 +46,7 @@ export class MessageService {
           conversation: { id: dto.conversation_id },
           sender: { id: user.sub },
           text: dto.text,
-          ...(dto.image_urls && { image_urls: dto.image_urls }),
+          ...(dto.image_urls?.length !== 0 && { image_urls: dto.image_urls }),
         });
       },
     );
@@ -58,7 +63,7 @@ export class MessageService {
       },
       {
         ...(dto.text && { text: dto.text }),
-        edit_at: new Date(),
+        updated_at: new Date(),
       },
     );
 
@@ -85,9 +90,10 @@ export class MessageService {
         id: dto.message_id,
         conversation: { id: dto.conversation_id },
         sender: { id: user_id },
+        image_urls: Not(IsNull()),
       },
       {
-        image_urls: undefined,
+        image_urls: [],
       },
     );
 
@@ -96,27 +102,23 @@ export class MessageService {
     }
   }
 
-  async readMessage(user_id: number, dto: ReadMessageDTO): Promise<void> {
-    const isOwner = await this.chatService.checkOwnerConversation(
-      dto.conversation_id,
-      user_id,
-    );
+  async deleteReply(user_id: number, dto: DeleteReplyDTO) {
+    const deleteResult = await this.messageRepo.delete({
+      id: dto.reply_id,
+      sender: { id: user_id },
+      conversation: { id: dto.conversation_id },
+    });
 
-    if (!isOwner) {
-      throw new ForbiddenException('คุณไม่ใช่เจ้าของห้องนี้');
+    if (deleteResult.affected === 0) {
+      throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบข้อความได้');
     }
-
-    await this.messageRepo.update(
-      { id: In(dto.message_ids), conversation: { id: dto.conversation_id } },
-      { is_read: true },
-    );
   }
 
-  async loadMessage(user: JwtPayload, dto: LoadMessages): Promise<Message[]> {
-    if (user.role === Role.USER) {
+  async readMessage(user: JwtPayload, dto: ReadMessageDTO): Promise<void> {
+    if (user.role !== Role.SUPPORT) {
       const isOwner = await this.chatService.checkOwnerConversation(
-        dto.conversation_id,
         user.sub,
+        dto.conversation_id,
       );
 
       if (!isOwner) {
@@ -124,21 +126,61 @@ export class MessageService {
       }
     }
 
-    if (user.role === Role.SUPPORT || user.role === Role.USER) {
-      const newMessages = this.messageRepo.find({
-        where: {
-          ...(dto.befor_message_id
-            ? { id: LessThan(dto.befor_message_id) }
-            : {}),
-          conversation: { id: dto.conversation_id },
-        },
-        take: 10,
-        order: { createdAt: 'DESC' },
-      });
+    await this.messageRepo.update(
+      { id: In(dto.message_ids), conversation: { id: dto.conversation_id } },
+      { read_at: new Date() },
+    );
+  }
 
-      return newMessages;
+  async loadMessage(user: JwtPayload, dto: LoadMessages): Promise<Message[]> {
+    if (user.role !== Role.SUPPORT) {
+      const isOwner = await this.chatService.checkOwnerConversation(
+        user.sub,
+        dto.conversation_id,
+      );
+
+      if (!isOwner) {
+        throw new ForbiddenException('คุณไม่ใช่เจ้าของห้องนี้');
+      }
     }
 
-    throw new ForbiddenException('คุณไม่มีสิทธิ์โหลดข้อความในห้องสนทนานี้');
+    return await this.messageRepo.find({
+      where: {
+        ...(dto.befor_message_id ? { id: LessThan(dto.befor_message_id) } : {}),
+        conversation: { id: dto.conversation_id },
+      },
+      take: 10,
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async createReplyMessage(sender: JwtPayload, dto: CreateReplyDTO) {
+    // check permission
+    if (sender.role !== Role.SUPPORT) {
+      const isOwner = await this.chatService.checkOwnerConversation(
+        sender.sub,
+        dto.conversation_id,
+      );
+
+      if (!isOwner) throw new ForbiddenException();
+    }
+
+    // เช็คว่าข้อความที่จะตอบกลับเป็นข้อความที่อยู่ใน conversation นี้
+    const isMessageInConversation = await this.messageRepo.existsBy({
+      id: dto.message_id,
+      conversation: { id: dto.conversation_id },
+    });
+
+    if (!isMessageInConversation) throw new ForbiddenException();
+
+    return await this.replyRepo.save({
+      conversation: { id: dto.conversation_id },
+      message: { id: dto.message_id },
+      sender: { id: sender.sub },
+      text: dto.text,
+      ...(dto.image_urls && dto.image_urls.length > 1
+        ? { image_urls: dto.image_urls }
+        : {}),
+    });
   }
 }
