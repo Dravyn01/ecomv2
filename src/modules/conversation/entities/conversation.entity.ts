@@ -8,7 +8,8 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Inbox, User } from 'src/config/entities.config';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Inbox } from 'src/modules/chat/entities/inbox.entity';
 import { Message } from 'src/modules/message/entities/message.entity';
 import { Replies } from 'src/modules/message/entities/reply.entity';
 

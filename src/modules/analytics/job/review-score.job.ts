@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductStats } from '../entities/product-stats.entity';
-import { Review } from 'src/config/entities.config';
 import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { AnalyticsService } from '../analytics.service';
+import { Review } from 'src/modules/review/entities/review.entity';
 
 @Injectable()
 export class ReviewsScoreCron {
@@ -18,45 +18,6 @@ export class ReviewsScoreCron {
   ) {}
 
   // วันละ 2 รอบ (22:00 และ 02:00)
-  // @Cron('0 22 * * *')
-  // @Cron('0 2 * * *')
-  // async handleReview(): Promise<void> {
-  //   const { start, end } = getDate();
-  //
-  //   //
-  //   const reviewsToday = await this.reviewRepo.find({
-  //     where: { created_at: Between(start, end) },
-  //     relations: ['product'],
-  //   });
-  //
-  //   if (reviewsToday.length === 0) return; // ไม่มีรีวิววันนี้ → จบ
-  //
-  //   //
-  //   const productIds = Array.from(
-  //     new Set(reviewsToday.map((r) => r.product.id)),
-  //   );
-  //
-  //   //
-  //   for (const productId of productIds) {
-  //     //
-  //     const allReviews = await this.reviewRepo.find({
-  //       where: { product: { id: productId } },
-  //       select: ['rating'],
-  //     });
-  //
-  //     const review_count = allReviews.length;
-  //
-  //     //
-  //
-  //     // save stat
-  //     await this.productStatsRepo.save({
-  //       product: { id: productId },
-  //       review_count,
-  //       avg_rating,
-  //     });
-  //   }
-  // }
-  //
   @Cron('0 22 * * *')
   @Cron('0 2 * * *')
   async handleReview(): Promise<void> {

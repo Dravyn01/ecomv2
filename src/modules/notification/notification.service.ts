@@ -6,9 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
-import { Message, Role, StockStatus } from 'src/config/entities.config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
+import { Message } from '../message/entities/message.entity';
+import { Role } from '../user/entities/user.entity';
+import { StockStatus } from '../stock/entities/stock.entity';
 
 /*
  * WARNING: อาจมีเคสที่กด delete all notification แล้วไม่มี notification ให้ลบแล้วโดน throw error มาให้

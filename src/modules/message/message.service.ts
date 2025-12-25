@@ -1,6 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CreateMessageDTO } from './dto/create-message.dto';
-import { Message, Role } from 'src/config/entities.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
@@ -9,20 +8,22 @@ import { UpdateMessageDTO } from './dto/update-message.dto';
 import { DeleteMessageDTO } from './dto/delete-message.dto';
 import { ReadMessageDTO } from './dto/read-message.dto';
 import { LoadMessages } from './dto/load-messages.dto';
-import { Reply } from './entities/reply.entity';
 import { CreateReplyDTO } from './dto/create-reply.dto';
 import { DeleteReplyDTO } from './dto/delete-reply.dto';
 import { ConversationService } from '../conversation/conversation.service';
 import { UpdateReplyDTO } from './dto/update-reply.dto';
 import { DeleteResult } from 'typeorm/browser';
+import { Message } from './entities/message.entity';
+import { Replies } from './entities/reply.entity';
+import { Role } from '../user/entities/user.entity';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectRepository(Message)
     private readonly messageRepo: Repository<Message>,
-    @InjectRepository(Reply)
-    private readonly replyRepo: Repository<Reply>,
+    @InjectRepository(Replies)
+    private readonly replyRepo: Repository<Replies>,
     private readonly conversationService: ConversationService,
   ) {}
 

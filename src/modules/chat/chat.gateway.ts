@@ -8,7 +8,8 @@ import {
 import { Socket, Server } from 'socket.io';
 import { Logger, NotFoundException, UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from 'src/common/guards/ws-jwt.guard';
-import { Inbox, Role } from 'src/config/entities.config';
+import { Role } from 'src/modules/user/entities/user.entity';
+import { Inbox } from './entities/inbox.entity';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { WsCheckRole } from 'src/common/guards/ws-role.guard';
 import { InjectRepository } from '@nestjs/typeorm';

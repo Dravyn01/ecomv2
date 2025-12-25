@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
-import { User } from 'src/config/entities.config';
+import { User } from 'src/modules/user/entities/user.entity';
 
 @Entity('inboxs')
 export class Inbox {

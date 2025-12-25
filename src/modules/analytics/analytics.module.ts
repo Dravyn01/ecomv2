@@ -3,12 +3,9 @@ import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserPurchaseHistory } from './entities/user-purchase-history.entity';
-import {
-  Order,
-  OrderItem,
-  ProductStats,
-  ProductView,
-} from 'src/config/entities.config';
+import { Order, OrderItem } from 'src/modules/order/entities/order.entity';
+import { ProductStats } from './entities/product-stats.entity';
+import { ProductView } from './entities/product-view.entity';
 import { ProductsScoreCron } from './job/products-score.job';
 
 @Module({

@@ -6,13 +6,15 @@ import { ProductVariant } from './entities/product-variant.entity';
 import { SizeModule } from '../size/size.module';
 import { ProductModule } from '../product/product.module';
 import { ColorModule } from '../color/color.module';
+import { ImageModule } from '../image/image.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProductVariant, Image]),
+    TypeOrmModule.forFeature([ProductVariant]),
     ProductModule,
     ColorModule,
     SizeModule,
+    ImageModule,
   ],
   controllers: [ProductVariantController],
   providers: [ProductVariantService],

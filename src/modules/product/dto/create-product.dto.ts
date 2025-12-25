@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
@@ -12,8 +11,9 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { ProductVariantStatus } from 'src/config/entities.config';
+import { Type } from 'class-transformer';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
+import { ProductStatus } from '../entities/product.entity';
 
 export class CreateProductDTO {
   @IsNotEmpty({ message: 'กรุณากรอกชื่อสินค้า' })
@@ -41,10 +41,10 @@ export class CreateProductDTO {
   discount_price?: number;
 
   @IsOptional()
-  @IsEnum(ProductVariantStatus, {
+  @IsEnum(ProductStatus, {
     message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductStatus เท่านั้น',
   })
-  status: ProductVariantStatus;
+  status: ProductStatus;
 
   @IsOptional()
   @IsArray({ message: 'หมวดหมู่สินค้าต้องเป็นอาเรย์ของตัวเลข' })
@@ -53,7 +53,7 @@ export class CreateProductDTO {
     each: true,
     message: 'หมวดหมู่แต่ละรายการต้องเป็นตัวเลขที่มากกว่า 0',
   })
-  category_ids: number[] = [];
+  category_ids: number[];
 
   @ValidateNested({ each: true })
   @Type(() => CreateImageDTO)

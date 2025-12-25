@@ -5,7 +5,7 @@ import { Product } from './entities/product.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryModule } from '../category/category.module';
 import { ProductView } from '../analytics/entities/product-view.entity';
-import { Image } from 'src/config/entities.config';
+import { Image } from '../image/entities/image.entity';
 
 @Module({
   imports: [

@@ -1,4 +1,3 @@
-import { Order, ProductVariant } from 'src/config/entities.config';
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +10,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { StockChangeType } from '../enums/stock-change.enum';
+import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
+import { Order } from 'src/modules/order/entities/order.entity';
 
 export enum StockStatus {
   NONE = 'NONE',

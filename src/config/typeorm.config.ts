@@ -6,7 +6,7 @@ dotenv.config();
 
 const config: DataSourceOptions = {
   type: 'postgres',
-  entities: ['dist/**/*.entity.js', 'src/**/*.entity.ts'],
+  entities: ['dist/**/**/**/*.entity.js', 'src/**/**/**/*.entity.ts'],
   migrations: ['dist/migrations/*.js'],
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 5432,

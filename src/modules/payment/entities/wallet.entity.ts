@@ -1,4 +1,4 @@
-import { User } from 'src/config/entities.config';
+import { User } from 'src/modules/user/entities/user.entity';
 import {
   Column,
   Entity,

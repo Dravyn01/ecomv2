@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Order, OrderItem } from './entities/order.entity';
 import { Repository, DataSource, Not, In } from 'typeorm';
 import { UserService } from '../user/user.service';
-import { Cart, UserPurchaseHistory } from 'src/config/entities.config';
 import { StockService } from '../stock/stock.service';
 import { StockChangeType } from '../stock/enums/stock-change.enum';
 import { OrderStatus } from './enums/order-status.enum';
@@ -15,6 +14,8 @@ import { ProductService } from '../product/product.service';
 import { FindAllOrdersQuery } from './dto/find-all-orders.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateMovementDTO } from '../stock/dto/create-movement.dto';
+import { Cart } from '../cart/entities/cart.entity';
+import { UserPurchaseHistory } from '../analytics/entities/user-purchase-history.entity';
 
 @Injectable()
 export class OrderService {

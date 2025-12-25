@@ -1,12 +1,12 @@
 import { UserService } from './user.service';
-import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { UserResponse } from './dto/user.response';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { CheckRoleGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
-import { Role } from './entities/user.entity';
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Role, User } from './entities/user.entity';
+import { Controller, Get, Logger, Req, UseGuards } from '@nestjs/common';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 
 @UseGuards(JwtGuard)
 @Controller('/admin/users')
@@ -26,12 +26,13 @@ export class UserController {
     };
   }
 
+  @UseGuards(JwtGuard)
   @Get('/profile')
   async getProfile(
-    @GetUser() req: { email: string },
+    @Req() req: { user: JwtPayload },
   ): Promise<ApiResponse<UserResponse>> {
-    this.logger.log(`[POST] /user/profile called for email=${req.email}`);
-    const user = await this.userService.getProfile(req.email);
+    this.logger.log(`[POST] /user/profile called for email=${req.user.email}`);
+    const user = await this.userService.getProfile(req.user.email);
     return { message: 'user info', data: user };
   }
 }

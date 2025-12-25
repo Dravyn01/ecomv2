@@ -2,18 +2,24 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Message } from './message.entity';
-import { Conversation, User } from 'src/config/entities.config';
+import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
+import { Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
 
 @Entity('replies')
-export class Reply {
-  @PrimaryGeneratedColumn()
+export class Replies {
+  @PrimaryGeneratedColumn({ name: 'reply_id' })
   id: number;
 
   @ManyToOne(() => Message, (m) => m.replies)
+  @JoinColumn()
   message: Message;
 
   @ManyToOne(() => Conversation)
@@ -25,8 +31,9 @@ export class Reply {
   @Column('text')
   text: string;
 
-  @Column({ type: 'text', array: true })
-  image_urls: string[];
+  @ValidateNested({ each: true })
+  @Type(() => CreateImageDTO)
+  images: CreateImageDTO[];
 
   @Column({ type: 'timestamp', nullable: true })
   read_at?: Date;

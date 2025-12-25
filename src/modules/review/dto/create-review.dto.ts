@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsPositive,
   IsInt,
@@ -5,10 +6,11 @@ import {
   Length,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
-import { ImagesDTO } from 'src/modules/image/dto/create-image.dto';
+import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
 
-export class CreateReviewDto extends ImagesDTO {
+export class CreateReviewDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการรีวิว' })
   @IsInt({ message: '' })
   @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
@@ -25,4 +27,8 @@ export class CreateReviewDto extends ImagesDTO {
     message: 'ความคิดเห็นต้องไม่สั้นเกินไป และ ยาวเกิน 100 ตัวอักษร',
   })
   comment: string;
+
+  @ValidateNested({ each: true })
+  @Type(() => CreateImageDTO)
+  images: CreateImageDTO[];
 }

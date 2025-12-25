@@ -9,7 +9,7 @@ import { ProductService } from '../product/product.service';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
-import { Image, ImageOwnerType } from 'src/modules/image/entities/image.entity';
+import { ImageOwnerType } from 'src/modules/image/entities/image.entity';
 import { ImageService } from '../image/image.service';
 
 @Injectable()
@@ -20,8 +20,6 @@ export class ProductVariantService {
   constructor(
     @InjectRepository(ProductVariant)
     private readonly variantRepo: Repository<ProductVariant>,
-    @InjectRepository(Image)
-    private readonly imageRepo: Repository<Image>,
 
     private readonly sizeService: SizeService,
     private readonly productService: ProductService,
@@ -143,7 +141,6 @@ export class ProductVariantService {
 
       if (body.images && body) {
         for (const image of body.images) {
-          Object.assign(image, body.image_id);
           await this.imageService.updateImage({ image, tx });
         }
       }

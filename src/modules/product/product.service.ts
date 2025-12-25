@@ -10,14 +10,12 @@ import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CategoryService } from '../category/category.service';
 import { ProductView } from '../analytics/entities/product-view.entity';
 import { type Request } from 'express';
-import { User } from 'src/config/entities.config';
 import { Image, ImageOwnerType } from '../image/entities/image.entity';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
-
-  // TODO: add logger
 
   constructor(
     @InjectRepository(Product)

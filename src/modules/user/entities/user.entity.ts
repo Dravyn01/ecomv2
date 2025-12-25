@@ -1,9 +1,10 @@
-import { Conversation, Review } from 'src/config/entities.config';
 import { LoginHistory } from 'src/modules/auth/entities/login-history.entity';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
+import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
 import { Message } from 'src/modules/message/entities/message.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 import { Wallet } from 'src/modules/payment/entities/wallet.entity';
+import { Review } from 'src/modules/review/entities/review.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import {
   Column,

@@ -1,5 +1,3 @@
-import { User } from 'src/config/entities.config';
-import { ProductVariant } from 'src/config/entities.config';
 import { StockMovement } from 'src/modules/stock/entities/stock.entity';
 import {
   Column,
@@ -13,6 +11,8 @@ import {
 } from 'typeorm';
 import { OrderStatus } from '../enums/order-status.enum';
 import { Payment } from 'src/modules/payment/entities/payment.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 
 @Entity('orders')
 export class Order {

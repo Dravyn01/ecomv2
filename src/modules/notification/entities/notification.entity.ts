@@ -1,4 +1,5 @@
-import { Conversation, User } from 'src/config/entities.config';
+import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,

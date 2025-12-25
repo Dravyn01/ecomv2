@@ -6,11 +6,13 @@ import {
   IsPositive,
   IsInt,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { ProductVariantStatus } from '../entities/product-variant.entity';
-import { ImagesDTO } from 'src/modules/image/dto/images.dto';
+import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
+import { Type } from 'class-transformer';
 
-export class CreateVariantDTO extends ImagesDTO {
+export class CreateVariantDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
   @IsInt({ message: '' })
   @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
@@ -36,4 +38,9 @@ export class CreateVariantDTO extends ImagesDTO {
     message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductVariantStatus',
   })
   status?: ProductVariantStatus = ProductVariantStatus.INACTIVE;
+
+  @IsNotEmpty({ message: '' })
+  @ValidateNested({ each: true })
+  @Type(() => CreateImageDTO)
+  images: CreateImageDTO[];
 }

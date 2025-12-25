@@ -1,4 +1,5 @@
-import { User } from 'src/config/entities.config';
+import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,8 +9,7 @@ import {
   JoinColumn,
   OneToMany,
 } from 'typeorm';
-import { Conversation } from 'src/config/entities.config';
-import { Reply } from './reply.entity';
+import { Replies } from './reply.entity';
 
 @Entity('messages')
 export class Message {
@@ -30,9 +30,8 @@ export class Message {
   @Column({ type: 'text', array: true })
   image_urls: string[];
 
-  @OneToMany(() => Reply, (r) => r.message, { nullable: true })
-  @JoinColumn()
-  replies: Reply[];
+  @OneToMany(() => Replies, (r) => r.message, { nullable: true })
+  replies: Replies[];
 
   @Column({ type: 'timestamp', nullable: true })
   read_at?: Date;

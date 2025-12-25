@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cart, CartItem } from 'src/config/entities.config';
+import { Cart, CartItem } from 'src/modules/cart/entities/cart.entity';
 import { Repository, DataSource } from 'typeorm';
 import { ProductVariantService } from '../product-variant/product-variant.service';
 import { UserService } from '../user/user.service';

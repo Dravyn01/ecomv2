@@ -6,18 +6,21 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
+  Res,
 } from '@nestjs/common';
 import { ReviewService } from './review.service';
-import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateReviewDTO } from './dto/create-review.dto';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Review } from './entities/review.entity';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 
-@Controller('/admin/reviews')
+@UseGuards(JwtGuard)
+@Controller('/api/reviews')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
-
-  // TODO: add logger
 
   // *DEBUG MODE*
   @Get()
@@ -41,8 +44,11 @@ export class ReviewController {
   }
 
   @Post()
-  async create(@Body() body: CreateReviewDto): Promise<ApiResponse<Review>> {
-    const review = await this.reviewService.create(body);
+  async create(
+    @Res() res: { user: JwtPayload },
+    @Body() body: CreateReviewDTO,
+  ): Promise<ApiResponse<Review>> {
+    const review = await this.reviewService.create(res.user.sub, body);
     return { message: 'สร้างรีวิวเรียบร้อย', data: review };
   }
 

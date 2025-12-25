@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, Length, MinLength } from 'class-validator';
-import { Role } from 'src/config/entities.config';
+import { Role } from 'src/modules/user/entities/user.entity';
 
 export class RegisterDTO {
   @IsNotEmpty({ message: 'ชื่อผู้ใช้ต้องไม่เป็นค่าว่าง' })

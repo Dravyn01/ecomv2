@@ -6,11 +6,11 @@ import {
 import { EntityManager, Repository } from 'typeorm';
 import { Stock, StockMovement, StockStatus } from './entities/stock.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ProductVariant } from 'src/config/entities.config';
 import { StockChangeType } from './enums/stock-change.enum';
 import { CreateMovementDTO } from './dto/create-movement.dto';
 import { NotificationService } from '../notification/notification.service';
 import { AddQuantityDTO } from './dto/add-quantity.dto';
+import { ProductVariant } from '../product-variant/entities/product-variant.entity';
 
 @Injectable()
 export class StockService {

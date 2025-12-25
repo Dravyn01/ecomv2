@@ -18,7 +18,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { ChatModule } from './modules/chat/chat.module';
-import { ProductView } from './config/entities.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({

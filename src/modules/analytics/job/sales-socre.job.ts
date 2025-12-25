@@ -3,10 +3,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductStats } from '../entities/product-stats.entity';
 import { Between, Repository } from 'typeorm';
-import { OrderItem } from 'src/config/entities.config';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { AnalyticsService } from '../analytics.service';
+import { OrderItem } from 'src/modules/order/entities/order.entity';
 
 @Injectable()
 export class SalesScoreCron {

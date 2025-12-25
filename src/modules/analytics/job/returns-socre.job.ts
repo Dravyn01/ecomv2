@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductStats } from '../entities/product-stats.entity';
-import { Order, OrderItem } from 'src/config/entities.config';
+import { Order, OrderItem } from 'src/modules/order/entities/order.entity';
 import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';

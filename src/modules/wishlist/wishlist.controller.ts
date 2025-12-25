@@ -13,12 +13,11 @@ import {
 import { WishlistService } from './wishlist.service';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Wishlist } from './entities/wishlist.entity';
-import { Role, User } from 'src/config/entities.config';
 import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
-import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { CheckRoleGuard } from 'src/common/guards/role.guard';
+import { Role, User } from '../user/entities/user.entity';
 
 @UseGuards(JwtGuard, CheckRoleGuard)
 @Controller('/api/wishlist')
@@ -29,10 +28,8 @@ export class WishlistController {
   @Get()
   async findByUser(
     @Req() req: { user: User },
-    @GetUser() user: any,
   ): Promise<ApiResponse<Wishlist[]>> {
     console.log('check role guard', req.user);
-    console.log('@GetUser', user);
     const wishlists = await this.wishlistService.findAllByUser(req.user.id);
     return {
       message: `พบสินค้่ในรายการโปรดทั้งหมด ${wishlists.length} รายการ`,

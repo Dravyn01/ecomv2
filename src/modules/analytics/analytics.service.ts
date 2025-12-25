@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserPurchaseHistory } from './entities/user-purchase-history.entity';
 import { In, Repository } from 'typeorm';
-import { Order, OrderItem } from 'src/config/entities.config';
+import { Order, OrderItem } from 'src/modules/order/entities/order.entity';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { Between } from 'typeorm';
 import { differenceInDays, endOfDay, startOfDay } from 'date-fns';
