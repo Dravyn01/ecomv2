@@ -166,7 +166,6 @@ export class OrderService {
       );
     }
 
-    // ใช้ transaction เพื่อความปลอดภัยของข้อมูล
     return await this.datasource.transaction(async (tx) => {
       order.status = OrderStatus.PAID;
 

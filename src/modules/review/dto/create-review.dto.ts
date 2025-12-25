@@ -5,28 +5,14 @@ import {
   Length,
   Max,
   Min,
-  IsString,
-  IsUrl,
-  IsOptional,
 } from 'class-validator';
+import { ImagesDTO } from 'src/modules/image/dto/create-image.dto';
 
-export class CreateReviewDto {
-  @IsNotEmpty({ message: '' })
-  @IsInt({ message: '' })
-  user_id: number;
-
+export class CreateReviewDto extends ImagesDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการรีวิว' })
   @IsInt({ message: '' })
   @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
   variant_id: number;
-
-  @IsOptional({ message: '' })
-  @IsString({ message: '' })
-  @IsUrl(
-    { require_host: true, protocols: ['http', 'https'], require_tld: true },
-    { message: '' },
-  )
-  image_url?: string;
 
   @IsNotEmpty({ message: 'กรุณาเลือกจำนวนดาว' })
   @IsInt({ message: 'จำนวนดาวต้องเป็นตัวเลข' })

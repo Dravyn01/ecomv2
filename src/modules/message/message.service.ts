@@ -1,9 +1,8 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CreateMessageDTO } from './dto/create-message.dto';
-import { Message, Role, User } from 'src/config/entities.config';
+import { Message, Role } from 'src/config/entities.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
-import { ChatService } from '../chat/chat.service';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 import { Injectable } from '@nestjs/common';
 import { UpdateMessageDTO } from './dto/update-message.dto';
@@ -13,6 +12,9 @@ import { LoadMessages } from './dto/load-messages.dto';
 import { Reply } from './entities/reply.entity';
 import { CreateReplyDTO } from './dto/create-reply.dto';
 import { DeleteReplyDTO } from './dto/delete-reply.dto';
+import { ConversationService } from '../conversation/conversation.service';
+import { UpdateReplyDTO } from './dto/update-reply.dto';
+import { DeleteResult } from 'typeorm/browser';
 
 @Injectable()
 export class MessageService {
@@ -21,7 +23,7 @@ export class MessageService {
     private readonly messageRepo: Repository<Message>,
     @InjectRepository(Reply)
     private readonly replyRepo: Repository<Reply>,
-    private readonly chatService: ChatService,
+    private readonly conversationService: ConversationService,
   ) {}
 
   async createMessage(
@@ -33,7 +35,7 @@ export class MessageService {
         // ถ้าใช่ SUPPORT ให้ไปต่อ
         if (user.role !== Role.SUPPORT) {
           // ถ้าไม่ใช่ SUPPORT เช็คว่าเป็นเจ้าของห้องไหม
-          const isOwner = await this.chatService.checkOwnerConversation(
+          const isOwner = await this.conversationService.checkOwnerConversation(
             user.sub,
             dto.conversation_id,
           );
@@ -73,11 +75,25 @@ export class MessageService {
   }
 
   async deleteMessage(user_id: number, dto: DeleteMessageDTO): Promise<void> {
-    const deleteResult = await this.messageRepo.delete({
-      id: dto.message_id,
-      sender: { id: user_id },
-      conversation: { id: dto.conversation_id },
-    });
+    let deleteResult: DeleteResult | null;
+
+    if (dto.message_id) {
+      deleteResult = await this.messageRepo.delete({
+        id: dto.message_id,
+        sender: { id: user_id },
+        conversation: { id: dto.conversation_id },
+      });
+    } else if (dto.reply_id) {
+      deleteResult = await this.replyRepo.delete({
+        id: dto.reply_id,
+        sender: { id: user_id },
+        conversation: { id: dto.conversation_id },
+      });
+    } else {
+      throw new BadRequestException(
+        'ไม่สามารถลบข้อความได้เนื่องจากไม่พบ message_id หรือ reply_id',
+      );
+    }
 
     if (deleteResult.affected === 0) {
       throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบข้อความได้');
@@ -116,7 +132,7 @@ export class MessageService {
 
   async readMessage(user: JwtPayload, dto: ReadMessageDTO): Promise<void> {
     if (user.role !== Role.SUPPORT) {
-      const isOwner = await this.chatService.checkOwnerConversation(
+      const isOwner = await this.conversationService.checkOwnerConversation(
         user.sub,
         dto.conversation_id,
       );
@@ -134,7 +150,7 @@ export class MessageService {
 
   async loadMessage(user: JwtPayload, dto: LoadMessages): Promise<Message[]> {
     if (user.role !== Role.SUPPORT) {
-      const isOwner = await this.chatService.checkOwnerConversation(
+      const isOwner = await this.conversationService.checkOwnerConversation(
         user.sub,
         dto.conversation_id,
       );
@@ -157,7 +173,7 @@ export class MessageService {
   async createReplyMessage(sender: JwtPayload, dto: CreateReplyDTO) {
     // check permission
     if (sender.role !== Role.SUPPORT) {
-      const isOwner = await this.chatService.checkOwnerConversation(
+      const isOwner = await this.conversationService.checkOwnerConversation(
         sender.sub,
         dto.conversation_id,
       );
@@ -182,5 +198,22 @@ export class MessageService {
         ? { image_urls: dto.image_urls }
         : {}),
     });
+  }
+
+  async updateReplyMessage(sender: JwtPayload, dto: UpdateReplyDTO) {
+    const updatedResult = await this.replyRepo.update(
+      {
+        conversation: { id: dto.conversation_id },
+        message: { id: dto.message_id },
+        sender: { id: sender.sub },
+      },
+      {
+        text: dto.text,
+      },
+    );
+
+    if (updatedResult.affected === 0) {
+      throw new ForbiddenException();
+    }
   }
 }

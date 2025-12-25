@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ColorService } from '../color/color.service';
 import { SizeService } from '../size/size.service';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
@@ -9,6 +9,8 @@ import { ProductService } from '../product/product.service';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
+import { Image, ImageOwnerType } from 'src/modules/image/entities/image.entity';
+import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class ProductVariantService {
@@ -18,10 +20,14 @@ export class ProductVariantService {
   constructor(
     @InjectRepository(ProductVariant)
     private readonly variantRepo: Repository<ProductVariant>,
+    @InjectRepository(Image)
+    private readonly imageRepo: Repository<Image>,
 
     private readonly sizeService: SizeService,
     private readonly productService: ProductService,
     private readonly colorService: ColorService,
+    private readonly imageService: ImageService,
+    private readonly manager: EntityManager,
   ) {}
 
   // # DEBUG
@@ -77,14 +83,6 @@ export class ProductVariantService {
     return product;
   }
 
-  /*
-   *
-   * create variant
-   *
-   * TODO: add flow logic
-   *
-   *
-   * */
   async create(body: CreateVariantDTO): Promise<ProductVariant> {
     this.logger.log(`[${this.className}::create] service called!`);
 
@@ -92,30 +90,36 @@ export class ProductVariantService {
     const color = await this.colorService.findOne(body.color_id);
     const size = await this.sizeService.findOne(body.size_id);
 
-    const newVariant = await this.variantRepo.save({
-      size: { id: size.id },
-      product: { id: product.id },
-      color: { id: color.id },
-      price: body.price,
-      image_url: body.image_url,
-      stock: {
-        quantity: 0,
-      },
+    const savedVariant = await this.manager.transaction(async (tx) => {
+      const newVariant = await tx.save(ProductVariant, {
+        size: { id: size.id },
+        product: { id: product.id },
+        color: { id: color.id },
+        price: body.price,
+        stock: {
+          quantity: 0,
+        },
+      });
+
+      if (body.images) {
+        for (const image of body.images) {
+          await this.imageService.createImage({
+            image,
+            owner_id: newVariant.id,
+            owner_type: ImageOwnerType.PRODUCT,
+            tx,
+          });
+        }
+      }
+
+      return newVariant;
     });
 
     this.logger.log(`[${this.className}::create] created variant success`);
 
-    return newVariant;
+    return savedVariant;
   }
 
-  /*
-   *
-   * update variant
-   *
-   * TODO: add flow logic
-   *
-   *
-   * */
   async update(
     variant_id: number,
     body: UpdateVariantDTO,
@@ -124,23 +128,34 @@ export class ProductVariantService {
 
     const existing_variant = await this.findOne(variant_id);
 
-    const updated_variant = await this.variantRepo.save({
-      id: existing_variant.id,
-      ...body,
-      ...(body.product_id && { product: { id: body.product_id } }),
-      ...(body.size_id && {
-        size: { id: (await this.sizeService.findOne(body.size_id)).id },
-      }),
-      ...(body.color_id && {
-        color: { id: (await this.colorService.findOne(body.color_id)).id },
-      }),
+    const savedVariant = await this.manager.transaction(async (tx) => {
+      const updatedVariant = await this.variantRepo.save({
+        id: existing_variant.id,
+        ...body,
+        ...(body.product_id && { product: { id: body.product_id } }),
+        ...(body.size_id && {
+          size: { id: (await this.sizeService.findOne(body.size_id)).id },
+        }),
+        ...(body.color_id && {
+          color: { id: (await this.colorService.findOne(body.color_id)).id },
+        }),
+      });
+
+      if (body.images && body) {
+        for (const image of body.images) {
+          Object.assign(image, body.image_id);
+          await this.imageService.updateImage({ image, tx });
+        }
+      }
+
+      return updatedVariant;
     });
 
     this.logger.log(
       `[${this.className}::update] variant_id=${variant_id} has updated!`,
     );
 
-    return updated_variant;
+    return savedVariant;
   }
 
   async delete(variant_id: number): Promise<ProductVariant> {

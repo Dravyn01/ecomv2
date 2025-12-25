@@ -98,7 +98,7 @@ export class NotificationService {
       {
         id: notificationId,
         sender: { id: senderId },
-        read_at: undefined,
+        read_at: IsNull(),
       },
       {
         read_at: new Date(),

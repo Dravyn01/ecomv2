@@ -3,6 +3,7 @@ import { LoginHistory } from 'src/modules/auth/entities/login-history.entity';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
 import { Message } from 'src/modules/message/entities/message.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
+import { Wallet } from 'src/modules/payment/entities/wallet.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import {
   Column,
@@ -65,4 +66,7 @@ export class User {
 
   @OneToMany(() => LoginHistory, (hi) => hi.user)
   logined_history: LoginHistory;
+
+  @OneToOne(() => Wallet, (w) => w.user)
+  wallet: Wallet;
 }

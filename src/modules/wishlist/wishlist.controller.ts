@@ -13,7 +13,7 @@ import {
 import { WishlistService } from './wishlist.service';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Wishlist } from './entities/wishlist.entity';
-import { User } from 'src/config/entities.config';
+import { Role, User } from 'src/config/entities.config';
 import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
@@ -25,7 +25,7 @@ import { CheckRoleGuard } from 'src/common/guards/role.guard';
 export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
-  @Roles('customer', 'admin')
+  @Roles(Role.USER, Role.ADMIN)
   @Get()
   async findByUser(
     @Req() req: { user: User },
@@ -40,7 +40,7 @@ export class WishlistController {
     };
   }
 
-  @Roles('customer')
+  @Roles(Role.USER)
   @Post()
   async create(
     @Req() req: { user: User },
@@ -51,7 +51,7 @@ export class WishlistController {
     return { message: 'นำสินค้าเข้ารายการโปรดเรียบร้อย', data: wishlist };
   }
 
-  @Roles('customer')
+  @Roles(Role.USER)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':wishlist_id')
   async remove(

@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Between, Repository } from 'typeorm';
-import { ProductStats, UserPurchaseHistory } from 'src/config/entities.config';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { getDate } from 'src/utils/get-date';
 import { AnalyticsService } from '../analytics.service';
+import { ProductStats } from '../entities/product-stats.entity';
+import { UserPurchaseHistory } from '../entities/user-purchase-history.entity';
 
 @Injectable()
 export class BuyersScoreCron {

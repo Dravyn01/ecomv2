@@ -6,7 +6,8 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Product, User } from 'src/config/entities.config';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Product } from 'src/modules/product/entities/product.entity';
 
 @Entity('product_views')
 export class ProductView {

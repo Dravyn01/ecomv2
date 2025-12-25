@@ -8,9 +8,11 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OrderStatus } from '../enums/order-status.enum';
+import { Payment } from 'src/modules/payment/entities/payment.entity';
 
 @Entity('orders')
 export class Order {
@@ -27,8 +29,10 @@ export class Order {
   order_date: Date;
 
   // One User Many Order
-  @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => User, (user) => user.orders, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
   user: User;
 
   // One Shipment Many Order
@@ -36,6 +40,7 @@ export class Order {
   // @JoinColumn({ name: 'shipment_id' })
   // shipment: Shipment;
 
+  // One Order Many Movement
   @OneToMany(() => StockMovement, (movement) => movement.order, {
     nullable: true,
   })
@@ -46,6 +51,12 @@ export class Order {
     cascade: true,
   })
   items: OrderItem[];
+
+  // One Order One Payment
+  @OneToOne(() => Payment, (p) => p.order, {
+    onDelete: 'CASCADE',
+  })
+  payment: Payment;
 }
 
 @Entity('order_item')
@@ -62,12 +73,12 @@ export class OrderItem {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number; // ราคาสินค้า * จำนวน
 
-  // Many CartItem One Order
+  // Many OrderItem One Order
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn()
   order: Order;
 
-  // Many CartItem One ProductVariant
+  // Many OrderItem One ProductVariant
   @ManyToOne(() => ProductVariant, (variant) => variant.order_items, {
     onDelete: 'SET NULL',
   })

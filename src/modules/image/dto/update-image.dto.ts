@@ -1,8 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateVariantDTO } from './create-variant.dto';
 import { IsNotEmpty, IsUUID } from 'class-validator';
+import { CreateImageDTO } from './create-image.dto';
 
-export class UpdateVariantDTO extends PartialType(CreateVariantDTO) {
+export class UpdateImageDTO extends PartialType(CreateImageDTO) {
   @IsNotEmpty({ message: '' })
   @IsUUID()
   image_id: string;

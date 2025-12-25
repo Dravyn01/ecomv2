@@ -1,13 +1,12 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import dotenv from 'dotenv';
-import * as entities from './entities.config';
 
 dotenv.config();
 
 const config: DataSourceOptions = {
   type: 'postgres',
-  entities: Object.values(entities) as Function[],
+  entities: ['dist/**/*.entity.js', 'src/**/*.entity.ts'],
   migrations: ['dist/migrations/*.js'],
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT) || 5432,

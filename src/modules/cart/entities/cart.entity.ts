@@ -20,7 +20,11 @@ export class Cart {
   created_at: Date;
 
   // One Cart One User
-  @OneToOne(() => User, (user) => user.cart, { nullable: true })
+  @OneToOne(() => User, (user) => user.cart, {
+    nullable: true,
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   user: User;
 

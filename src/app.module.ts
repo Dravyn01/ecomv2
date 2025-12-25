@@ -55,7 +55,6 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     AnalyticsModule,
     UploadModule,
     ChatModule,
-    ProductView,
   ],
 
   controllers: [],

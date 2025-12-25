@@ -3,10 +3,10 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { ProductStats } from '../entities/product-stats.entity';
-import { Wishlist } from 'src/config/entities.config';
 import { ProductView } from '../entities/product-view.entity';
 import { getDate } from 'src/utils/get-date';
 import { AnalyticsService } from '../analytics.service';
+import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 
 @Injectable()
 export class ProductsEngagementCron {

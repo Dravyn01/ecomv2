@@ -9,7 +9,7 @@ import { ColorModule } from '../color/color.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProductVariant]),
+    TypeOrmModule.forFeature([ProductVariant, Image]),
     ProductModule,
     ColorModule,
     SizeModule,

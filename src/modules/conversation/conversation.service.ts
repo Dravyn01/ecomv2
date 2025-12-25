@@ -21,4 +21,17 @@ export class ConversationService {
   async existsConversation(conversation_id: string): Promise<boolean> {
     return await this.conversationRepo.existsBy({ id: conversation_id });
   }
+
+  async joinRoom(user_id: number): Promise<string> {
+    const exists = await this.conversationRepo.findOne({
+      where: { user: { id: user_id } },
+    });
+
+    if (exists) return exists.id;
+
+    const newConversation = await this.conversationRepo.save({
+      user: { id: user_id },
+    });
+    return newConversation.id;
+  }
 }

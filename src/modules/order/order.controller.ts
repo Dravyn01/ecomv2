@@ -13,20 +13,24 @@ import { Order } from './entities/order.entity';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { FindAllOrdersQuery } from './dto/find-all-orders.query';
 
-// add @UseGuard(JwtGuard)
+// TODO: final add @JwtGuard, @CheckRoleGuard
 
 @Controller('/admin/orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  // # DEBUG METHOD
+  /*
+   * TODO:
+   * add pagination
+   * search by user_id
+   * connect to dashboard
+   * */
   @Get()
   async allOrders(): Promise<any> {
     const orders = await this.orderService.findAll();
     return { message: `พบ order ${orders.length} รายการ`, data: orders };
   }
 
-  // find by user_id
   @Get(':user_id')
   async findByUser(
     @Param('user_id') user_id: string,
@@ -39,14 +43,12 @@ export class OrderController {
     };
   }
 
-  // checkout by user_id
   @Post('/checkout/:user_id')
   async checkout(@Param('user_id') user_id: string): Promise<any> {
     const order = await this.orderService.checkout(+user_id);
     return { message: 'เช็คเอาท์สำเร็จ', data: order };
   }
 
-  // cancel order
   @Put('/cancel/:order_id')
   async cancel(
     @Param('order_id') order_id: string,
@@ -55,7 +57,6 @@ export class OrderController {
     return { message: 'ยกเลิก order แล้ว', data: order };
   }
 
-  // delete order(admin contro)
   @Delete(':order_id')
   async delete(
     @Param('order_id') order_id: string,
@@ -64,7 +65,6 @@ export class OrderController {
     return { message: `ลบ order หมายเลข ${order_id} เรียบร้อย`, data: order };
   }
 
-  // paid order
   @Put('/paid/:order_id')
   async paidOrder(
     @Param('order_id') order_id: string,

@@ -6,11 +6,11 @@ import {
   IsPositive,
   IsInt,
   Min,
-  IsUrl,
 } from 'class-validator';
 import { ProductVariantStatus } from '../entities/product-variant.entity';
+import { ImagesDTO } from 'src/modules/image/dto/images.dto';
 
-export class CreateVariantDTO {
+export class CreateVariantDTO extends ImagesDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
   @IsInt({ message: '' })
   @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
@@ -30,13 +30,6 @@ export class CreateVariantDTO {
   @IsNumber({}, { message: 'ราคาต้องเป็นตัวเลข' })
   @Min(1, { message: 'ราคาสินค้าต้องมากกว่า 1 บาท' })
   price: number;
-
-  @IsNotEmpty({ message: 'กรุณาเลือกรูปภาพ' })
-  @IsUrl(
-    { require_host: true, protocols: ['http', 'https'], require_tld: true },
-    { message: '' },
-  )
-  image_url: string;
 
   @IsOptional()
   @IsEnum(ProductVariantStatus, {

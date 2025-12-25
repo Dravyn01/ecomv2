@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Product } from './entities/product.entity';
+import { Product, ProductStatus } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { FindAllProductsQuery } from './dto/find-all-products.query';
@@ -11,6 +11,7 @@ import { CategoryService } from '../category/category.service';
 import { ProductView } from '../analytics/entities/product-view.entity';
 import { type Request } from 'express';
 import { User } from 'src/config/entities.config';
+import { Image, ImageOwnerType } from '../image/entities/image.entity';
 
 @Injectable()
 export class ProductService {
@@ -21,9 +22,10 @@ export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
-
     @InjectRepository(ProductView)
     private readonly viewRepo: Repository<ProductView>,
+    @InjectRepository(Image)
+    private readonly imageRepo: Repository<Image>,
     private readonly categoryService: CategoryService,
   ) {}
 
@@ -72,14 +74,28 @@ export class ProductService {
     await this.categoryService.validateIds(body.category_ids);
 
     // save product
-    return await this.productRepo.save({
+    const product = await this.productRepo.save({
       name: body.name,
       description: body.description,
       base_price: body.base_price,
+      status: ProductStatus.INACTIVE,
       discount_price: body.discount_price,
-      image_url: body.image_url,
       categories: body.category_ids.map((id) => ({ id })),
     });
+
+    if (body.images) {
+      for (const image of body.images) {
+        await this.imageRepo.save({
+          url: image.url,
+          order: image.order,
+          owner_id: product.id,
+          owner_type: ImageOwnerType.PRODUCT,
+          public_id: image.public_id,
+        });
+      }
+    }
+
+    return product;
   }
 
   // update product

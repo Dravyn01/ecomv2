@@ -14,6 +14,7 @@ import { Review } from 'src/modules/review/entities/review.entity';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import { ProductStats } from 'src/modules/analytics/entities/product-stats.entity';
+import { Image } from 'src/modules/image/entities/image.entity';
 
 export enum ProductStatus {
   DRAFT,
@@ -32,9 +33,6 @@ export class Product {
 
   @Column({ type: 'varchar', length: 255 })
   description: string;
-
-  @Column({ type: 'text' })
-  image_url: string;
 
   // # price
   @Column({ type: 'numeric', precision: 10, scale: 2 })
@@ -84,4 +82,8 @@ export class Product {
   // One Product One ProductRepeatSummary
   @OneToOne(() => ProductStats, (stats) => stats.product)
   stats: ProductStats;
+
+  // One Product Many Image
+  @OneToMany(() => Image, (img) => img.owner_id)
+  images: Image[];
 }

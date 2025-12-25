@@ -1,9 +1,13 @@
-import { IsInt, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class DeleteMessageDTO {
-  @IsNotEmpty({ message: '' })
+  @IsOptional({ message: '' })
   @IsInt({ message: '' })
-  message_id: number;
+  message_id?: number;
+
+  @IsOptional()
+  @IsInt({ message: '' })
+  reply_id?: number;
 
   @IsNotEmpty({ message: '' })
   @IsUUID()

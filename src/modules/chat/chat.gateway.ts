@@ -8,7 +8,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import { Logger, NotFoundException, UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from 'src/common/guards/ws-jwt.guard';
-import { Conversation, Inbox, Role } from 'src/config/entities.config';
+import { Inbox, Role } from 'src/config/entities.config';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { WsCheckRole } from 'src/common/guards/ws-role.guard';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,6 +29,8 @@ import { ConversationService } from '../conversation/conversation.service';
 /*
  * NOTE:
  * ทุก event ยังไม่ได้มีการเทสเกิดขี้น เนื่องจากเขียน api ตัวนี้บนมือถือ และ ไม่มี tools ให้เทส
+ *
+ * WARNING: ข้อมูลที่ emit กลับไปหา client อาจไม่ครบตามที่ client ต้องการ
  * */
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -43,8 +45,6 @@ export class ChatGateway {
 
   constructor(
     @InjectRepository(Inbox) private readonly inboxRepo: Repository<Inbox>,
-    @InjectRepository(Conversation)
-    private readonly conversationRepo: Repository<Conversation>,
     private readonly chatService: ChatService,
     private readonly notifyService: NotificationService,
     private readonly messageService: MessageService,
@@ -52,57 +52,47 @@ export class ChatGateway {
   ) {}
 
   /**
-   * เมื่อผู้ใช้กด "คุยกับแอดมิน" จะสร้างห้องสนทนาใหม่(if no found conversation)และให้ client join
-   * @returns conversation_id สำหรับผูกห้องของลูกค้า
+   * เมื่อผู้ใช้กด "คุยกับแอดมิน"
+   * จะสร้าง conversation ใหม่(if not exists)
    */
+  @Roles(Role.USER)
+  @UseGuards(WsJwtGuard, CheckRoleGuard)
   @SubscribeMessage('JOIN_ROOM')
   async onJoinRoom(@ConnectedSocket() client: Socket) {
-    const user_id = client.data.user.sub;
-
-    this.logger.log(
-      `[${this.className}::createConversation] cateway called! (user_id=${user_id})`,
+    const conversation_id = await this.conversationService.joinRoom(
+      client.data.user.sub,
     );
 
-    const exists = await this.conversationRepo.findOne({
-      where: { user: { id: user_id } },
-    });
+    client.join(`ROOM_${conversation_id}`);
 
-    if (exists) return exists.id;
-
-    this.logger.log(
-      `[${this.className}::createConversation] no conversation found for user_id=${user_id}. create a new one successfully!`,
-    );
-
-    const saved = await this.conversationRepo.save({ user: { id: user_id } });
-
-    client.join(`ROOM_${saved.id}`);
-    return saved.id;
+    this.server
+      .to(`ROOM_${conversation_id}`)
+      .emit('JOINED_ROOM', { conversation_id });
   }
 
   /**
    * รับข้อความจาก user แล้วบันทึก และกระจายให้ผู้ฟังในห้องสนทนา
    */
   @Roles(Role.USER, Role.SUPPORT)
-  @UseGuards(WsCheckRole)
+  @UseGuards(WsJwtGuard, WsCheckRole)
   @SubscribeMessage('SEND_MESSAGE')
   async onSendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody()
     dto: CreateMessageDTO,
   ) {
-    this.logger.log(
-      `[${this.className}::SEND_MESSAGE] called event! (body=${JSON.stringify(
-        dto,
-      )}, sub=${client.data.user.sub}`,
-    );
-
     const user: JwtPayload = client.data.user;
 
+    // save message
     const message = await this.messageService.createMessage(user, dto);
+
+    // สร้างการแจ้งเดือนสำหรับแจ้งเดือนครั้งนี้
     const newNotification = await this.notifyService.createNotification(
       user,
       message,
     );
+
+    // create inbox
     await this.chatService.createInbox(user.sub, dto.conversation_id);
 
     // Notification: ส่งแจ้งเตือนหาผู้ใช้
@@ -123,8 +113,6 @@ export class ChatGateway {
       conversation_id: dto.conversation_id,
       user: message.sender,
     });
-
-    this.logger.debug(`[${this.className}::SEND_MESSAGE] done! have no error`);
   }
 
   @SubscribeMessage('UPDATE_MESSAGE')
