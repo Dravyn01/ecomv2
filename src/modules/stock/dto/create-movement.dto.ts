@@ -6,14 +6,14 @@ import {
   Length,
   IsString,
   IsInt,
+  IsUUID,
 } from 'class-validator';
 import { StockChangeType } from '../enums/stock-change.enum';
 
 export class CreateMovementDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกตัวเลือกสินค้า' })
-  @IsInt({ message: 'รหัสตัวเลือกสินค้าต้องเป็นจำนวนเต็ม' })
-  @IsPositive({ message: 'รหัสตัวเลือกสินค้าต้องมากกว่า 0' })
-  variant_id: number;
+  @IsUUID('4', { message: 'รูปแบบหมายเลขสินค้าไม่ถูกต้อง' })
+  variant_id: string;
 
   @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
   @IsInt({ message: 'จำนวนต้องเป็นจำนวนเต็ม' })

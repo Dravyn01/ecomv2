@@ -55,7 +55,7 @@ export class WishlistController {
     @Req() req: { user: User },
     @Param('product_id') product_id: string,
   ): Promise<ApiResponse<null>> {
-    await this.wishlistService.remove(req.user.id, +product_id);
+    await this.wishlistService.remove(req.user.id, product_id);
     return { message: 'นำสินค้าออกจากรายการโปรดเรียบร้อย', data: null };
   }
 }

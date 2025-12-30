@@ -15,7 +15,7 @@ import { FindAllOrdersQuery } from './dto/find-all-orders.query';
 
 // TODO: final add @JwtGuard, @CheckRoleGuard
 
-@Controller('/admin/orders')
+@Controller('/api/orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
@@ -36,7 +36,7 @@ export class OrderController {
     @Param('user_id') user_id: string,
     @Query() query: FindAllOrdersQuery,
   ): Promise<ApiResponse<DatasResponse<Order[]>>> {
-    const orders = await this.orderService.findByUser(+user_id, query);
+    const orders = await this.orderService.findByUser(user_id, query);
     return {
       message: `พบ order ของผู้ใช้ หมายเลข ${user_id} ทั้งหมด ${orders.count} รายการ`,
       data: orders,
@@ -45,7 +45,7 @@ export class OrderController {
 
   @Post('/checkout/:user_id')
   async checkout(@Param('user_id') user_id: string): Promise<any> {
-    const order = await this.orderService.checkout(+user_id);
+    const order = await this.orderService.checkout(user_id);
     return { message: 'เช็คเอาท์สำเร็จ', data: order };
   }
 

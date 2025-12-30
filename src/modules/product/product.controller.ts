@@ -28,8 +28,6 @@ export class ProductController {
   private readonly className = ProductController.name;
   private readonly logger = new Logger(ProductController.name);
 
-  // TODO: edit and add logger
-
   constructor(private readonly productService: ProductService) {}
 
   @Get()
@@ -49,7 +47,7 @@ export class ProductController {
   @UseGuards(OptionalIdentityStrategy)
   @Get(':product_id')
   async findOne(
-    @Param('product_id') product_id: number,
+    @Param('product_id') product_id: string,
     @Req() req: Request,
   ): Promise<ApiResponse<Product>> {
     this.logger.log(
@@ -82,7 +80,7 @@ export class ProductController {
     this.logger.log(
       `[${this.className}::update] update a exists product with object=${JSON.stringify(body)}`,
     );
-    const product = await this.productService.update(+product_id, body);
+    const product = await this.productService.update(product_id, body);
     return {
       message: 'อัพเดทสินค้าเสร็จสิ้น',
       data: product,

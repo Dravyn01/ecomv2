@@ -19,6 +19,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ImageModule } from './modules/image/image.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     AnalyticsModule,
     UploadModule,
     ChatModule,
+    ImageModule,
   ],
 
   controllers: [],

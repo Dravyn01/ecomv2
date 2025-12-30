@@ -3,9 +3,9 @@ import { AuthService } from './auth.service';
 import { RegisterDTO } from './dto/register.dto';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { LocalGuard } from 'src/common/guards/local.guard';
-import { UserResponse } from 'src/modules/user/dto/user.response';
 import { User } from 'src/modules/user/entities/user.entity';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
+import { BaseUserDTO } from '../user/dto/base-user.dto';
 
 @Controller('/api/auth')
 export class AuthController {
@@ -15,9 +15,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('/register')
-  async register(
-    @Body() body: RegisterDTO,
-  ): Promise<ApiResponse<UserResponse>> {
+  async register(@Body() body: RegisterDTO): Promise<ApiResponse<BaseUserDTO>> {
     this.logger.log(
       `[${this.className}::register] register with username=${body.username} email=${body.email}`,
     );

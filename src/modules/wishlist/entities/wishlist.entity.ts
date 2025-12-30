@@ -3,23 +3,24 @@ import { User } from 'src/modules/user/entities/user.entity';
 import {
   CreateDateColumn,
   Entity,
-  ManyToOne,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 
 @Entity('wishlist')
-@Unique(['user', 'product'])
 export class Wishlist {
   @PrimaryGeneratedColumn({ name: 'wishlist_id' })
   id: number;
 
-  @ManyToOne(() => User, (user) => user.wishlists, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (user) => user.wishlists, { onDelete: 'CASCADE' })
+  @JoinColumn()
   user: User;
 
-  @ManyToOne(() => Product, (product) => product.wishlists, {
+  @OneToOne(() => Product, (product) => product.wishlists, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn()
   product: Product;
 
   @CreateDateColumn()

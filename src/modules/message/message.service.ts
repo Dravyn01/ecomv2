@@ -57,7 +57,7 @@ export class MessageService {
     return newMessage;
   }
 
-  async updateMessage(user_id: number, dto: UpdateMessageDTO): Promise<void> {
+  async updateMessage(user_id: string, dto: UpdateMessageDTO): Promise<void> {
     const updatedResult = await this.messageRepo.update(
       {
         id: dto.message_id,
@@ -75,7 +75,7 @@ export class MessageService {
     }
   }
 
-  async deleteMessage(user_id: number, dto: DeleteMessageDTO): Promise<void> {
+  async deleteMessage(user_id: string, dto: DeleteMessageDTO): Promise<void> {
     let deleteResult: DeleteResult | null;
 
     if (dto.message_id) {
@@ -101,25 +101,24 @@ export class MessageService {
     }
   }
 
-  async deleteImage(user_id: number, dto: DeleteMessageDTO): Promise<void> {
-    const updateResult = await this.messageRepo.update(
-      {
-        id: dto.message_id,
-        conversation: { id: dto.conversation_id },
-        sender: { id: user_id },
-        image_urls: Not(IsNull()),
-      },
-      {
-        image_urls: [],
-      },
-    );
-
-    if (updateResult.affected === 0) {
-      throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบรูปภาพได้');
-    }
+  async deleteImage(user_id: string, dto: DeleteMessageDTO): Promise<void> {
+    // TODO: ลบรูป with image_id
+    // const updateResult = await this.messageRepo.update(
+    //   {
+    //     id: dto.message_id,
+    //     conversation: { id: dto.conversation_id },
+    //     sender: { id: user_id },
+    //   },
+    //   {
+    //     images: [],
+    //   },
+    // );
+    // if (updateResult.affected === 0) {
+    //   throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบรูปภาพได้');
+    // }
   }
 
-  async deleteReply(user_id: number, dto: DeleteReplyDTO) {
+  async deleteReply(user_id: string, dto: DeleteReplyDTO) {
     const deleteResult = await this.messageRepo.delete({
       id: dto.reply_id,
       sender: { id: user_id },

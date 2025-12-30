@@ -1,13 +1,14 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { CreateProductDTO } from './create-product.dto';
-import { UpdateImageDTO } from 'src/modules/image/dto/update-image.dto';
 import { Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
 
 export class UpdateProductDTO extends PartialType(
   OmitType(CreateProductDTO, ['images'] as const),
 ) {
+  @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => UpdateImageDTO)
-  images?: UpdateImageDTO[];
+  @Type(() => CreateImageDTO)
+  images?: CreateImageDTO[];
 }

@@ -17,7 +17,7 @@ import { CreateVariantDTO } from './dto/create-variant.dto';
 import { UpdateVariantDTO } from './dto/update-variant.dto';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 
-@Controller('/admin/product-variants')
+@Controller('/api/product-variants')
 export class ProductVariantController {
   private readonly className = 'product-variant.controller';
   private readonly logger = new Logger(ProductVariantController.name);
@@ -46,7 +46,7 @@ export class ProductVariantController {
     );
 
     const variants = await this.variantService.findAllByProduct(
-      +product_id,
+      product_id,
       query,
     );
 
@@ -82,7 +82,7 @@ export class ProductVariantController {
         body,
       )} variant_id=${variant_id}`,
     );
-    const variant = await this.variantService.update(+variant_id, body);
+    const variant = await this.variantService.update(variant_id, body);
     return {
       message: `อัพเดท variant หมายเลข ${variant_id} สำเร็จ`,
       data: variant,
@@ -96,10 +96,11 @@ export class ProductVariantController {
     this.logger.log(
       `[${this.className}::delete] delete product with product_id=${variant_id}`,
     );
-    const variant = await this.variantService.delete(+variant_id);
+    const variant = await this.variantService.delete(variant_id);
     return {
       message: `ลบ variant หมายเลข ${variant_id} สำเร็จ`,
       data: variant,
     };
   }
 }
+

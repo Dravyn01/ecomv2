@@ -1,20 +1,19 @@
 import { Type } from 'class-transformer';
 import {
-  IsPositive,
   IsInt,
   IsNotEmpty,
   Length,
   Max,
   Min,
   ValidateNested,
+  IsUUID,
 } from 'class-validator';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
 
 export class CreateReviewDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการรีวิว' })
-  @IsInt({ message: '' })
-  @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
-  variant_id: number;
+  @IsUUID('4', { message: 'รหัสสินค้าต้องอยู่ในรูปแบบ UUID v4' })
+  variant_id: string;
 
   @IsNotEmpty({ message: 'กรุณาเลือกจำนวนดาว' })
   @IsInt({ message: 'จำนวนดาวต้องเป็นตัวเลข' })

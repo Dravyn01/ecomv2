@@ -32,7 +32,7 @@ export class OrderService {
   }
 
   async findByUser(
-    user_id: number,
+    user_id: string,
     query: FindAllOrdersQuery,
   ): Promise<DatasResponse<Order[]>> {
     const { page, limit, order, status } = query;
@@ -57,7 +57,7 @@ export class OrderService {
     return order;
   }
 
-  async checkout(user_id: number): Promise<Order> {
+  async checkout(user_id: string): Promise<Order> {
     const user = await this.userService.findOne(user_id);
 
     const order = await this.datasource.transaction(async (tx) => {

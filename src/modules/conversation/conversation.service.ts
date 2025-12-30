@@ -9,7 +9,7 @@ export class ConversationService {
   private readonly conversationRepo: Repository<Conversation>;
 
   async checkOwnerConversation(
-    user_id: number,
+    user_id: string,
     conversation_id: string,
   ): Promise<boolean> {
     return await this.conversationRepo.existsBy({
@@ -22,7 +22,7 @@ export class ConversationService {
     return await this.conversationRepo.existsBy({ id: conversation_id });
   }
 
-  async joinRoom(user_id: number): Promise<string> {
+  async joinRoom(user_id: string): Promise<string> {
     const exists = await this.conversationRepo.findOne({
       where: { user: { id: user_id } },
     });

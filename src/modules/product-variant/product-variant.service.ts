@@ -38,7 +38,7 @@ export class ProductVariantService {
   }
 
   async findAllByProduct(
-    product_id: number,
+    product_id: string,
     body: FindAllQuery,
   ): Promise<DatasResponse<ProductVariant[]>> {
     this.logger.log(`[${this.className}::findAllByProduct] service called!`);
@@ -59,7 +59,7 @@ export class ProductVariantService {
     return { data: variants, count };
   }
 
-  async findOne(variant_id: number): Promise<ProductVariant> {
+  async findOne(variant_id: string): Promise<ProductVariant> {
     this.logger.log(`[${this.className}::findOne] service called!`);
 
     const product = await this.variantRepo.findOne({
@@ -104,7 +104,7 @@ export class ProductVariantService {
           await this.imageService.createImage({
             image,
             owner_id: newVariant.id,
-            owner_type: ImageOwnerType.PRODUCT,
+            owner_type: ImageOwnerType.VARIANT,
             tx,
           });
         }
@@ -119,7 +119,7 @@ export class ProductVariantService {
   }
 
   async update(
-    variant_id: number,
+    variant_id: string,
     body: UpdateVariantDTO,
   ): Promise<ProductVariant> {
     this.logger.log(`[${this.className}::update] service called!`);
@@ -141,7 +141,7 @@ export class ProductVariantService {
 
       if (body.images && body) {
         for (const image of body.images) {
-          await this.imageService.updateImage({ image, tx });
+          await this.imageService.updateImage(image, tx);
         }
       }
 
@@ -155,7 +155,7 @@ export class ProductVariantService {
     return savedVariant;
   }
 
-  async delete(variant_id: number): Promise<ProductVariant> {
+  async delete(variant_id: string): Promise<ProductVariant> {
     this.logger.log(`[${this.className}::delete] service called!`);
 
     const variant = await this.findOne(variant_id);

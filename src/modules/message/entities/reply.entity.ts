@@ -9,14 +9,11 @@ import {
 import { Message } from './message.entity';
 import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
-import { Type } from 'class-transformer';
-import { ValidateNested } from 'class-validator';
 
 @Entity('replies')
 export class Replies {
-  @PrimaryGeneratedColumn({ name: 'reply_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'reply_id' })
+  id: string;
 
   @ManyToOne(() => Message, (m) => m.replies)
   @JoinColumn()
@@ -30,10 +27,6 @@ export class Replies {
 
   @Column('text')
   text: string;
-
-  @ValidateNested({ each: true })
-  @Type(() => CreateImageDTO)
-  images: CreateImageDTO[];
 
   @Column({ type: 'timestamp', nullable: true })
   read_at?: Date;

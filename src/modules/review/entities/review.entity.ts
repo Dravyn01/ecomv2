@@ -11,27 +11,27 @@ import {
 
 @Entity('reviews')
 export class Review {
-  @PrimaryGeneratedColumn({ name: 'review_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'review_id' })
+  id: string;
 
+  /* ผู้รีวิว */
   @ManyToOne(() => User, (user) => user.reviews, {
     nullable: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  user?: User;
+  user: User;
 
+  /* สินค้าที่รีวิว */
   @ManyToOne(() => Product, (product) => product.reviews, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
   product: Product;
 
-  @Column({ type: 'text', nullable: true })
-  image_url?: string;
-
+  /* คะแนนรีวิว (1-5) */
   @Column()
-  rating: number; //
+  rating: number;
 
   @Column({ length: 255 })
   comment: string;

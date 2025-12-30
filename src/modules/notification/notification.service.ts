@@ -25,7 +25,7 @@ export class NotificationService {
 
   async findOneBySender(
     notificatino_id: string,
-    sender_id: number,
+    sender_id: string,
   ): Promise<Notification> {
     const notification = await this.notifyRepo.findOneBy({
       id: notificatino_id,
@@ -57,7 +57,7 @@ export class NotificationService {
     await this.notifyRepo.save(savedNotify);
   }
 
-  async createStockAlert(variant_id: number, status: StockStatus) {
+  async createStockAlert(variant_id: string, status: StockStatus) {
     const newNotification = await this.notifyRepo.save({
       title: status === StockStatus.OUT ? 'สต็อกหมดแล้ว' : 'สต็อกใกล์หมดแล้ว',
       type: NotificationType.STOCK_ALERT,
@@ -70,10 +70,10 @@ export class NotificationService {
     console.log('EventEmitter is sending complete!');
   }
 
-  async deleteOneNotification(senderId: number, notification_id: string) {
+  async deleteOneNotification(sender_id: string, notification_id: string) {
     const deleteResult = await this.notifyRepo.delete({
       id: notification_id,
-      sender: { id: senderId },
+      sender: { id: sender_id },
     });
 
     if (deleteResult.affected === 0) {
@@ -82,9 +82,9 @@ export class NotificationService {
     // TODO: return affected count to gateway
   }
 
-  async deleteAllReadNotifications(senderId: number) {
+  async deleteAllReadNotifications(sender_id: string) {
     const deleteResult = await this.notifyRepo.delete({
-      sender: { id: senderId },
+      sender: { id: sender_id },
       read_at: Not(IsNull()),
     });
 
@@ -95,11 +95,11 @@ export class NotificationService {
     return deleteResult.affected;
   }
 
-  async markOneNotificationAsRead(senderId: number, notificationId: string) {
+  async markOneNotificationAsRead(sender_id: string, notificationId: string) {
     const updateResult = await this.notifyRepo.update(
       {
         id: notificationId,
-        sender: { id: senderId },
+        sender: { id: sender_id },
         read_at: IsNull(),
       },
       {
@@ -112,7 +112,7 @@ export class NotificationService {
     }
   }
 
-  async markAllNotificationsAsRead(sender_id: number) {
+  async markAllNotificationsAsRead(sender_id: string) {
     const updatedResult = await this.notifyRepo.update(
       {
         receiver: { id: sender_id },

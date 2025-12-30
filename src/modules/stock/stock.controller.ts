@@ -21,7 +21,7 @@ export class StockController {
   async findByVariant(
     @Param('variant_id') variant_id: string,
   ): Promise<ApiResponse<Stock>> {
-    const stock = await this.stockService.findByVariant(+variant_id);
+    const stock = await this.stockService.findByVariant(variant_id);
     return {
       message: `ข้อมูลสต๊อกของสินค้าหมายเลข ${variant_id}`,
       data: stock,

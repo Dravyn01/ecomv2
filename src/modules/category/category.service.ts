@@ -4,7 +4,7 @@ import {
   Logger,
   BadRequestException,
 } from '@nestjs/common';
-import { ILike, In, Repository } from 'typeorm';
+import { EntityManager, ILike, In, Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindAllCategory } from './dto/find-all-category.query';
@@ -126,11 +126,14 @@ export class CategoryService {
     await this.categoryRepo.remove(await this.findOne(category_id));
   }
 
-  async validateIds(category_ids: number[]): Promise<Category[]> {
+  async validateIds(
+    category_ids: number[],
+    tx: EntityManager,
+  ): Promise<Category[]> {
     this.logger.log(
       `[${this.className}::validateIds] service called! (category_ids=${category_ids.join(', ')})`,
     );
-    const categories = await this.categoryRepo.findBy({
+    const categories = await tx.findBy(Category, {
       id: In(category_ids),
     });
 

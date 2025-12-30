@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Product, ProductStatus } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { EntityManager, ILike, Repository } from 'typeorm';
 import { FindAllProductsQuery } from './dto/find-all-products.query';
 import { CreateProductDTO } from './dto/create-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
@@ -10,8 +10,9 @@ import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CategoryService } from '../category/category.service';
 import { ProductView } from '../analytics/entities/product-view.entity';
 import { type Request } from 'express';
-import { Image, ImageOwnerType } from '../image/entities/image.entity';
+import { ImageOwnerType } from '../image/entities/image.entity';
 import { User } from '../user/entities/user.entity';
+import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class ProductService {
@@ -22,9 +23,9 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
     @InjectRepository(ProductView)
     private readonly viewRepo: Repository<ProductView>,
-    @InjectRepository(Image)
-    private readonly imageRepo: Repository<Image>,
+    private readonly imageService: ImageService,
     private readonly categoryService: CategoryService,
+    private readonly manager: EntityManager,
   ) {}
 
   // find all
@@ -51,7 +52,7 @@ export class ProductService {
   }
 
   // find by id
-  async findOne(product_id: number): Promise<Product> {
+  async findOne(product_id: string): Promise<Product> {
     const product = await this.productRepo.findOne({
       where: {
         id: product_id,
@@ -66,50 +67,67 @@ export class ProductService {
     return product;
   }
 
-  // create product
   async create(body: CreateProductDTO): Promise<Product> {
-    // validate category
-    await this.categoryService.validateIds(body.category_ids);
+    return this.manager.transaction(async (tx: EntityManager) => {
+      await this.categoryService.validateIds(body.category_ids, tx);
 
-    // save product
-    const product = await this.productRepo.save({
-      name: body.name,
-      description: body.description,
-      base_price: body.base_price,
-      status: ProductStatus.INACTIVE,
-      discount_price: body.discount_price,
-      categories: body.category_ids.map((id) => ({ id })),
-    });
+      // save product
+      const product = await tx.save(Product, {
+        name: body.name,
+        description: body.description,
+        base_price: body.base_price,
+        status: ProductStatus.INACTIVE,
+        discount_price: body.discount_price,
+        categories: body.category_ids.map((id) => ({ id })),
+      });
 
-    if (body.images) {
-      for (const image of body.images) {
-        await this.imageRepo.save({
-          url: image.url,
-          order: image.order,
-          owner_id: product.id,
-          owner_type: ImageOwnerType.PRODUCT,
-          public_id: image.public_id,
-        });
+      if (body.images?.length) {
+        for (const image of body.images) {
+          await this.imageService.createImage({
+            owner_id: product.id,
+            owner_type: ImageOwnerType.PRODUCT,
+            image,
+            tx,
+          });
+        }
       }
-    }
 
-    return product;
+      return product;
+    });
   }
 
   // update product
-  async update(product_id: number, body: UpdateProductDTO): Promise<Product> {
-    let exists_product = await this.findOne(product_id);
+  async update(product_id: string, body: UpdateProductDTO): Promise<Product> {
+    let product = await this.findOne(product_id);
 
-    // validate and set category
-    if (body.category_ids) {
-      const categories = await this.categoryService.validateIds(
-        body.category_ids,
-      );
-      exists_product.categories = categories;
-    }
+    const updatedProduct = await this.manager.transaction(async (tx) => {
+      // validate and set category
+      if (body.category_ids?.length) {
+        const categories = await this.categoryService.validateIds(
+          body.category_ids,
+          tx,
+        );
+        product.categories = categories;
+      }
 
-    const updated_product = this.productRepo.merge(exists_product, body as any);
-    return await this.productRepo.save(updated_product);
+      const savedProduct = tx.merge(Product, product, body);
+      await this.productRepo.save(savedProduct);
+
+      if (body.images?.length) {
+        for (const image of body.images) {
+          await this.imageService.createImage({
+            owner_id: product_id,
+            owner_type: ImageOwnerType.PRODUCT,
+            image,
+            tx,
+          });
+        }
+      }
+
+      return savedProduct;
+    });
+
+    return updatedProduct;
   }
 
   // delete product
@@ -118,7 +136,7 @@ export class ProductService {
   }
 
   // view product
-  async view(product_id: number, req: Request): Promise<Product> {
+  async view(product_id: string, req: Request): Promise<Product> {
     this.logger.log(
       `[product.service::view] called! (product_id=${product_id}, user=${JSON.stringify(req.user)})`,
     );
@@ -159,6 +177,7 @@ export class ProductService {
       };
     }
 
+    // ระบุก่อนว่าเป็น user || ip เดิมไหม ถ้าไม่ใช่ก็เพิ่มไป ถ้าใช่ก็ไม่
     // if (isBefore(now, addMinutes(new Date(saved_view.last_view_at), 1)))
     //   return product;
 

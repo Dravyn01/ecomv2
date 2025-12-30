@@ -13,8 +13,8 @@ import { Replies } from './reply.entity';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn({ name: 'message_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'message_id' })
+  id: string;
 
   @ManyToOne(() => Conversation, (con) => con.messages)
   @JoinColumn()
@@ -26,9 +26,6 @@ export class Message {
 
   @Column({ type: 'text' })
   text: string;
-
-  @Column({ type: 'text', array: true })
-  image_urls: string[];
 
   @OneToMany(() => Replies, (r) => r.message, { nullable: true })
   replies: Replies[];

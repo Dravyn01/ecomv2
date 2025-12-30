@@ -45,7 +45,7 @@ export class UploadController {
       message: 'upload file successfully!',
       data: {
         url: result.secure_url,
-        publicId: result.public_id,
+        public_id: result.public_id,
       },
     };
   }

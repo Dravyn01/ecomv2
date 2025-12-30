@@ -12,10 +12,10 @@ import {
   ApiResponseFormat,
 } from 'src/common/dto/res/common-response';
 
-@Injectable()
 /*
  * interceptor นี้ทำหน้าที่แปลง response ให้เป็นไปตาม format
  * */
+@Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T> {
   intercept(
     context: ExecutionContext,
@@ -29,8 +29,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T> {
         return {
           code: response.statusCode ?? HttpStatus.OK,
           status: 'success',
-          message: data.message,
-          data: data.data,
+          ...(data.message && { message: data.message }),
+          ...(data.data && { data: data.data }),
         } as ApiResponseFormat<T>;
       }),
     );

@@ -7,6 +7,7 @@ import {
   IsInt,
   Min,
   ValidateNested,
+  IsUUID,
 } from 'class-validator';
 import { ProductVariantStatus } from '../entities/product-variant.entity';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
@@ -14,9 +15,8 @@ import { Type } from 'class-transformer';
 
 export class CreateVariantDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
-  @IsInt({ message: '' })
-  @IsPositive({ message: 'รหัสสินค้าต้องเป็นตัวเลขที่มากกว่า 0' })
-  product_id: number;
+  @IsUUID('4', { message: 'รหัสสินค้าต้องอยู่ในรูปแบบ UUID v4' })
+  product_id: string;
 
   @IsNotEmpty({ message: 'กรุณาเลือกสี' })
   @IsInt({ message: '' })

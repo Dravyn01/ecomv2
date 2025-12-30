@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -9,6 +10,8 @@ export enum ImageOwnerType {
   PRODUCT = 'PRODUCT',
   PROFILE = 'PROFILE',
   REVIEW = 'REVIEW',
+  VARIANT = 'VARIANT',
+  MESSAGE = 'MESSAGE',
 }
 
 @Entity('images')
@@ -28,12 +31,27 @@ export class Image {
   })
   owner_type: ImageOwnerType;
 
-  @Column()
-  owner_id: string | number;
+  @Column({ type: 'uuid' })
+  owner_id: string;
 
-  @Column({ default: 0 })
+  @Column({ default: 1 })
   order: number;
 
+  @Column({ default: false })
+  is_primary: boolean;
+
+  @Column({ length: 50, nullable: true })
+  alt?: string;
+
+  @Column('int')
+  width: number;
+
+  @Column('int')
+  height: number;
+
   @CreateDateColumn()
-  createdAt: Date;
+  created_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at?: Date;
 }

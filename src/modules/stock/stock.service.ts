@@ -29,7 +29,7 @@ export class StockService {
     });
   }
 
-  async findByVariant(variant_id: number): Promise<Stock> {
+  async findByVariant(variant_id: string): Promise<Stock> {
     const stock = await this.stockRepo.findOne({
       where: { variant: { id: variant_id } },
       order: { id: 'ASC' },
@@ -39,7 +39,7 @@ export class StockService {
     return stock;
   }
 
-  async IsOutOfStock(variant_id: number, qty: number): Promise<void> {
+  async isOutOfStock(variant_id: string, qty: number): Promise<void> {
     const stock = await this.findByVariant(variant_id);
     if (stock.quantity <= 0 || stock.quantity < qty)
       throw new BadRequestException('สินค้าในสต็อกหมดแล้ว');
@@ -57,7 +57,7 @@ export class StockService {
     });
   }
 
-  async notifyStock(variant_id: number, qty: number): Promise<void> {
+  async notifyStock(variant_id: string, qty: number): Promise<void> {
     const stock = await this.findByVariant(variant_id);
     const remaining = stock.quantity - qty;
 

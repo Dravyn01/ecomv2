@@ -7,9 +7,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import { UserResponse } from './dto/user.response';
-import { toUserResponse } from 'src/common/mapper/user.mapper';
 import { Role, User } from './entities/user.entity';
+import { UserResponseDTO } from './dto/user-response.dto';
+import { BaseUserDTO } from './dto/base-user.dto';
 
 @Injectable()
 export class UserService {
@@ -33,10 +33,9 @@ export class UserService {
     throw new UnauthorizedException('invalid email or password');
   }
 
-  async getAllUser(): Promise<UserResponse[]> {
+  async getAllUser(): Promise<BaseUserDTO[]> {
     this.logger.log('getAllUser called');
-    const users = await this.userRepo.find();
-    return users.map(toUserResponse);
+    return await this.userRepo.find();
   }
 
   async findByEmail(email: string): Promise<User> {
@@ -51,23 +50,20 @@ export class UserService {
     throw new NotFoundException('user not found');
   }
 
-  async findOne(user_id: number): Promise<UserResponse> {
+  async findOne(user_id: string): Promise<UserResponseDTO> {
     const user = await this.userRepo.findOne({
       where: { id: user_id },
       relations: ['cart', 'orders'],
     });
-    console.log('user', user);
     if (!user) throw new NotFoundException('not found user');
     return user;
   }
 
-  async getProfile(email: string): Promise<UserResponse> {
-    this.logger.log(`getProfile called with email=${email}`);
-    const user = await this.findByEmail(email);
-    return toUserResponse(user);
+  async getProfile(email: string): Promise<UserResponseDTO> {
+    return await this.findByEmail(email);
   }
 
-  async checkRole(user_id: number, role: Role): Promise<Boolean> {
+  async checkRole(user_id: string, role: Role): Promise<Boolean> {
     const user = await this.userRepo.findOneBy({ id: user_id });
     if (!user) throw new NotFoundException('not found user');
     if (user.role === role) {
@@ -76,7 +72,7 @@ export class UserService {
     return false;
   }
 
-  async findConversation(user_id: number): Promise<string> {
+  async findConversation(user_id: string): Promise<string> {
     const exists = await this.userRepo.findOne({
       where: {
         id: user_id,

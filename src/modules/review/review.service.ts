@@ -24,7 +24,7 @@ export class ReviewService {
   }
 
   async findByProduct(
-    product_id: number,
+    product_id: string,
     query: FindAllQuery,
   ): Promise<Review[]> {
     const { page, limit, order } = query;
@@ -41,7 +41,7 @@ export class ReviewService {
     });
   }
 
-  async create(user_id: number, body: CreateReviewDTO): Promise<Review> {
+  async create(user_id: string, body: CreateReviewDTO): Promise<Review> {
     const user = await this.userService.findOne(user_id);
 
     const review = this.manager.transaction(async (tx) => {
@@ -72,7 +72,7 @@ export class ReviewService {
     return review;
   }
 
-  async delete(review_id: number): Promise<void> {
+  async delete(review_id: string): Promise<void> {
     await this.reviewRepo.delete(review_id);
   }
 }

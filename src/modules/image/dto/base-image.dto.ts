@@ -1,10 +1,11 @@
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPositive,
   IsString,
   IsUrl,
-  Min,
 } from 'class-validator';
 
 export class BaseImageDTO {
@@ -19,8 +20,21 @@ export class BaseImageDTO {
   @IsString()
   public_id?: string;
 
+  @IsOptional()
+  @IsString()
+  alt?: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  is_primary: boolean;
+
   @IsNotEmpty({ message: '' })
-  @IsInt({ message: '' })
-  @Min(1, { message: '' })
-  order: number;
+  @IsInt()
+  @IsPositive()
+  width: number;
+
+  @IsNotEmpty({ message: '' })
+  @IsInt()
+  @IsPositive()
+  height: number;
 }

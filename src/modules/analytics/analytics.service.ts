@@ -220,10 +220,10 @@ export class AnalyticsService {
 
   aggregateByProduct<T, R>(
     items: T[],
-    getProductId: (item: T) => number,
+    getProductId: (item: T) => string,
     reducer: (acc: R, item: T) => void, // เพิ่มค่าให้กับข้อมูลยังไง
     initial: () => R, // หน้าตาข้อมูลว่าง เช่น { repeat: 0, unique: 0 }
-  ): Map<number, R> {
+  ): Map<string, R> {
     /*
      * T ข้อมูลที่เป็น array
      * R ข้อมูลว่าง เช่น { repeat: 0, unique: 0 }
@@ -234,7 +234,7 @@ export class AnalyticsService {
      * initial = สร้างข้อมูลเริ่มต้น สำหรับไว้เพิ่มค่า
      * */
 
-    const map = new Map<number, R>();
+    const map = new Map<string, R>();
 
     for (const item of items) {
       const productId = getProductId(item);

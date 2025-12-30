@@ -1,10 +1,9 @@
-import { IsInt, IsNotEmpty, IsPositive } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive, IsUUID } from 'class-validator';
 
 export class AddQuantityDTO {
   @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการเพิ่มจำนวน' })
-  @IsInt({ message: 'หมายเลขรายการสินค้าต้องเป็นตัวเลข' })
-  @IsPositive({ message: 'หมายเลขรายการสินค้าต้องเป็นตัวเลขที่มากว่า 0' })
-  variant_id: number;
+  @IsUUID('4', { message: 'รูปแบบหมายเลขสินค้าไม่ถูกต้อง' })
+  variant_id: string;
 
   @IsNotEmpty({ message: 'กรุณากรอกจำนวนที่ต้องการเพิ่ม' })
   @IsInt({ message: 'จำนวนต้องเป็นตัวเลขเท่านั้น' })

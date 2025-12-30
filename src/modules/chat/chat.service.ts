@@ -11,7 +11,7 @@ export class ChatService {
   ) {}
 
   // ส่ง inbox ไปหา support (ถ้าเป็นข้อความแรก)
-  async createInbox(sender_id: number, conversation_id: string) {
+  async createInbox(sender_id: string, conversation_id: string) {
     // เช็คว่ามี inbox จาก sender นี้ กับ conversation นี้หรือยัง ถ้าไม่มีให้ส่ง ถ้ามีไม่ต้อง
     if (
       !(await this.inboxRepo.findOneBy({

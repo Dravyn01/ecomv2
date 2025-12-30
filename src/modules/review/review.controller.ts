@@ -31,10 +31,10 @@ export class ReviewController {
 
   @Get(':product_id')
   async findOne(
-    @Param('product_id') product_id: number,
+    @Param('product_id') product_id: string,
     @Query() query: FindAllQuery,
   ): Promise<ApiResponse<Review[]>> {
-    const reviews = await this.reviewService.findByProduct(+product_id, query);
+    const reviews = await this.reviewService.findByProduct(product_id, query);
     console.log(product_id);
     console.log(reviews);
     return {
@@ -53,8 +53,8 @@ export class ReviewController {
   }
 
   @Delete(':review_id')
-  async remove(@Param('review_id') id: string) {
-    const review = await this.reviewService.delete(+id);
+  async remove(@Param('review_id') review_id: string) {
+    const review = await this.reviewService.delete(review_id);
     return { message: 'ลบรีวิวเรียบร้อย', data: review };
   }
 }

@@ -1,9 +1,9 @@
-import { IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class UpdateMessageDTO {
   @IsNotEmpty({ message: '' })
-  @IsInt()
-  message_id: number;
+  @IsUUID('4', { message: 'รูปแบบของหมายเลขข้อความไม่ถูกต้อง' })
+  message_id: string;
 
   @IsNotEmpty({ message: '' })
   @IsUUID()

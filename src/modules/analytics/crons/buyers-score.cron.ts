@@ -32,10 +32,7 @@ export class BuyersScoreCron {
       relations: ['user', 'product'],
     });
 
-    const grouped = this.analyticService.aggregateByProduct<
-      UserPurchaseHistory,
-      { unique: Set<number>; repeat: 0 }
-    >(
+    const grouped = this.analyticService.aggregateByProduct(
       historyOrderPaidToday,
       (h) => h.product.id,
       (acc, item) => {
@@ -52,18 +49,20 @@ export class BuyersScoreCron {
       const unique_buyers = data.unique.size; // แปลงเป็นจำนวน เพราะ ไม่ได้ต้องการ user_id
       const repeat_buyers = data.repeat;
 
-      //
+      // new repeat rate
       const repeat_rate =
         unique_buyers === 0
           ? 0
           : Number(((repeat_buyers / unique_buyers) * 100).toFixed(2));
 
-      await this.productStatsRepo.save({
-        product: { id: product_id },
-        unique_buyers,
-        repeat_buyers,
-        repeat_rate,
-      });
+      await this.productStatsRepo.update(
+        { product: { id: product_id } },
+        {
+          unique_buyers,
+          repeat_buyers,
+          repeat_rate,
+        },
+      );
     }
   }
 }

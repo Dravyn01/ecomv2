@@ -1,6 +1,7 @@
 import { LoginHistory } from 'src/modules/auth/entities/login-history.entity';
 import { Cart } from 'src/modules/cart/entities/cart.entity';
 import { Conversation } from 'src/modules/conversation/entities/conversation.entity';
+import { Image } from 'src/modules/image/entities/image.entity';
 import { Message } from 'src/modules/message/entities/message.entity';
 import { Order } from 'src/modules/order/entities/order.entity';
 import { Wallet } from 'src/modules/payment/entities/wallet.entity';
@@ -25,8 +26,8 @@ export enum Role {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn({ name: 'user_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'user_id' })
+  id: string;
 
   @Column({ length: 30 })
   username: string;
@@ -47,6 +48,9 @@ export class User {
   updated_at: Date;
 
   // # relations
+  @OneToMany(() => Image, (img) => img.owner_id, { onDelete: 'CASCADE' })
+  avatar: Image;
+
   @OneToOne(() => Cart, (cart) => cart.user)
   cart: Cart;
 
@@ -56,7 +60,7 @@ export class User {
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
 
-  @OneToMany(() => Wishlist, (wishlist) => wishlist.user)
+  @OneToOne(() => Wishlist, (wishlist) => wishlist.user)
   wishlists: Wishlist[];
 
   @OneToMany(() => Message, (message) => message.sender)

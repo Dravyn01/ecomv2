@@ -13,11 +13,11 @@ export class WishlistService {
     private readonly productService: ProductService,
   ) {}
 
-  async findAllByUser(user_id: number): Promise<Wishlist[]> {
+  async findAllByUser(user_id: string): Promise<Wishlist[]> {
     return await this.wishlistRepo.findBy({ user: { id: user_id } });
   }
 
-  async create(user_id: number, body: AddToWishlistDto): Promise<Wishlist> {
+  async create(user_id: string, body: AddToWishlistDto): Promise<Wishlist> {
     const product = await this.productService.findOne(body.product_id);
     return await this.wishlistRepo.save({
       user: { id: user_id },
@@ -25,7 +25,7 @@ export class WishlistService {
     });
   }
 
-  async remove(user_id: number, product_id: number) {
+  async remove(user_id: string, product_id: string) {
     const product = await this.productService.findOne(product_id);
     await this.wishlistRepo.delete({
       user: { id: user_id },

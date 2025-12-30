@@ -25,8 +25,8 @@ export enum ProductStatus {
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn({ name: 'product_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'product_id' })
+  id: string;
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
@@ -76,14 +76,10 @@ export class Product {
   reviews: Review[];
 
   // One Product Many Wishlist
-  @OneToMany(() => Wishlist, (wishlist) => wishlist.product)
+  @OneToOne(() => Wishlist, (wishlist) => wishlist.product)
   wishlists: Wishlist[];
 
   // One Product One ProductRepeatSummary
   @OneToOne(() => ProductStats, (stats) => stats.product)
   stats: ProductStats;
-
-  // One Product Many Image
-  @OneToMany(() => Image, (img) => img.owner_id)
-  images: Image[];
 }

@@ -38,8 +38,9 @@ export class Stock {
   })
   movements: StockMovement[];
 
+  /* มีการเพิ่มจำนวน ลดจำนวน เมื่อไหร่ */
   @UpdateDateColumn()
-  updated_at: Date; // มีการเพิ่มจำนวน ลดจำนวน เมื่อไหร่
+  updated_at: Date;
 }
 
 @Entity('stock_movements')
@@ -56,15 +57,19 @@ export class StockMovement {
   @Column('int')
   quantity: number; // จำนวนสินค้าที่ถูกเพิ่ม/ลบ/คืน
 
+  /* หมายเหตุ (optional) */
   @Column({ type: 'varchar', length: 255, nullable: true })
   note?: string;
 
+  /*
+   * เคสที่ movement เกิดจาก order (RETURN, CHECKOUT, CANCEL)
+   * */
   @ManyToOne(() => Order, (order) => order.movements, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn()
-  order?: Order; // เคสที่ movement เกิดจาก order เช่น สั่งซื้อสินค้า 3 ซิ้นจาก order 123
+  order?: Order;
 
   @CreateDateColumn()
   created_at: Date;

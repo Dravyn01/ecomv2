@@ -24,8 +24,8 @@ export enum ProductVariantStatus {
 
 @Entity('product_variants')
 export class ProductVariant {
-  @PrimaryGeneratedColumn({ name: 'product_variant_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'product_variant_id' })
+  id: string;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   price: number;
@@ -33,9 +33,6 @@ export class ProductVariant {
   /* example: PD-BLK-XL-003 */
   @Column({ type: 'varchar', length: 100, nullable: true }) // should be unique
   sku: string;
-
-  @Column({ type: 'text' })
-  image_url: string;
 
   @Column({
     type: 'enum',
@@ -47,6 +44,7 @@ export class ProductVariant {
   @CreateDateColumn()
   created_at: Date;
 
+  // # relations
   // One Variant Many OrderItem
   @OneToMany(() => OrderItem, (orderItem) => orderItem.variant)
   order_items: OrderItem[];

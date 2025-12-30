@@ -4,10 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { UserResponse } from 'src/modules/user/dto/user.response';
-import { toUserResponse } from 'src/common/mapper/user.mapper';
 import { User } from 'src/modules/user/entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
+import { BaseUserDTO } from '../user/dto/base-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +26,7 @@ export class AuthService {
    * รับข้อมูลผู้ใช้มา -> hash รหัสผ่านของผู้ใช้
    * บันทึกลงฐานข้อมูล
    */
-  async register(req: RegisterDTO): Promise<UserResponse> {
+  async register(req: RegisterDTO): Promise<BaseUserDTO> {
     this.logger.log(`[${this.className}::register] service called!`);
 
     const user = await this.userRepo.existsBy({ email: req.email });
@@ -48,11 +47,7 @@ export class AuthService {
       role: req.role,
     });
 
-    this.logger.log(
-      `[${this.className}::register] register email=${req.email} success`,
-    );
-
-    return toUserResponse(newUser);
+    return newUser;
   }
 
   /*

@@ -48,12 +48,14 @@ export class SalesScoreCron {
     );
 
     for (const [productId, stat] of grouped.entries()) {
-      await this.productStatsRepo.save({
-        product: { id: productId },
-        total_orders: stat.total_orders,
-        total_quantity_sold: stat.qty,
-        total_revenue: stat.revenue,
-      });
+      await this.productStatsRepo.update(
+        { product: { id: productId } },
+        {
+          total_orders: stat.total_orders,
+          total_quantity_sold: stat.qty,
+          total_revenue: stat.revenue,
+        },
+      );
     }
   }
 }

@@ -17,15 +17,3 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     return await this.userService.validateUser(email, password);
   }
 }
-
-/*
- *
- * user -> POST http://localhost:8080/api/login
- * Called controller -> use local guard
- * find email & compare password
- * if invalid -> throw UnAuthorization
- * if valid -> call service.login
- * save login-history
- * generatee accessToken
- *
- * */

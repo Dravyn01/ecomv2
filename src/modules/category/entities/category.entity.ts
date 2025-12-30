@@ -36,7 +36,7 @@ export class Category {
   // เก็บหมวดหมู่ที่เราไปเชื่อม (nullable ถ้าหมวดหมู่หลักไม่มี sub)
   // parent ทำหน้าที่บอกว่าเราอยู่ใต้หมวดหมู่ไหน  ถ้าสังเกตดีๆ parent จะเก็บ Category = หมวดหมู่หลักที่เราไปเชื่อมเขา
   @ManyToOne(() => Category, (cate) => cate.children, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
+  @JoinColumn()
   parent: Category | null;
 
   @CreateDateColumn()

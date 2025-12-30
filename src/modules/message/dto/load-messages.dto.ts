@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class LoadMessages {
   @IsNotEmpty({ message: 'หมายเลขห้องต้องไม่เป็นค่าว่าง' })
@@ -6,6 +6,6 @@ export class LoadMessages {
   conversation_id: string;
 
   @IsOptional()
-  @IsInt()
-  befor_message_id?: number;
+  @IsUUID('4', { message: 'รูปแบบของหมายเลขข้อความไม่ถูกต้อง' })
+  befor_message_id?: string;
 }

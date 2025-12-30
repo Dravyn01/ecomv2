@@ -1,9 +1,9 @@
-import { IsInt, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class DeleteReplyDTO {
   @IsNotEmpty({ message: '' })
-  @IsInt({ message: '' })
-  reply_id: number;
+  @IsUUID('4', { message: '' })
+  reply_id: string;
 
   @IsNotEmpty({ message: '' })
   @IsUUID()

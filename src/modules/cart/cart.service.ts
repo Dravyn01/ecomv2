@@ -45,7 +45,7 @@ export class CartService {
     return { data: carts, count } as DatasResponse<Cart[]>;
   }
 
-  async findOneByUser(user_id: number): Promise<Cart> {
+  async findOneByUser(user_id: string): Promise<Cart> {
     const existing = await this.cartRepo.findOne({
       where: { user: { id: user_id } },
       relations: ['items'],
@@ -63,7 +63,7 @@ export class CartService {
     const variant = await this.variantService.findOne(body.variant_id);
 
     const cart_item = await this.datasource.transaction(async (tx) => {
-      await this.stockService.IsOutOfStock(body.variant_id, body.quantity);
+      await this.stockService.isOutOfStock(body.variant_id, body.quantity);
 
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
 
@@ -91,7 +91,7 @@ export class CartService {
         // เพิ่มจำนวน
         existing_item.quantity += body.quantity;
 
-        await this.stockService.IsOutOfStock(
+        await this.stockService.isOutOfStock(
           existing_item.variant.id,
           existing_item.quantity,
         );
@@ -134,22 +134,6 @@ export class CartService {
     await this.cartRepo.delete(cart.id);
   }
 
-  /*
-   * --- Comment By GPT (ขก เขียนเอง) ---
-   *
-   * ฟังก์ชันนี้จัดการ action ของ cart_item ได้แก่:
-   *  - REMOVE → ลบสินค้าออกจาก cart
-   *  - DECREASE → ลดจำนวนสินค้า 1 ชิ้น
-   *
-   * 1: หา cart ของ user
-   * 2: หา cart_item ที่ตรงกับ variant_id
-   *      - ถ้าไม่เจอ → throw NotFoundException
-   * 3: เช็ค action:
-   *      3.1: ถ้า action === 'REMOVE' → ลบ cart_item และ return status 'deleted'
-   *      3.2: ถ้า action === 'DECREASE' และ quantity <= 1 → ลบ cart_item และ return status 'deleted'
-   * 4: ถ้า DECREASE แล้ว quantity > 1 → ลด quantity ลง 1 และ save
-   * 5: return cart_item พร้อม status 'updated' หรือ 'deleted'
-   */
   async itemAction(
     body: ActionsCartItemDTO,
   ): Promise<{ cart_item: CartItem; status: 'updated' | 'deleted' }> {
@@ -157,11 +141,11 @@ export class CartService {
       `[cart.service::itemAction] START user=${body.user_id}, variant=${body.variant_id}, action=${body.action}`,
     );
 
-    // 1: หา cart ของ user
+    // หา cart ของ user
     const cart = await this.findOneByUser(body.user_id);
     this.logger.log(`[cart.service::itemAction] Loaded cart cartId=${cart.id}`);
 
-    // 2: หา cart_item
+    // หา cart_item
     const cart_item = await this.cartItemRepo.findOneBy({
       cart: { id: cart.id },
       variant: { id: body.variant_id },
@@ -178,7 +162,7 @@ export class CartService {
       throw new NotFoundException('ไม่พบสินค้าที่ต้องการลบ');
     }
 
-    // 3: ตรวจสอบ action
+    // ตรวจสอบ action
     const act = body.action.toUpperCase();
     this.logger.log(`[cart.service::itemAction] Action resolved: ${act}`);
 
@@ -199,13 +183,13 @@ export class CartService {
       return { cart_item, status: 'deleted' };
     }
 
-    // 4: DECREASE quantity > 1
+    // DECREASE quantity > 1
     cart_item.quantity -= 1;
     this.logger.log(
       `[cart.service::itemAction] Decreasing quantity itemId=${cart_item.id}, newQty=${cart_item.quantity}`,
     );
 
-    // 5: return status 'updated'
+    // return status 'updated'
     const updated_cart_item = await this.cartItemRepo.save(cart_item);
 
     this.logger.log(

@@ -1,7 +1,7 @@
-import { IsInt, IsPositive } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
 
 export class AddToWishlistDto {
-  @IsInt({ message: 'กรุณาเลือกสินค้าที่ต้องการเพิ่มลงรายการโปรด' })
-  @IsPositive({ message: 'รหัสสินค้าต้องเป็นจำนวนเต็มและมากกว่า 0' })
-  product_id: number;
+  @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
+  @IsUUID('4', { message: 'รหัสสินค้าต้องอยู่ในรูปแบบ UUID v4' })
+  product_id: string;
 }
