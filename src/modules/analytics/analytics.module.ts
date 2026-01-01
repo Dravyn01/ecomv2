@@ -6,7 +6,6 @@ import { UserPurchaseHistory } from './entities/user-purchase-history.entity';
 import { Order, OrderItem } from 'src/modules/order/entities/order.entity';
 import { ProductStats } from './entities/product-stats.entity';
 import { ProductView } from './entities/product-view.entity';
-import { ProductsScoreCron } from './job/products-score.job';
 
 @Module({
   imports: [
@@ -19,6 +18,6 @@ import { ProductsScoreCron } from './job/products-score.job';
     ]),
   ],
   controllers: [AnalyticsController],
-  providers: [AnalyticsService, ProductsScoreCron],
+  providers: [AnalyticsService],
 })
 export class AnalyticsModule {}

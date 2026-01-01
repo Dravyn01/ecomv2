@@ -26,6 +26,8 @@ import { ReadMessageDTO } from '../message/dto/read-message.dto';
 import { LoadMessages } from '../message/dto/load-messages.dto';
 import { CreateReplyDTO } from '../message/dto/create-reply.dto';
 import { ConversationService } from '../conversation/conversation.service';
+import { ImageService } from '../image/image.service';
+import { ImageOwnerType } from '../image/entities/image.entity';
 
 /*
  * NOTE:
@@ -41,8 +43,8 @@ export class ChatGateway {
   @WebSocketServer()
   readonly server: Server;
 
-  private readonly logger = new Logger(ChatGateway.name);
-  private readonly className = 'chat.gateway';
+  // private readonly logger = new Logger(ChatGateway.name);
+  // private readonly className = 'chat.gateway';
 
   constructor(
     @InjectRepository(Inbox) private readonly inboxRepo: Repository<Inbox>,
@@ -50,6 +52,7 @@ export class ChatGateway {
     private readonly notifyService: NotificationService,
     private readonly messageService: MessageService,
     private readonly conversationService: ConversationService,
+    private readonly imageService: ImageService,
   ) {}
 
   /**
@@ -153,17 +156,6 @@ export class ChatGateway {
     await this.messageService.deleteMessage(client.data.user.sub, dto);
 
     this.server.to(`ROOM_${dto.conversation_id}`).emit('DELETE_MESSAGE', {
-      message_id: dto.message_id,
-    });
-  }
-
-  @SubscribeMessage('DELETE_IMAGE_MESSAGE')
-  async onDeleteImageMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() dto: DeleteMessageDTO,
-  ) {
-    await this.messageService.deleteImage(client.data.user.sub, dto);
-    this.server.to(`ROOM_${dto.conversation_id}`).emit('IMAGE_DELETED', {
       message_id: dto.message_id,
     });
   }

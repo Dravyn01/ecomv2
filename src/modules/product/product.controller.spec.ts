@@ -16,21 +16,6 @@ describe('ProductController', () => {
     discount_price: 90,
     created_at: new Date(),
     updated_at: new Date(),
-    review_count: 0,
-    avg_rating: 0.0,
-    sales_count: 0,
-    wishlist_count: 0,
-    view_count: 0,
-    return_count: 0,
-    return_rate: 0.0,
-    repeat_purchase_rate: 0.0,
-    repeat_count: 0,
-    popularity_score: 0.0,
-    categories: [{ id: 1, name: 'Category 1' }],
-    variants: [],
-    reviews: [],
-    wishlists: [],
-    repeat_summaries: null,
   };
 
   // mock response แยกตาม action

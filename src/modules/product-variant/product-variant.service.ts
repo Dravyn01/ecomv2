@@ -60,23 +60,17 @@ export class ProductVariantService {
   }
 
   async findOne(variant_id: string): Promise<ProductVariant> {
-    this.logger.log(`[${this.className}::findOne] service called!`);
-
     const product = await this.variantRepo.findOne({
       where: { id: variant_id },
       relations: ['product', 'color', 'size'],
     });
 
     if (!product) {
-      this.logger.log(
+      this.logger.warn(
         `[${this.className}::findOne] not found variant with variant_id=${variant_id}`,
       );
       throw new NotFoundException(`ไม่พบสินค้าหมายเลขนี้: ${variant_id}`);
     }
-
-    this.logger.log(
-      `[${this.className}::findOne] found variant with variant_id=${variant_id}`,
-    );
 
     return product;
   }
@@ -99,21 +93,17 @@ export class ProductVariantService {
         },
       });
 
-      if (body.images) {
-        for (const image of body.images) {
-          await this.imageService.createImage({
-            image,
-            owner_id: newVariant.id,
-            owner_type: ImageOwnerType.VARIANT,
-            tx,
-          });
-        }
+      for (const image of body.images) {
+        await this.imageService.createImage({
+          image,
+          owner_id: newVariant.id,
+          owner_type: ImageOwnerType.VARIANT,
+          tx,
+        });
       }
 
       return newVariant;
     });
-
-    this.logger.log(`[${this.className}::create] created variant success`);
 
     return savedVariant;
   }
@@ -122,8 +112,6 @@ export class ProductVariantService {
     variant_id: string,
     body: UpdateVariantDTO,
   ): Promise<ProductVariant> {
-    this.logger.log(`[${this.className}::update] service called!`);
-
     const existing_variant = await this.findOne(variant_id);
 
     const savedVariant = await this.manager.transaction(async (tx) => {
@@ -139,7 +127,7 @@ export class ProductVariantService {
         }),
       });
 
-      if (body.images && body) {
+      if (body.images?.length) {
         for (const image of body.images) {
           await this.imageService.updateImage(image, tx);
         }
@@ -148,24 +136,12 @@ export class ProductVariantService {
       return updatedVariant;
     });
 
-    this.logger.log(
-      `[${this.className}::update] variant_id=${variant_id} has updated!`,
-    );
-
     return savedVariant;
   }
 
   async delete(variant_id: string): Promise<ProductVariant> {
-    this.logger.log(`[${this.className}::delete] service called!`);
-
     const variant = await this.findOne(variant_id);
-
     await this.variantRepo.remove(variant);
-
-    this.logger.log(
-      `[${this.className}::delete] variant_id=${variant_id} has deleted`,
-    );
-
     return variant;
   }
 }

@@ -6,6 +6,7 @@ import {
   Max,
   Min,
   ValidateNested,
+  IsOptional,
   IsUUID,
 } from 'class-validator';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
@@ -27,7 +28,8 @@ export class CreateReviewDTO {
   })
   comment: string;
 
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CreateImageDTO)
-  images: CreateImageDTO[];
+  images?: CreateImageDTO[];
 }

@@ -7,6 +7,8 @@ import { OrderStatus } from '../order/enums/order-status.enum';
 import { FindAllQuery } from 'src/common/dto/req/find-all.query';
 import { UserService } from '../user/user.service';
 import { Order } from '../order/entities/order.entity';
+import { ImageService } from '../image/image.service';
+import { ImageOwnerType } from '../image/entities/image.entity';
 
 @Injectable()
 export class ReviewService {
@@ -16,6 +18,7 @@ export class ReviewService {
 
     private readonly userService: UserService,
     private readonly manager: EntityManager,
+    private readonly imageService: ImageService,
   ) {}
 
   // # DEBUG
@@ -61,12 +64,24 @@ export class ReviewService {
         );
 
       // สร้างรีวิวใหม่
-      return await tx.save(Review, {
+      const newReview = await tx.save(Review, {
         user: { id: user_id },
         comment: body.comment,
         rating: body.rating,
-        // image_url: body.,
       });
+
+      if (body.images?.length) {
+        for (const image of body.images) {
+          await this.imageService.createImage({
+            image,
+            owner_id: newReview.id,
+            owner_type: ImageOwnerType.REVIEW,
+            tx,
+          });
+        }
+      }
+
+      return newReview;
     });
 
     return review;

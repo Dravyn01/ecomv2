@@ -10,6 +10,9 @@ import * as bcrypt from 'bcryptjs';
 import { Role, User } from './entities/user.entity';
 import { UserResponseDTO } from './dto/user-response.dto';
 import { BaseUserDTO } from './dto/base-user.dto';
+import { ImageService } from '../image/image.service';
+import { CreateImageDTO } from '../image/dto/create-image.dto';
+import { ImageOwnerType } from '../image/entities/image.entity';
 
 @Injectable()
 export class UserService {
@@ -17,6 +20,7 @@ export class UserService {
 
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly imageService: ImageService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> {
@@ -82,5 +86,13 @@ export class UserService {
     if (!exists)
       throw new NotFoundException('not found conversation by this user');
     return exists.conversation.id;
+  }
+
+  async uploadProfile(user_id: string, image: CreateImageDTO): Promise<void> {
+    await this.imageService.createImage({
+      image,
+      owner_id: user_id,
+      owner_type: ImageOwnerType.PROFILE,
+    });
   }
 }

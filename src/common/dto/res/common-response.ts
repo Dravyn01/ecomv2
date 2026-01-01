@@ -2,8 +2,8 @@
 export interface ApiResponseFormat<T> {
   code: number;
   status: string;
-  message: string;
-  data: T;
+  message?: string;
+  data?: T;
 }
 
 // error case

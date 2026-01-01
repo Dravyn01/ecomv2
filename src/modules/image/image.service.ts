@@ -1,10 +1,9 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Between, EntityManager, Repository, MoreThan } from 'typeorm';
+import { Between, EntityManager, Repository, MoreThan, IsNull } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Image, ImageOwnerType } from './entities/image.entity';
 import { CreateImageDTO } from './dto/create-image.dto';
@@ -15,7 +14,7 @@ interface CreateImageRequest {
   image: CreateImageDTO;
   owner_id: string;
   owner_type: ImageOwnerType;
-  tx: EntityManager;
+  tx?: EntityManager;
 }
 
 @Injectable()
@@ -35,44 +34,40 @@ export class ImageService {
   }
 
   async createImage(req: CreateImageRequest): Promise<Image> {
-    const image = await this.imageRepo.findOne({
+    const repo = req.tx ? req.tx.getRepository(Image) : this.imageRepo;
+
+    const lastImage = await repo.findOne({
       where: {
         owner_id: req.owner_id,
         owner_type: req.owner_type,
       },
       order: {
-        createdAt: 'DESC',
+        order: 'DESC',
       },
+      select: ['order'],
     });
 
-    let savedImage: Image;
+    const nextOrder = lastImage && lastImage.order ? lastImage.order + 1 : 1;
 
-    if (!image) {
-      savedImage = {
-        url: req.image.url,
-        public_id: req.image.public_id,
-        owner_type: req.owner_type,
-        owner_id: req.owner_id,
-        alt: req.image.alt,
-        width: req.image.width,
-        height: req.image.height,
-      } as Image;
-    } else {
-      savedImage = {
-        url: req.image.url,
-        public_id: req.image.public_id,
-        owner_type: req.owner_type,
-        owner_id: req.owner_id,
-        alt: req.image.alt,
-        width: req.image.width,
-        height: req.image.height,
-        order: Math.max(image.order) + 1,
-      } as Image;
+    if (lastImage && lastImage.owner_type === ImageOwnerType.PROFILE) {
+      await repo.delete({
+        owner_type: ImageOwnerType.PROFILE,
+        owner_id: lastImage.owner_id,
+      });
     }
 
-    req.tx.save(Image, savedImage);
-    console.log('savedImage', savedImage);
-    return savedImage;
+    const image = repo.create({
+      url: req.image.url,
+      public_id: req.image.public_id,
+      owner_type: req.owner_type,
+      owner_id: req.owner_id,
+      alt: req.image.alt,
+      width: req.image.width,
+      height: req.image.height,
+      order: nextOrder,
+    });
+
+    return await repo.save(image);
   }
 
   async updateImage(dto: UpdateImageDTO, tx: EntityManager): Promise<void> {
@@ -93,16 +88,23 @@ export class ImageService {
 
   async moveOrder(dto: MoveImageDTO) {
     const image = await this.findOne(dto.image_id);
-    const maxOrder = await this.imageRepo.maximum('order', {
-      owner_id: image.owner_id,
-      owner_type: image.owner_type,
+    const maxOrder = await this.imageRepo.findOne({
+      select: ['order'],
+      where: {
+        owner_id: image.owner_id,
+        owner_type: image.owner_type,
+        deleted_at: IsNull(),
+      },
+      order: {
+        order: 'DESC',
+      },
     });
 
     if (!maxOrder) {
       throw new NotFoundException('ไม่พบลำดับของรรูปภาพนี้');
     }
 
-    if (dto.target < 1 || dto.target > maxOrder) {
+    if (dto.target < 1 || dto.target > maxOrder.order) {
       throw new BadRequestException('target order ไม่ถูกต้อง');
     }
 
@@ -117,6 +119,7 @@ export class ImageService {
             owner_id: image.owner_id,
             owner_type: image.owner_type,
             order: Between(dto.target, image.order - 1), //
+            deleted_at: IsNull(),
             /* target: 3, current: 5 (ลบ 1 เพื่อไม่ให้ 5 โดนขยับ) */
             /* Between(3, 5) -> 3, 4, 5 not correct */
             /* Between(3, 5 - 1) -> 3, 4 correct*/
@@ -136,6 +139,7 @@ export class ImageService {
             owner_id: image.owner_id,
             owner_type: image.owner_type,
             order: Between(image.order + 1, dto.target),
+            deleted_at: IsNull(),
             /* target: 4, current: 1 (+1 เพื่อไม่ให้ 1 โดนขยับ) */
             /* Between(1, 4) -> 1, 2, 3, 4 not correct */
             /* Between(1 + 1, 4) -> 2, 3, 4 correct */
@@ -154,114 +158,25 @@ export class ImageService {
     });
   }
 
-  async deleteImage(
-    image_id: string,
-    owner_type: ImageOwnerType,
-  ): Promise<void> {
+  async deleteImage(image_id: string): Promise<Image> {
     const image = await this.findOne(image_id);
 
-    await this.manager.transaction(async (tx) => {
-      await tx.softDelete(Image, { id: image_id, owner_type });
+    return await this.manager.transaction(async (tx) => {
+      await tx.softDelete(Image, { id: image_id });
 
       await tx.decrement(
         Image,
         {
-          id: image.id,
           owner_id: image.owner_id,
           owner_type: image.owner_type,
           order: MoreThan(image.order),
+          deleted_at: IsNull(),
         },
         'order',
         1,
       );
+
+      return image;
     });
   }
-
-  // async moveOrder(dto: MoveImageDTO): Promise<Image> {
-  //   const image = await this.findOne(dto.image_id);
-  //   const maxOrder = await this.maxOrder(
-  //     image.owner_id,
-  //     image.owner_type,
-  //   );
-  //
-  //   let updatedResult: UpdateResult;
-  //
-  //   if (dto.target < 1 || dto.target > maxOrder) {
-  //     throw new BadRequestException('target order ไม่ถูกต้อง');
-  //   }
-  //
-  //   if (dto.target === image.order) {
-  //     return image;
-  //   }
-  //
-  //   await this.manager.transaction(async (tx) => {
-  //     // move up (ย้ายจาก order บนมาต่ำ)
-  //     if (dto.target < image.order) {
-  //       /*
-  //        * orders = [1,2,3,4,5]
-  //        * target = 2
-  //        * current = 5
-  //        *
-  //        * WHERE order >= 2 AND order < 5
-  //        * result [2, 3, 4] จากนั้นเอาค่ามาบวก 1 ทั้งหมด
-  //        * in orders [1, 3, 4, 5, 5] (ยังไม่สนใจว่ามี 5 ซ้ำ — ชั่วคราว)
-  //        * set order 5 = 2
-  //        * */
-  //       updatedResult = await tx
-  //         .createQueryBuilder()
-  //         .update(Image)
-  //         .set({ order: () => `"order" + 1` })
-  //         .where(
-  //           `
-  //         "owner_id" = :owner_id AND
-  //         "owner_type" = :owner_type AND
-  //         "order" >= :target AND
-  //         "order" < :current
-  //         `,
-  //           {
-  //             owner_id: image.owner_id,
-  //             owner_type: image.owner_type,
-  //             current: image.order,
-  //             target: dto.target,
-  //           },
-  //         )
-  //         .execute();
-  //     } else if (dto.target > image.order) {
-  //       /*
-  //        * move down (ย้ายจาก order ต่ำมาบน)
-  //        *
-  //        * orders = [1,2,3,4,5]
-  //        * target = 5
-  //        * current = 2
-  //        *
-  //        * WHERE order > 2 AND order <= 5
-  //        * result [3, 4, 5] จากนั้นเอาค่ามาลบ 1 ทั้งหมด
-  //        * in orders [1, 2, 2, 3, 4] (ยังไม่สนใจว่ามี 5 ซ้ำ — ชั่วคราว)
-  //        * set order 2 = 5
-  //        * */
-  //       updatedResult = await tx
-  //         .createQueryBuilder()
-  //         .update(Image)
-  //         .set({ order: () => `"order" - 1` })
-  //         .where(
-  //           `
-  //         "owner_id" = :owner_id AND
-  //         "owner_type" = :owner_type AND
-  //         "order" > :current AND "order" <= :target
-  //         `,
-  //           {
-  //             owner_id: image.owner_id,
-  //             owner_type: image.owner_type,
-  //             current: image.order,
-  //             target: dto.target,
-  //           },
-  //         )
-  //         .execute();
-  //     }
-  //
-  //     await tx.update(Image, { id: dto.image_id }, { order: dto.target });
-  //   });
-  //
-  //   return image;
-  // }
 }

@@ -22,7 +22,7 @@ import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
-  // *DEBUG MODE*
+  //# DEBUG
   @Get()
   async findAll(): Promise<ApiResponse<Review[]>> {
     const reviews = await this.reviewService.findAll();

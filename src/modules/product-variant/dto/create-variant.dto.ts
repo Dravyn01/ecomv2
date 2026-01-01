@@ -39,7 +39,6 @@ export class CreateVariantDTO {
   })
   status?: ProductVariantStatus = ProductVariantStatus.INACTIVE;
 
-  @IsNotEmpty({ message: '' })
   @ValidateNested({ each: true })
   @Type(() => CreateImageDTO)
   images: CreateImageDTO[];

@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CreateMessageDTO } from './dto/create-message.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 import { Injectable } from '@nestjs/common';
 import { UpdateMessageDTO } from './dto/update-message.dto';
@@ -16,6 +16,8 @@ import { DeleteResult } from 'typeorm/browser';
 import { Message } from './entities/message.entity';
 import { Replies } from './entities/reply.entity';
 import { Role } from '../user/entities/user.entity';
+import { ImageOwnerType } from '../image/entities/image.entity';
+import { ImageService } from '../image/image.service';
 
 @Injectable()
 export class MessageService {
@@ -25,6 +27,7 @@ export class MessageService {
     @InjectRepository(Replies)
     private readonly replyRepo: Repository<Replies>,
     private readonly conversationService: ConversationService,
+    private readonly imageService: ImageService,
   ) {}
 
   async createMessage(
@@ -32,7 +35,7 @@ export class MessageService {
     dto: CreateMessageDTO,
   ): Promise<Message> {
     const newMessage = await this.messageRepo.manager.transaction(
-      async (manager) => {
+      async (tx) => {
         // ถ้าใช่ SUPPORT ให้ไปต่อ
         if (user.role !== Role.SUPPORT) {
           // ถ้าไม่ใช่ SUPPORT เช็คว่าเป็นเจ้าของห้องไหม
@@ -45,12 +48,24 @@ export class MessageService {
         }
 
         // save message
-        return manager.getRepository(Message).save({
+        const message = await tx.save(Message, {
           conversation: { id: dto.conversation_id },
           sender: { id: user.sub },
           text: dto.text,
-          ...(dto.image_urls?.length !== 0 && { image_urls: dto.image_urls }),
         });
+
+        if (dto.images?.length) {
+          for (const image of dto.images) {
+            await this.imageService.createImage({
+              image,
+              owner_id: message.id,
+              owner_type: ImageOwnerType.MESSAGE,
+              tx,
+            });
+          }
+        }
+
+        return message;
       },
     );
 
@@ -58,7 +73,7 @@ export class MessageService {
   }
 
   async updateMessage(user_id: string, dto: UpdateMessageDTO): Promise<void> {
-    const updatedResult = await this.messageRepo.update(
+    await this.messageRepo.update(
       {
         id: dto.message_id,
         sender: { id: user_id },
@@ -69,23 +84,17 @@ export class MessageService {
         updated_at: new Date(),
       },
     );
-
-    if (updatedResult.affected === 0) {
-      throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถแก้ไขข้อความได้');
-    }
   }
 
   async deleteMessage(user_id: string, dto: DeleteMessageDTO): Promise<void> {
-    let deleteResult: DeleteResult | null;
-
     if (dto.message_id) {
-      deleteResult = await this.messageRepo.delete({
+      await this.messageRepo.delete({
         id: dto.message_id,
         sender: { id: user_id },
         conversation: { id: dto.conversation_id },
       });
     } else if (dto.reply_id) {
-      deleteResult = await this.replyRepo.delete({
+      await this.replyRepo.delete({
         id: dto.reply_id,
         sender: { id: user_id },
         conversation: { id: dto.conversation_id },
@@ -95,39 +104,14 @@ export class MessageService {
         'ไม่สามารถลบข้อความได้เนื่องจากไม่พบ message_id หรือ reply_id',
       );
     }
-
-    if (deleteResult.affected === 0) {
-      throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบข้อความได้');
-    }
-  }
-
-  async deleteImage(user_id: string, dto: DeleteMessageDTO): Promise<void> {
-    // TODO: ลบรูป with image_id
-    // const updateResult = await this.messageRepo.update(
-    //   {
-    //     id: dto.message_id,
-    //     conversation: { id: dto.conversation_id },
-    //     sender: { id: user_id },
-    //   },
-    //   {
-    //     images: [],
-    //   },
-    // );
-    // if (updateResult.affected === 0) {
-    //   throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบรูปภาพได้');
-    // }
   }
 
   async deleteReply(user_id: string, dto: DeleteReplyDTO) {
-    const deleteResult = await this.messageRepo.delete({
+    await this.messageRepo.delete({
       id: dto.reply_id,
       sender: { id: user_id },
       conversation: { id: dto.conversation_id },
     });
-
-    if (deleteResult.affected === 0) {
-      throw new ForbiddenException('เกิดข้อผิดพลาด ไม่สามารถลบข้อความได้');
-    }
   }
 
   async readMessage(user: JwtPayload, dto: ReadMessageDTO): Promise<void> {
@@ -160,6 +144,7 @@ export class MessageService {
       }
     }
 
+    // WARN: now message_id is uuid
     return await this.messageRepo.find({
       where: {
         ...(dto.befor_message_id ? { id: LessThan(dto.befor_message_id) } : {}),
@@ -171,7 +156,7 @@ export class MessageService {
   }
 
   async createReplyMessage(sender: JwtPayload, dto: CreateReplyDTO) {
-    // check permission
+    // permission check
     if (sender.role !== Role.SUPPORT) {
       const isOwner = await this.conversationService.checkOwnerConversation(
         sender.sub,
@@ -181,7 +166,7 @@ export class MessageService {
       if (!isOwner) throw new ForbiddenException();
     }
 
-    // เช็คว่าข้อความที่จะตอบกลับเป็นข้อความที่อยู่ใน conversation นี้
+    //2️⃣ check message belongs to conversation
     const isMessageInConversation = await this.messageRepo.existsBy({
       id: dto.message_id,
       conversation: { id: dto.conversation_id },
@@ -189,19 +174,31 @@ export class MessageService {
 
     if (!isMessageInConversation) throw new ForbiddenException();
 
-    return await this.replyRepo.save({
-      conversation: { id: dto.conversation_id },
-      message: { id: dto.message_id },
-      sender: { id: sender.sub },
-      text: dto.text,
-      ...(dto.image_urls && dto.image_urls.length > 1
-        ? { image_urls: dto.image_urls }
-        : {}),
+    await this.replyRepo.manager.transaction(async (tx) => {
+      // create reply
+      const reply = await tx.save(Replies, {
+        conversation: { id: dto.conversation_id },
+        message: { id: dto.message_id },
+        sender: { id: sender.sub },
+        text: dto.text,
+      });
+
+      // create images (if any)
+      if (dto.images?.length) {
+        for (const image of dto.images) {
+          await this.imageService.createImage({
+            image,
+            owner_id: reply.id,
+            owner_type: ImageOwnerType.MESSAGE,
+            tx,
+          });
+        }
+      }
     });
   }
 
   async updateReplyMessage(sender: JwtPayload, dto: UpdateReplyDTO) {
-    const updatedResult = await this.replyRepo.update(
+    await this.replyRepo.update(
       {
         conversation: { id: dto.conversation_id },
         message: { id: dto.message_id },
@@ -211,9 +208,5 @@ export class MessageService {
         text: dto.text,
       },
     );
-
-    if (updatedResult.affected === 0) {
-      throw new ForbiddenException();
-    }
   }
 }
