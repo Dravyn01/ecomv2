@@ -7,6 +7,7 @@ import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
 import { AnalyticsService } from '../analytics.service';
+import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 
 @Injectable()
 export class ReturnsScoreCron {
@@ -17,7 +18,6 @@ export class ReturnsScoreCron {
     private readonly orderItemRepo: Repository<OrderItem>,
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
-    private readonly analyticService: AnalyticsService,
   ) {}
 
   @Cron('0 */2 * * *') // ทุก 2 ชม
@@ -36,7 +36,7 @@ export class ReturnsScoreCron {
 
     if (items.length === 0) return;
 
-    const grouped = this.analyticService.aggregateByProduct(
+    const grouped = aggregateByProduct(
       items,
       (i) => i.variant.product.id,
       (acc, item) => {
@@ -58,13 +58,15 @@ export class ReturnsScoreCron {
         status: OrderStatus.PAID,
       });
 
-      await this.productStatsRepo.save({
-        product: { id: product_id },
-        total_returns: data.total,
-        quantity_returned: data.qty,
-        refund_amount: data.amount,
-        return_rate: (data.total / paidCount) * 100,
-      });
+      await this.productStatsRepo.update(
+        { product: { id: product_id } },
+        {
+          total_returns: data.total,
+          quantity_returned: data.qty,
+          refund_amount: data.amount,
+          return_rate: (data.total / paidCount) * 100,
+        },
+      );
     }
   }
 }

@@ -5,8 +5,8 @@ import { ProductStats } from '../entities/product-stats.entity';
 import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { OrderStatus } from 'src/modules/order/enums/order-status.enum';
-import { AnalyticsService } from '../analytics.service';
 import { OrderItem } from 'src/modules/order/entities/order.entity';
+import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 
 @Injectable()
 export class SalesScoreCron {
@@ -15,10 +15,10 @@ export class SalesScoreCron {
     private readonly productStatsRepo: Repository<ProductStats>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
-    private readonly analyticService: AnalyticsService,
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR) // ทุก 1 ชม
+  // ทุก 1 ชม
+  @Cron(CronExpression.EVERY_HOUR)
   async handleSales(): Promise<void> {
     const { end, start } = getDate();
 
@@ -32,7 +32,7 @@ export class SalesScoreCron {
       relations: ['variant.product'],
     });
 
-    const grouped = this.analyticService.aggregateByProduct(
+    const grouped = aggregateByProduct(
       items,
       (i) => i.variant.product.id,
       (acc, item) => {

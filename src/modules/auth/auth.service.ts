@@ -4,9 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { User } from 'src/modules/user/entities/user.entity';
+import { Role, User } from 'src/modules/user/entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
 import { BaseUserDTO } from '../user/dto/base-user.dto';
+import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +45,6 @@ export class AuthService {
       username: req.username,
       email: req.email,
       password: hash_password,
-      role: req.role,
     });
 
     return newUser;
@@ -62,7 +62,7 @@ export class AuthService {
       `[${this.className}::login] check user by user_id=${user.id}`,
     );
 
-    //
+    // find exists history
     const existsHistory = await this.logHistory.findOne({
       where: {
         user: { id: user.id },
@@ -74,17 +74,18 @@ export class AuthService {
       `[${this.className}::login] ${existsHistory ? `founded user (data=${JSON.stringify(existsHistory)})` : `not found history of user_id=${user.id}. will insert first history`}`,
     );
 
-    //
+    // save history
     await this.logHistory.save({
       user: { id: user.id },
       count: existsHistory ? existsHistory.count + 1 : 1,
       last_login_at: new Date(),
     });
 
+    // jwt payload
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: Role.USER,
     };
 
     const token = this.jwtService.sign(payload);

@@ -38,6 +38,9 @@ export class Stock {
   })
   movements: StockMovement[];
 
+  @CreateDateColumn()
+  created_at: Date;
+
   /* มีการเพิ่มจำนวน ลดจำนวน เมื่อไหร่ */
   @UpdateDateColumn()
   updated_at: Date;

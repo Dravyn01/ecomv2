@@ -1,16 +1,26 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiResponse } from 'src/common/dto/res/common-response';
 import { Stock } from './entities/stock.entity';
 import { StockService } from './stock.service';
 import { AddQuantityDTO } from './dto/add-quantity.dto';
+import { FindAllStockDTO } from './dto/find-all-stock.dto';
+
+/*
+ * TODO: add decoractor
+ * @JwtGuard
+ * @CheckRoleGurd
+ * @Roles(Role.ADMIN)
+ * */
 
 @Controller('/admin/stocks')
 export class StockController {
   constructor(private readonly stockService: StockService) {}
 
   @Get()
-  async debug(): Promise<ApiResponse<Stock[]>> {
-    const stock = await this.stockService.findAll();
+  async findAll(
+    @Query() query: FindAllStockDTO,
+  ): Promise<ApiResponse<Stock[]>> {
+    const stock = await this.stockService.findAll(query);
     return {
       message: `พบสต๊อกทั้งหมด ${stock.length} รายการ`,
       data: stock,

@@ -5,8 +5,8 @@ import { Between, Repository } from 'typeorm';
 import { ProductStats } from '../entities/product-stats.entity';
 import { ProductView } from '../entities/product-view.entity';
 import { getDate } from 'src/utils/get-date';
-import { AnalyticsService } from '../analytics.service';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
+import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 
 @Injectable()
 export class ProductsEngagementCron {
@@ -17,7 +17,6 @@ export class ProductsEngagementCron {
     private readonly productViewRepo: Repository<ProductView>,
     @InjectRepository(Wishlist)
     private readonly wishlistRepo: Repository<Wishlist>,
-    private readonly analyticService: AnalyticsService,
   ) {}
 
   // รันทุก 6 ชั่วโมง
@@ -37,7 +36,7 @@ export class ProductsEngagementCron {
       relations: ['product'],
     });
 
-    this.analyticService.aggregateByProduct<Wishlist, { wishlist: 0; view: 0 }>(
+    aggregateByProduct(
       wishlists,
       (v) => v.product.id,
       (acc, _) => {
@@ -46,10 +45,7 @@ export class ProductsEngagementCron {
       () => ({ wishlist: 0, view: 0 }),
     );
 
-    const grouped = this.analyticService.aggregateByProduct<
-      ProductView,
-      { wishlist: 0; view: 0 }
-    >(
+    const grouped = aggregateByProduct(
       views,
       (v) => v.product.id,
       (acc, _) => {
@@ -58,17 +54,19 @@ export class ProductsEngagementCron {
       () => ({ wishlist: 0, view: 0 }),
     );
 
-    console.log('cron.engagement', grouped);
-
     // update stats
     for (const [product_id, data] of grouped.entries()) {
       const { view, wishlist } = data;
 
-      await this.productStatsRepo.save({
-        product: { id: product_id },
-        view_count: view,
-        wishlist_count: wishlist,
-      });
+      await this.productStatsRepo.update(
+        {
+          product: { id: product_id },
+        },
+        {
+          view_count: view,
+          wishlist_count: wishlist,
+        },
+      );
     }
   }
 }

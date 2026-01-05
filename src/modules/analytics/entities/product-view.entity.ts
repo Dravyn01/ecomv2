@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   OneToOne,
+  JoinColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -18,6 +19,7 @@ export class ProductView {
   product: Product;
 
   @OneToOne(() => User)
+  @JoinColumn()
   user: User; // คนกดดู (ถ้ามี)
 
   @Column({ nullable: true })

@@ -9,6 +9,8 @@ import { Image, ImageOwnerType } from './entities/image.entity';
 import { CreateImageDTO } from './dto/create-image.dto';
 import { UpdateImageDTO } from './dto/update-image.dto';
 import { MoveImageDTO } from './dto/move-image.dto';
+import { UpdatePrimaryImageDTO } from './dto/update-primary-image.dto';
+import { Min } from 'class-validator';
 
 interface CreateImageRequest {
   image: CreateImageDTO;
@@ -49,6 +51,7 @@ export class ImageService {
 
     const nextOrder = lastImage && lastImage.order ? lastImage.order + 1 : 1;
 
+    // CASE Profile
     if (lastImage && lastImage.owner_type === ImageOwnerType.PROFILE) {
       await repo.delete({
         owner_type: ImageOwnerType.PROFILE,
@@ -65,6 +68,7 @@ export class ImageService {
       width: req.image.width,
       height: req.image.height,
       order: nextOrder,
+      is_primary: req.image.is_primary,
     });
 
     return await repo.save(image);
@@ -75,15 +79,38 @@ export class ImageService {
 
     await tx.update(
       Image,
-      { id: dto.image_id },
+      { id: image.id },
       {
         ...(dto.url && { url: image.url }),
         ...(dto.public_id && { public_id: image.public_id }),
         ...(dto.alt && { alt: image.alt }),
-        ...(dto.width && { width: image.width }),
-        ...(dto.height && { height: image.height }),
+        ...(dto.width !== undefined && { width: image.width }),
+        ...(dto.height !== undefined && { height: image.height }),
       },
     );
+  }
+
+  async updatePrimaryImage(image_id: string) {
+    const image = await this.findOne(image_id);
+
+    if (image.is_primary) return;
+
+    await this.imageRepo.manager.transaction(async (tx) => {
+      // แก้ primary ตัวเก่าให้เป็น false
+      await tx.update(
+        Image,
+        {
+          owner_id: image.owner_id,
+          owner_type: image.owner_type,
+          is_primary: true,
+        },
+        {
+          is_primary: false,
+        },
+      );
+
+      await tx.update(Image, image_id, { is_primary: true });
+    });
   }
 
   async moveOrder(dto: MoveImageDTO) {
@@ -162,8 +189,41 @@ export class ImageService {
     const image = await this.findOne(image_id);
 
     return await this.manager.transaction(async (tx) => {
-      await tx.softDelete(Image, { id: image_id });
+      await tx.softDelete(Image, image_id);
 
+      if (image.is_primary) {
+        // หารูปที่เก่าที่สุดหรือรูปแรกที่ยังไม่ถูกลบ
+        const firstImage = await tx.findOne(Image, {
+          where: {
+            owner_id: image.owner_id,
+            owner_type: image.owner_type,
+            deleted_at: IsNull(),
+          },
+          order: {
+            created_at: 'ASC',
+          },
+        });
+
+        // ถ้าเจออัพเดทรูปนั้นให้เป็ฯ primary
+        if (firstImage) {
+          // ล้างตัวเก่า กัน edge case
+          await tx.update(
+            Image,
+            {
+              owner_id: image.owner_id,
+              owner_type: image.owner_type,
+              is_primary: true,
+            },
+            {
+              is_primary: false,
+            },
+          );
+
+          await tx.update(Image, firstImage.id, { is_primary: true });
+        }
+      }
+
+      // ขะยับ order ให้ตัวที่อยู่หลังรูปที่จะลบ มัน -1
       await tx.decrement(
         Image,
         {

@@ -34,9 +34,6 @@ export class ProductController {
   async findAll(
     @Query() query: FindAllProductsQuery,
   ): Promise<ApiResponse<DatasResponse<Product[]>>> {
-    this.logger.log(
-      `[${this.className}::findAll]: LOG paramter {q: ${query.search}, page: ${query.page}, limit: ${query.limit}, order: ${query.order}}`,
-    );
     const products = await this.productService.findAll(query);
     return {
       message: `พบสินค้าทั้งหมด ${products.count} รายการ`,
@@ -50,9 +47,6 @@ export class ProductController {
     @Param('product_id') product_id: string,
     @Req() req: Request,
   ): Promise<ApiResponse<Product>> {
-    this.logger.log(
-      `[${this.className}::findById] search product with product_id=${product_id}`,
-    );
     const product = await this.productService.view(product_id, req);
     return {
       message: `ข้อมูลสินค้าหมายเลข ${product_id}`,
@@ -62,9 +56,6 @@ export class ProductController {
 
   @Post()
   async create(@Body() body: CreateProductDTO): Promise<ApiResponse<Product>> {
-    this.logger.log(
-      `[${this.className}::create] create a new product with object=${JSON.stringify(body)}`,
-    );
     const product = await this.productService.create(body);
     return {
       message: 'สร้างสินค้าเสร็จสิ้น',
@@ -77,9 +68,6 @@ export class ProductController {
     @Param('product_id') product_id: string,
     @Body() body: UpdateProductDTO,
   ): Promise<ApiResponse<Product>> {
-    this.logger.log(
-      `[${this.className}::update] update a exists product with object=${JSON.stringify(body)}`,
-    );
     const product = await this.productService.update(product_id, body);
     return {
       message: 'อัพเดทสินค้าเสร็จสิ้น',
@@ -92,9 +80,6 @@ export class ProductController {
   async delete(
     @Param('product_id') product_id: string,
   ): Promise<ApiResponse<null>> {
-    this.logger.log(
-      `[${this.className}::delete] delete product with product_id=${product_id}`,
-    );
     await this.productService.delete(+product_id);
     return {
       message: `ลบสินค้าหมายเลข "${product_id}" เสร็จสิ้น`,

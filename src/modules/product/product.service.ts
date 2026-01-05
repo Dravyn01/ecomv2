@@ -13,11 +13,11 @@ import { type Request } from 'express';
 import { ImageOwnerType } from '../image/entities/image.entity';
 import { User } from '../user/entities/user.entity';
 import { ImageService } from '../image/image.service';
+import { addMinutes, isBefore } from 'date-fns';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 
 @Injectable()
 export class ProductService {
-  private readonly logger = new Logger(ProductService.name);
-
   constructor(
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
@@ -137,39 +137,44 @@ export class ProductService {
 
   // view product
   async view(product_id: string, req: Request): Promise<Product> {
-    this.logger.log(
-      `[product.service::view] called! (product_id=${product_id}, user=${JSON.stringify(req.user)})`,
-    );
     const product = await this.findOne(product_id);
-    const user = (req.user as User | null) || null;
+    const user = (req.user as JwtPayload | null) || null;
+    const ip = req.ip;
+    const agent = req.headers['user-agent'];
     const now = new Date();
+
     let newData;
 
-    const item = await this.viewRepo.findOne({
+    console.log('user', user);
+
+    // หา viewer
+    const viewer = await this.viewRepo.findOne({
       where: user
         ? {
-            user: { id: user.id },
+            user: { id: user.sub },
             product: { id: product.id },
           }
         : {
-            ip_address: req.ip,
-            user_agent: req.headers['user-agent'],
+            ip_address: ip,
+            user_agent: agent,
             product: { id: product.id },
           },
     });
 
-    if (item) {
+    console.log('viewer', viewer);
+
+    if (viewer) {
       // update
       newData = {
-        id: item.id,
+        id: viewer.id,
         last_view_at: now,
-        total_view: item.total_view + 1,
+        total_view: viewer.total_view + 1,
       };
     } else {
       // insert
       newData = {
         product: { id: product_id },
-        user: user ? { id: user.id } : {},
+        user: user ? { id: user.sub } : {},
         ip_address: req.ip,
         user_agent: req.headers['user-agent'],
         last_view_at: now,
@@ -177,11 +182,11 @@ export class ProductService {
       };
     }
 
-    // ระบุก่อนว่าเป็น user || ip เดิมไหม ถ้าไม่ใช่ก็เพิ่มไป ถ้าใช่ก็ไม่
-    // if (isBefore(now, addMinutes(new Date(saved_view.last_view_at), 1)))
-    //   return product;
+    if (viewer && isBefore(now, addMinutes(viewer.last_view_at, 1))) {
+      return product;
+    }
 
-    console.log('item', item);
+    console.log('item', viewer);
     await this.viewRepo.save(newData);
     return product;
   }

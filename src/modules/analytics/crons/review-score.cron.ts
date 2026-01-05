@@ -6,6 +6,7 @@ import { Between, Repository } from 'typeorm';
 import { getDate } from 'src/utils/get-date';
 import { AnalyticsService } from '../analytics.service';
 import { Review } from 'src/modules/review/entities/review.entity';
+import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 
 @Injectable()
 export class ReviewsScoreCron {
@@ -14,7 +15,6 @@ export class ReviewsScoreCron {
     private readonly productStatsRepo: Repository<ProductStats>,
     @InjectRepository(Review)
     private readonly reviewRepo: Repository<Review>,
-    private analyticService: AnalyticsService,
   ) {}
 
   // วันละ 2 รอบ (22:00 และ 02:00)
@@ -23,7 +23,7 @@ export class ReviewsScoreCron {
   async handleReview(): Promise<void> {
     const { start, end } = getDate();
 
-    //
+    // รีวิววันนี้
     const reviewsToday = await this.reviewRepo.find({
       where: { created_at: Between(start, end) },
       relations: ['product'],
@@ -31,7 +31,7 @@ export class ReviewsScoreCron {
 
     if (reviewsToday.length === 0) return; // ไม่มีรีวิววันนี้ → จบ
 
-    const grouped = this.analyticService.aggregateByProduct(
+    const grouped = aggregateByProduct(
       reviewsToday,
       (r) => r.product.id,
       (acc, _) => {

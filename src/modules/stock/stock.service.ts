@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
@@ -11,20 +12,28 @@ import { CreateMovementDTO } from './dto/create-movement.dto';
 import { NotificationService } from '../notification/notification.service';
 import { AddQuantityDTO } from './dto/add-quantity.dto';
 import { ProductVariant } from '../product-variant/entities/product-variant.entity';
+import { FindAllStockDTO } from './dto/find-all-stock.dto';
 
 @Injectable()
 export class StockService {
+  private readonly className = 'stock.service';
+  private readonly logger = new Logger(StockService.name);
+
   constructor(
     @InjectRepository(Stock)
     private readonly stockRepo: Repository<Stock>,
     private readonly notifyService: NotificationService,
   ) {}
 
-  // TODO: add logger
-
-  async findAll(): Promise<Stock[]> {
+  async findAll(query: FindAllStockDTO): Promise<Stock[]> {
     return await this.stockRepo.find({
-      order: { id: 'ASC', movements: { created_at: 'DESC' } },
+      where: {
+        variant: {
+          ...(query.product_id && { product: { id: query.product_id } }),
+        },
+      },
+      order: { created_at: query.order },
+      take: query.product_id ? undefined : 15,
       relations: ['movements', 'variant'],
     });
   }
@@ -32,7 +41,6 @@ export class StockService {
   async findByVariant(variant_id: string): Promise<Stock> {
     const stock = await this.stockRepo.findOne({
       where: { variant: { id: variant_id } },
-      order: { id: 'ASC' },
       relations: ['movements', 'variant'],
     });
     if (!stock) throw new NotFoundException('ไม่พบรายการสินค้า');
@@ -82,10 +90,40 @@ export class StockService {
     await this.stockRepo.save(stock);
   }
 
-  async createMovement(req: CreateMovementDTO, tx: EntityManager) {
+  /**
+   * บันทึกการเคลื่อนไหวของสต็อก (StockMovement)
+   * และปรับจำนวนในสต็อกในคำสั่งเดียว
+   *
+   * ⚠️ IMPORTANT:
+   * - function นี้ "เปลี่ยน state ของสต็อกจริง"
+   * - มีผลกับจำนวน stock ในระบบทันที
+   * - ควรถูกเรียกภายใน transaction เท่านั้น
+   *
+   * Behavior ตาม change_type:
+   * - IN      : เพิ่มจำนวนสต็อก
+   * - OUT     : ตัดจำนวนสต็อก (ใช้กับ Order / Checkout)
+   * - RETURN  : คืนสต็อกกลับเข้า
+   * - ADJUST  : ปรับสต็อกตรง (+/-) เพื่อแก้ไขข้อมูล
+   *
+   * Validation:
+   * - ตรวจสอบว่า variant และ stock ต้องมีอยู่
+   * - กรณี OUT จะตรวจสอบว่าสต็อกเพียงพอก่อนตัด
+   * - ป้องกัน stock ติดลบ
+   *
+   * Side Effects:
+   * - UPDATE Stock.quantity
+   * - INSERT StockMovement
+   *
+   * @param body  ข้อมูลการเปลี่ยนแปลงสต็อก
+   * @param tx   EntityManager จาก transaction
+   *
+   * @throws NotFoundException  เมื่อไม่พบสินค้า หรือไม่พบสต็อก
+   * @throws BadRequestException เมื่อสต็อกไม่เพียงพอในกรณี OUT
+   */
+  async createMovement(body: CreateMovementDTO, tx: EntityManager) {
     // โหลดข้อมูล variant พร้อม stock
     const variant = await tx.findOne(ProductVariant, {
-      where: { id: req.variant_id },
+      where: { id: body.variant_id },
       relations: ['stock'],
     });
     if (!variant) throw new NotFoundException('ไม่พบสินค้า');
@@ -93,6 +131,7 @@ export class StockService {
     const stock = variant.stock;
     if (!stock) {
       // กัน edge case: ไม่พบ stock ของสินค้านี้
+      // ถึงแม้ตอนสร้างรายการสินค้าจะมีการสร้างสต็อกควบคู่ด้วยก็เถอะ
       throw new NotFoundException('ไม่พบสต็อกของสินค้านี้');
     }
 
@@ -100,27 +139,25 @@ export class StockService {
 
     // ปรับจำนวนตามประเภทของ change_type
     if (
-      req.change_type === StockChangeType.IN ||
-      req.change_type === StockChangeType.RETURN
+      body.change_type === StockChangeType.IN ||
+      body.change_type === StockChangeType.RETURN
     ) {
-      console.log('CASE IN OR RETURN');
-      newQuantity += req.quantity;
-    } else if (req.change_type === StockChangeType.OUT) {
-      console.log('CASE OUT');
-
+      newQuantity += body.quantity;
+      this.logger.log;
+    } else if (body.change_type === StockChangeType.OUT) {
       // ตรวจสอบว่าสต็อกพอต่อการตัดหรือไม่
-      if (stock.quantity < req.quantity) {
+      if (stock.quantity < body.quantity) {
         throw new BadRequestException(
-          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${req.quantity} ชิ้น)`,
+          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${body.quantity} ชิ้น)`,
         );
       }
 
-      newQuantity -= req.quantity;
-    } else if (req.change_type === StockChangeType.ADJUST) {
+      newQuantity -= body.quantity;
+    } else if (body.change_type === StockChangeType.ADJUST) {
       console.log('CASE ADJUST');
 
       // ปรับจำนวนแบบเพิ่ม/ลดตรง ๆ
-      newQuantity += req.quantity;
+      newQuantity += body.quantity;
 
       // ถ้าติดลบให้บังคับเป็น 0 เพื่อป้องกันค่าสต็อกผิดปกติ
       if (newQuantity < 0) newQuantity = 0;
@@ -128,10 +165,10 @@ export class StockService {
 
     // สร้าง default note ตามประเภท movement
     const defaultNote = {
-      [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${req.quantity}`,
-      [StockChangeType.OUT]: `Order #${req.order_id}`,
-      [StockChangeType.ADJUST]: `Adjust product #${variant.id}, quantity: ${req.quantity}`,
-      [StockChangeType.RETURN]: `Return product #${variant.id}, quantity: ${req.quantity}`,
+      [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${body.quantity}`,
+      [StockChangeType.OUT]: `Order #${body.order_id}`,
+      [StockChangeType.ADJUST]: `Adjust product #${variant.id}, quantity: ${body.quantity}`,
+      [StockChangeType.RETURN]: `Return product #${variant.id}, quantity: ${body.quantity}`,
     };
 
     // เตรียมข้อมูลสำหรับบันทึก stock + movement
@@ -139,10 +176,10 @@ export class StockService {
 
     const saved_movement = {
       stock: { id: stock.id },
-      quantity: req.quantity,
-      change_type: req.change_type,
-      note: req.note ?? defaultNote[req.change_type],
-      ...(req.order_id && { order: { id: req.order_id } }),
+      quantity: body.quantity,
+      change_type: body.change_type,
+      note: body.note ?? defaultNote[body.change_type],
+      ...(body.order_id && { order: { id: body.order_id } }),
     };
 
     // บันทึกลงฐานข้อมูล
