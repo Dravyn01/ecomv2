@@ -179,8 +179,7 @@ export class ChatGateway {
     });
 
     // mark ว่าเปิด inbox แล้ว
-    if (existsInbox && !existsInbox.is_open) {
-      existsInbox.is_open = true;
+    if (existsInbox && !existsInbox.open_at) {
       existsInbox.open_at = new Date();
       await this.inboxRepo.save(existsInbox);
     }

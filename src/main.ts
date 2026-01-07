@@ -3,12 +3,14 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filter/global-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptor/response.interceptor';
+import { AppLogger } from './logger/logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'warn', 'error', 'debug'],
   });
 
+  app.useLogger(new AppLogger());
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter());
   // validation config

@@ -8,7 +8,7 @@ import { StockService } from '../stock/stock.service';
 import { FindAllCartsDto } from './dto/find-all-carts.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { AddToCartDTO } from './dto/add-to-cart.dto';
-import { ActionsCartItemDTO } from './dto/actions-cartitem.dto';
+import { ActionCartItemDTO } from './dto/actions-cartitem.dto';
 
 @Injectable()
 export class CartService {
@@ -135,7 +135,7 @@ export class CartService {
   }
 
   async itemAction(
-    body: ActionsCartItemDTO,
+    body: ActionCartItemDTO,
   ): Promise<{ cart_item: CartItem; status: 'updated' | 'deleted' }> {
     this.logger.log(
       `[cart.service::itemAction] START user=${body.user_id}, variant=${body.variant_id}, action=${body.action}`,

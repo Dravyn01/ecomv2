@@ -1,20 +1,17 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
-  Matches,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { DATE_DTO_MESSAGE, DATE_FORMAT } from 'src/common/enums/dto/date.enum';
 
 export class DateQueryDTO {
-  @IsNotEmpty({ message: 'กรุณาระบุวันที่เริ่มต้น (from)' })
-  @IsString({ message: 'วันที่เริ่มต้น (from) ต้องเป็นข้อความ (string)' }) @Matches(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, {
-    message: 'รูปแบบวันที่เริ่มต้น (from) ต้องเป็น YYYY-MM-DD',
+  @IsNotEmpty({ message: DATE_DTO_MESSAGE.DATE_IS_NOT_EMPTY })
+  @Matches(DATE_FORMAT, {
+    message: DATE_DTO_MESSAGE.INVALID_DATE_FORMAT,
   })
   from: string;
 
   @IsOptional()
-  @IsString({ message: 'วันที่สิ้นสุด (to) ต้องเป็นข้อความ (string)' }) @Matches(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, {
-    message: 'รูปแบบวันที่สิ้นสุด (to) ต้องเป็น YYYY-MM-DD',
+  @Matches(DATE_FORMAT, {
+    message: DATE_DTO_MESSAGE.INVALID_DATE_FORMAT,
   })
   to?: string;
 }
+

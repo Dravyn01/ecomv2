@@ -1,4 +1,6 @@
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
+import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { NOTIFICATION_DTO_MESSAGE } from 'src/common/enums/dto/notification.enum';
 
 export enum ActionNotification {
   READ_ONE = 'READ_ONE',
@@ -6,11 +8,15 @@ export enum ActionNotification {
 }
 
 export class ReadNotification {
-  @IsNotEmpty({ message: 'notification_id ต้องไม่เป็นค่าว่าง' })
-  @IsUUID()
+  @IsNotEmpty({ message: NOTIFICATION_DTO_MESSAGE.ID_IS_NOT_EMPTY })
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: NOTIFICATION_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
   notification_id: string;
 
-  @IsNotEmpty({ message: 'ประเภพ action ต้องไม่เป็นค่าว่าง' })
-  @IsEnum(ActionNotification, { message: 'ประเภพ action ไม่ถูกต้อง' })
+  @IsNotEmpty({ message: NOTIFICATION_DTO_MESSAGE.ACTION_IS_NOT_EMPTY })
+  @IsEnum(ActionNotification, {
+    message: NOTIFICATION_DTO_MESSAGE.INVALID_ACTION,
+  })
   action: ActionNotification;
 }

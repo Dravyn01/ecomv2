@@ -9,30 +9,35 @@ import {
   IsUUID,
 } from 'class-validator';
 import { StockChangeType } from '../enums/stock-change.enum';
+import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
+import { STOCK_DTO_MESSAGE } from 'src/common/enums/dto/stock.enum';
+import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { ORDER_DTO } from 'src/common/enums/dto/order.enum';
 
 export class CreateMovementDTO {
-  @IsNotEmpty({ message: 'กรุณาเลือกตัวเลือกสินค้า' })
-  @IsUUID('4', { message: 'รูปแบบหมายเลขสินค้าไม่ถูกต้อง' })
+  @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: VARIANT_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
   variant_id: string;
 
-  @IsNotEmpty({ message: 'กรุณากรอกจำนวน' })
-  @IsInt({ message: 'จำนวนต้องเป็นจำนวนเต็ม' })
-  @IsPositive({ message: 'จำนวนต้องมากกว่า 0' })
+  @IsNotEmpty({ message: COMMON_DTO.QTY_IS_NOT_EMPTY })
+  @IsInt({ message: COMMON_DTO.QTY_IS_INTEGER })
+  @IsPositive({ message: COMMON_DTO.QTY_IS_POSITIVE })
   quantity: number;
 
-  @IsNotEmpty({ message: 'กรุณาเลือกประเภทการเปลี่ยนแปลง (change_type)' })
+  @IsNotEmpty({ message: STOCK_DTO_MESSAGE.CHANGE_TYPE_IS_NOT_EMPTY })
   @IsEnum(StockChangeType, {
-    message: `change_type ต้องเป็นหนึ่งในค่า ${StockChangeType}`,
+    message: STOCK_DTO_MESSAGE.INVALID_CHANGE_TYPE,
   })
   change_type: StockChangeType;
 
   @IsOptional()
-  @Length(1, 255, { message: 'โน้ตต้องมีความยาวระหว่าง 1 ถึง 255 ตัวอักษร' })
-  @IsString({ message: 'โน้ตต้องเป็นข้อความ (string)' })
+  @Length(1, 255, { message: STOCK_DTO_MESSAGE.INVALID_LENGTH_NOTE })
+  @IsString({ message: STOCK_DTO_MESSAGE.NOTE_MUST_BE_STRING })
   note?: string;
 
   @IsOptional()
-  @IsInt({ message: 'รหัส order ต้องเป็นตัวเลขจำนวนเต็ม' })
-  @IsPositive({ message: 'รหัส order ต้องเป็นจำนวนเต็มบวก' })
-  order_id?: number;
+  @IsUUID(COMMON_DTO.UUID_VERSION, { message: ORDER_DTO.ID_MUST_BE_UUID })
+  order_id?: string;
 }

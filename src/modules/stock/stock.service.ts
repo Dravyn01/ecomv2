@@ -47,54 +47,118 @@ export class StockService {
     return stock;
   }
 
+  /**
+   * เช็คว่าสต็อกเพียงพอสำหรับการตัดไหม
+   *
+   * business rules:
+   * - ถ้าสต็อกคงเหลือ <= 0 หรือ สต็อกคงเหลือ < จำนวนที่ต้องการตัด
+   *   @throws BadRequestException
+   *
+   * @returns Promise<void>
+   * */
   async isOutOfStock(variant_id: string, qty: number): Promise<void> {
     const stock = await this.findByVariant(variant_id);
     if (stock.quantity <= 0 || stock.quantity < qty)
       throw new BadRequestException('สินค้าในสต็อกหมดแล้ว');
   }
 
-  async addQuantity(dto: AddQuantityDTO): Promise<void> {
-    await this.stockRepo.manager.transaction(async (tx) => {
+  /**
+   * import สินค้าเข้าคลัง โดยแอดมิน
+   *
+   * @param dto ข้อมูลสำหรับเพิ่มจำนวนเข้าสต็อก
+   *
+   * @returns Promise<Stock>
+   * */
+  async addQuantity(dto: AddQuantityDTO): Promise<Stock> {
+    const stock = await this.stockRepo.manager.transaction(async (tx) => {
       const payload = {
         quantity: dto.quantity,
         variant_id: dto.variant_id,
         change_type: StockChangeType.IN,
       };
 
-      await this.createMovement(payload, tx);
+      const updatedStock = await this.createMovement(payload, tx);
+
+      this.logger.log(`[${this.logger.log}::addQuantity] ADDED QUANTITY`, {
+        stock_id: updatedStock.id,
+        payload,
+      });
+
+      return updatedStock;
     });
+
+    return stock;
   }
 
+  /**
+   * ตรวจสอบจำนวนสต็อกคงเหลือหลังการตัดสินค้า
+   * และอัปเดตสถานะสต็อก พร้อมแจ้งเตือน admin ตามเงื่อนไข
+   *
+   * bsuiness rules:
+   * - ถ้าสต็อกคงเหลือ = 0 เปลี่ยนสถานะเป็น OUT และแจ้งเตือน
+   * - ถ้าสต็อกคงเหลือ <= 15 เปลี่ยนสถานะเป็น LOW และแจ้งเตือน
+   * - ถ้าสถานะเดิมตรงกับสถานะใหม่ จะไม่แจ้งเตือนซ้ำ
+   *
+   * side effects:
+   * - UPDATE stock.status
+   * - INSERT notification (แจ้ง admin)
+   *
+   * @param variant_id รหัสสินค้า (variant)
+   * @param qty จำนวนสินค้าที่กำลังจะถูกตัดออกจากสต็อก
+   */
   async notifyStock(variant_id: string, qty: number): Promise<void> {
     const stock = await this.findByVariant(variant_id);
     const remaining = stock.quantity - qty;
-
-    console.log('remaining', remaining);
 
     if (remaining === 0 && stock.status !== StockStatus.OUT) {
       await this.notifyService.createStockAlert(
         stock.variant.id,
         StockStatus.OUT,
       );
+
+      this.logger.warn(`[${this.className}::notifyStock] CASE OUT`, {
+        stock_id: stock.id,
+        variant: variant_id,
+        quantity: qty,
+        befor_status: stock.status,
+        after_status: StockStatus.OUT,
+      });
+
       stock.status = StockStatus.OUT;
     }
 
-    if (remaining <= 10 && remaining > 0 && stock.status !== StockStatus.LOW) {
+    if (remaining <= 15 && remaining > 0 && stock.status !== StockStatus.LOW) {
       await this.notifyService.createStockAlert(
         stock.variant.id,
         StockStatus.LOW,
       );
+
+      this.logger.warn(`[${this.className}::notifyStock] CASE OUT`, {
+        stock_id: stock.id,
+        variant: variant_id,
+        stock_qty: stock.quantity,
+        quantity: qty,
+        befor_status: stock.status,
+        after_status: StockStatus.LOW,
+      });
+
       stock.status = StockStatus.LOW;
     }
 
     await this.stockRepo.save(stock);
+
+    this.logger.log(`[${this.className}::notifyStock] CASE OUT`, {
+      stock_id: stock.id,
+      variant: variant_id,
+      status: stock.status,
+    });
   }
 
   /**
    * บันทึกการเคลื่อนไหวของสต็อก (StockMovement)
    * และปรับจำนวนในสต็อกในคำสั่งเดียว
    *
-   * ⚠️ IMPORTANT:
+   * IMPORTANT:
    * - function นี้ "เปลี่ยน state ของสต็อกจริง"
    * - มีผลกับจำนวน stock ในระบบทันที
    * - ควรถูกเรียกภายใน transaction เท่านั้น
@@ -114,16 +178,21 @@ export class StockService {
    * - UPDATE Stock.quantity
    * - INSERT StockMovement
    *
-   * @param body  ข้อมูลการเปลี่ยนแปลงสต็อก
-   * @param tx   EntityManager จาก transaction
+   * @param dto  ข้อมูลการเปลี่ยนแปลงสต็อก
+   * @param tx    EntityManager จาก transaction
    *
    * @throws NotFoundException  เมื่อไม่พบสินค้า หรือไม่พบสต็อก
    * @throws BadRequestException เมื่อสต็อกไม่เพียงพอในกรณี OUT
+   *
+   * @returns Promise<Stock> - สต็อกที่อัพเดทจำนวนแล้ว
    */
-  async createMovement(body: CreateMovementDTO, tx: EntityManager) {
+  async createMovement(
+    dto: CreateMovementDTO,
+    tx: EntityManager,
+  ): Promise<Stock> {
     // โหลดข้อมูล variant พร้อม stock
     const variant = await tx.findOne(ProductVariant, {
-      where: { id: body.variant_id },
+      where: { id: dto.variant_id },
       relations: ['stock'],
     });
     if (!variant) throw new NotFoundException('ไม่พบสินค้า');
@@ -139,25 +208,43 @@ export class StockService {
 
     // ปรับจำนวนตามประเภทของ change_type
     if (
-      body.change_type === StockChangeType.IN ||
-      body.change_type === StockChangeType.RETURN
+      dto.change_type === StockChangeType.IN ||
+      dto.change_type === StockChangeType.RETURN
     ) {
-      newQuantity += body.quantity;
-      this.logger.log;
-    } else if (body.change_type === StockChangeType.OUT) {
-      // ตรวจสอบว่าสต็อกพอต่อการตัดหรือไม่
-      if (stock.quantity < body.quantity) {
+      newQuantity += dto.quantity;
+
+      this.logger.log(
+        `[${this.className}::createMovement] CASE=${dto.change_type}`,
+        { variant: dto.variant_id, order: dto.order_id, qty: newQuantity },
+      );
+    } else if (dto.change_type === StockChangeType.OUT) {
+      // เช็คว่าสต็อกพอต่อการตัดหรือไม่
+      // จำนวนในสต็อก น้อยกว่า จำนวนที่ต้องการตัดไหม
+      if (stock.quantity < dto.quantity) {
+        this.logger.warn(
+          `[${this.className}::createMovement] IN CASE=OUT คำสั่งซื้อ=${dto.order_id} ต้องการตัดสต็อกแต่จำนวนที่ในสต็อกเหลือน้อยกว่า`,
+        );
+
         throw new BadRequestException(
-          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${body.quantity} ชิ้น)`,
+          `จำนวนสินค้าในสต็อกไม่เพียงพอ (มี ${stock.quantity} ชิ้น แต่ต้องการ ${dto.quantity} ชิ้น)`,
         );
       }
 
-      newQuantity -= body.quantity;
-    } else if (body.change_type === StockChangeType.ADJUST) {
-      console.log('CASE ADJUST');
+      // decrement quantity
+      newQuantity -= dto.quantity;
 
+      this.logger.log(
+        `[${this.className}::createMovement] IN CASE=OUT ลดจำนวนในสต็อกไป=${newQuantity} ค่าก่อนลบ=${stock.quantity}`,
+      );
+    } else if (dto.change_type === StockChangeType.ADJUST) {
       // ปรับจำนวนแบบเพิ่ม/ลดตรง ๆ
-      newQuantity += body.quantity;
+      newQuantity += dto.quantity;
+
+      this.logger.warn(`[${this.className}::createMovement] CASE=ADJUST`, {
+        variant: dto.variant_id,
+        adjust_type: dto.quantity >= 0 ? 'POSATIVE' : 'NEGATIVE',
+        raw_value: dto.quantity,
+      });
 
       // ถ้าติดลบให้บังคับเป็น 0 เพื่อป้องกันค่าสต็อกผิดปกติ
       if (newQuantity < 0) newQuantity = 0;
@@ -165,25 +252,45 @@ export class StockService {
 
     // สร้าง default note ตามประเภท movement
     const defaultNote = {
-      [StockChangeType.IN]: `Import product #${variant.id}, quantity: ${body.quantity}`,
-      [StockChangeType.OUT]: `Order #${body.order_id}`,
-      [StockChangeType.ADJUST]: `Adjust product #${variant.id}, quantity: ${body.quantity}`,
-      [StockChangeType.RETURN]: `Return product #${variant.id}, quantity: ${body.quantity}`,
+      [StockChangeType.IN]: `Import variant #${variant.id}, quantity: ${dto.quantity}`,
+      [StockChangeType.OUT]: `Order #${dto.order_id}`,
+      [StockChangeType.ADJUST]: `Adjust variant #${variant.id}, quantity: ${dto.quantity}`,
+      [StockChangeType.RETURN]: `Return variant #${variant.id}, quantity: ${dto.quantity}`,
     };
 
-    // เตรียมข้อมูลสำหรับบันทึก stock + movement
-    const saved_stock = { ...stock, quantity: newQuantity };
-
-    const saved_movement = {
+    // อัพเดทจำนวนในสต็อก
+    const updatedStock = await tx.save(Stock, {
       stock: { id: stock.id },
-      quantity: body.quantity,
-      change_type: body.change_type,
-      note: body.note ?? defaultNote[body.change_type],
-      ...(body.order_id && { order: { id: body.order_id } }),
-    };
+      quantity: newQuantity,
+    });
 
-    // บันทึกลงฐานข้อมูล
-    await tx.save(Stock, saved_stock);
-    await tx.save(StockMovement, saved_movement);
+    // updated stock log
+    this.logger.log(`[${this.className}::createMovement] STOCK UPDATED`, {
+      stock_id: stock.id,
+      variant_id: dto.variant_id,
+      quantity_before: stock.quantity,
+      quantity_after: newQuantity,
+      change_type: dto.change_type,
+    });
+
+    // insert new movement
+    const movement = await tx.save(StockMovement, {
+      stock: { id: stock.id },
+      quantity: dto.quantity,
+      change_type: dto.change_type,
+      note: dto.note ?? defaultNote[dto.change_type],
+      ...(dto.order_id && { order: { id: dto.order_id } }),
+    });
+
+    // movement log
+    this.logger.log(`[${this.className}::createMovement] INSERT NEW MOVEMENT`, {
+      movement_id: movement.id,
+      stock_id: stock.id,
+      quantity: dto.quantity,
+      change_type: dto.change_type,
+      order: dto.order_id,
+    });
+
+    return updatedStock;
   }
 }

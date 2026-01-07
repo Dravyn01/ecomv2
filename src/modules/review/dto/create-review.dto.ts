@@ -1,4 +1,5 @@
 import { Type } from 'class-transformer';
+
 import {
   IsInt,
   IsNotEmpty,
@@ -9,22 +10,27 @@ import {
   IsOptional,
   IsUUID,
 } from 'class-validator';
+import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { REVIEW_DTO_MESSAGE } from 'src/common/enums/dto/review.enum';
+import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
 
 export class CreateReviewDTO {
-  @IsNotEmpty({ message: 'กรุณาเลือกสินค้าที่ต้องการรีวิว' })
-  @IsUUID('4', { message: 'รหัสสินค้าต้องอยู่ในรูปแบบ UUID v4' })
+  @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: VARIANT_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
   variant_id: string;
 
-  @IsNotEmpty({ message: 'กรุณาเลือกจำนวนดาว' })
-  @IsInt({ message: 'จำนวนดาวต้องเป็นตัวเลข' })
-  @Min(1, { message: 'จำนวนดาวต้องไม่ต่ำกว่า 1 ดาว' })
-  @Max(5, { message: 'จำนวนดาวต้องไม่เกิน 5 ดาว' })
+  @IsNotEmpty({ message: REVIEW_DTO_MESSAGE.RATING_IS_NOT_EMPTY })
+  @IsInt({ message: REVIEW_DTO_MESSAGE.RATING_MUST_BE_INTEGER })
+  @Min(1, { message: REVIEW_DTO_MESSAGE.RATING_MIN })
+  @Max(5, { message: REVIEW_DTO_MESSAGE.RATING_MAX })
   rating: number;
 
-  @IsNotEmpty({ message: 'กรุณากรอกความคิดเห็นต่อสินค้า' })
+  @IsNotEmpty({ message: REVIEW_DTO_MESSAGE.COMMENT_IS_NOT_EMPTY })
   @Length(1, 100, {
-    message: 'ความคิดเห็นต้องไม่สั้นเกินไป และ ยาวเกิน 100 ตัวอักษร',
+    message: REVIEW_DTO_MESSAGE.COMMENT_INVALID_LENGTH,
   })
   comment: string;
 

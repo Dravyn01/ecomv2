@@ -48,7 +48,7 @@ export class OrderService {
     return { data: orders, count };
   }
 
-  async findOne(order_id: number): Promise<Order> {
+  async findOne(order_id: string): Promise<Order> {
     const order = await this.orderRepo.findOne({
       where: { id: order_id },
       relations: ['items.variant.product', 'user'],
@@ -113,7 +113,7 @@ export class OrderService {
     return order;
   }
 
-  async cancel(order_id: number): Promise<Order> {
+  async cancel(order_id: string): Promise<Order> {
     const saved_order = this.datasource.transaction(async (tx) => {
       // หา order ตาม id และ status ต้องไม่เป็น cancel or return
       const order = await tx.findOne(Order, {
@@ -154,7 +154,7 @@ export class OrderService {
     return saved_order;
   }
 
-  async paid(order_id: number): Promise<Order> {
+  async paid(order_id: string): Promise<Order> {
     const order = await this.findOne(order_id);
 
     // ป้องกันการทำรายการซ้ำหรือทำในสถานะที่ไม่ถูกต้อง
@@ -215,7 +215,7 @@ export class OrderService {
     });
   }
 
-  async delete(order_id: number): Promise<Order> {
+  async delete(order_id: string): Promise<Order> {
     const order = await this.findOne(order_id);
     await this.orderRepo.remove(order);
     return order;

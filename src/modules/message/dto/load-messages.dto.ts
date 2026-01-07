@@ -1,11 +1,18 @@
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { CONVERSATION_DTO_MESSAGE } from 'src/common/enums/dto/conversation.enum';
+import { MESSAGE_DTO_MESSAGE } from 'src/common/enums/dto/message.enum';
 
-export class LoadMessages {
-  @IsNotEmpty({ message: 'หมายเลขห้องต้องไม่เป็นค่าว่าง' })
-  @IsUUID()
+export class LoadMessagesDTO {
+  @IsNotEmpty({ message: CONVERSATION_DTO_MESSAGE.ID_IS_NOT_EMPTY })
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: CONVERSATION_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
   conversation_id: string;
 
   @IsOptional()
-  @IsUUID('4', { message: 'รูปแบบของหมายเลขข้อความไม่ถูกต้อง' })
-  befor_message_id?: string;
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: MESSAGE_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
+  before_message_id?: string;
 }

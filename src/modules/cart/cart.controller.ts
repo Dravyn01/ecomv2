@@ -14,7 +14,7 @@ import { Cart, CartItem } from './entities/cart.entity';
 import { FindAllCartsDto } from './dto/find-all-carts.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { AddToCartDTO } from './dto/add-to-cart.dto';
-import { ActionsCartItemDTO } from './dto/actions-cartitem.dto';
+import { ActionCartItemDTO } from './dto/action-cartitem.dto';
 
 @Controller('/admin/carts')
 export class CartController {
@@ -48,7 +48,7 @@ export class CartController {
 
   @Put('/item-action')
   async cartItemAction(
-    @Body() body: ActionsCartItemDTO,
+    @Body() body: ActionCartItemDTO,
   ): Promise<ApiResponse<CartItem>> {
     const result = await this.cartService.itemAction(body);
     return {

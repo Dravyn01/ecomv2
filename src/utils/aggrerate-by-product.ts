@@ -1,27 +1,23 @@
+/**
+ * @param T ข้อมูลที่เป็น array
+ * @param R หน้าตาข้อมูลว่าง: { repeat: 0, unique: 0 }
+ *
+ * @callback getProductId: (item: T) => {} ดึง produt_id จากไหน
+ *
+ * @callback reducer: (acc: R, item: T) => {} logic สำหรับเพิ่มค่าให้กับ property ใน  map
+ * - @param acc ข้อมูลว่างที่ set ไว้ใน initial
+ * - @param item list ข้อมูลที่ถูก loop ไว้เป็นแถวๆ จาก items ที่ส่งเข้ามา
+ *
+ * @callback initial: () => {} สร้างข้อมูลเริ่มต้น หรือ ข้อมูลว่าง
+ *
+ * @returns Promise<string, R>
+ * */
 export const aggregateByProduct = <T, R>(
   items: T[],
   getProductId: (item: T) => string,
   reducer: (acc: R, item: T) => void,
   initial: () => R,
 ): Map<string, R> => {
-  /*
-   * types:
-   * T ข้อมูลที่เป็น array
-   * R หน้าตาข้อมูลว่าง: { repeat: 0, unique: 0 }
-   *
-   * callback:
-   * getProductId: (item: T) => ดึง produt_id จากไหน
-   *
-   * reducer: (acc: R, item: T) {
-   *  - callback logic สำหรับเพิ่มค่าให้กับ property ใน  map
-   *
-   *  acc = ข้อมูลว่างที่ set ไว้ใน initial
-   *  item = list ข้อมูลที่ถูก loop ไว้เป็นแถวๆ จาก items ที่ส่งเข้ามา
-   * }
-   *
-   * initial = สร้างข้อมูลเริ่มต้น หรือ ข้อมูลว่าง
-   * */
-
   const map = new Map<string, R>();
 
   for (const item of items) {

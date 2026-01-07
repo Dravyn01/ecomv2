@@ -16,8 +16,8 @@ import { ProductVariant } from 'src/modules/product-variant/entities/product-var
 
 @Entity('orders')
 export class Order {
-  @PrimaryGeneratedColumn({ name: 'order_id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'order_id' })
+  id: string;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   total_price: number;

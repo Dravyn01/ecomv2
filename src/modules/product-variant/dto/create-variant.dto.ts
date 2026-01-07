@@ -12,33 +12,40 @@ import {
 import { ProductVariantStatus } from '../entities/product-variant.entity';
 import { CreateImageDTO } from 'src/modules/image/dto/create-image.dto';
 import { Type } from 'class-transformer';
+import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
+import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { PRODUCT_DTO_MESSAGE } from 'src/common/enums/dto/product.enum';
+import { IMAGE_DTO_MESSAGE } from 'src/common/enums/dto/image.enum';
 
 export class CreateVariantDTO {
-  @IsNotEmpty({ message: 'กรุณาเลือกสินค้า' })
-  @IsUUID('4', { message: 'รหัสสินค้าต้องอยู่ในรูปแบบ UUID v4' })
+  @IsNotEmpty({ message: PRODUCT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
+  @IsUUID(COMMON_DTO.UUID_VERSION, {
+    message: PRODUCT_DTO_MESSAGE.ID_MUST_BE_UUID,
+  })
   product_id: string;
 
-  @IsNotEmpty({ message: 'กรุณาเลือกสี' })
-  @IsInt({ message: '' })
-  @IsPositive({ message: 'รหัสสีต้องเป็นตัวเลขที่มากกว่า 0' })
+  @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.COLOR_ID_IS_NOT_EMPTY })
+  @IsInt({ message: VARIANT_DTO_MESSAGE.COLOR_ID_MUST_BE_INTEGER })
+  @IsPositive({ message: VARIANT_DTO_MESSAGE.COLOR_ID_MUST_BE_POSITIVE })
   color_id: number;
 
-  @IsNotEmpty({ message: 'กรุณาเลือกไชส์' })
-  @IsInt({ message: '' })
-  @IsPositive({ message: 'รหัสไชส์ต้องเป็นตัวเลขที่มากกว่า 0' })
+  @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.SIZE_ID_IS_NOT_EMPTY })
+  @IsInt({ message: VARIANT_DTO_MESSAGE.SIZE_ID_MUST_BE_INTEGER })
+  @IsPositive({ message: VARIANT_DTO_MESSAGE.SIZE_ID_MUST_BE_POSITIVE })
   size_id: number;
 
-  @IsNotEmpty({ message: 'กรุณากรอกราคาสินค้า' })
-  @IsNumber({}, { message: 'ราคาต้องเป็นตัวเลข' })
-  @Min(1, { message: 'ราคาสินค้าต้องมากกว่า 1 บาท' })
+  @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.PRICE_IS_NOT_EMPTY })
+  @IsNumber({}, { message: VARIANT_DTO_MESSAGE.PRICE_MUST_BE_NUMBER })
+  @Min(1, { message: VARIANT_DTO_MESSAGE.PRICE_MIN })
   price: number;
 
   @IsOptional()
   @IsEnum(ProductVariantStatus, {
-    message: 'สถานะสินค้าต้องเป็นหนึ่งใน ProductVariantStatus',
+    message: VARIANT_DTO_MESSAGE.INVALID_VARIANT_STATUS,
   })
-  status?: ProductVariantStatus = ProductVariantStatus.INACTIVE;
+  status?: ProductVariantStatus;
 
+  @IsNotEmpty({ message: IMAGE_DTO_MESSAGE.IMAGE_IS_NOT_EMPTY })
   @ValidateNested({ each: true })
   @Type(() => CreateImageDTO)
   images: CreateImageDTO[];

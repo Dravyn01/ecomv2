@@ -23,7 +23,6 @@ export class ChatService {
       await this.inboxRepo.save({
         conversation: { id: conversation_id },
         sender: { id: sender_id },
-        is_open: false,
       });
     }
   }

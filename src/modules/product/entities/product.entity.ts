@@ -14,7 +14,6 @@ import { Review } from 'src/modules/review/entities/review.entity';
 import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
 import { Wishlist } from 'src/modules/wishlist/entities/wishlist.entity';
 import { ProductStats } from 'src/modules/analytics/entities/product-stats.entity';
-import { Image } from 'src/modules/image/entities/image.entity';
 
 export enum ProductStatus {
   DRAFT,

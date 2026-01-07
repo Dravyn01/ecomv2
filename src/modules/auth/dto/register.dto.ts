@@ -1,15 +1,20 @@
 import { IsEmail, IsNotEmpty, Length, MinLength } from 'class-validator';
+import { AUTH_DTO_MESSAGE } from 'src/common/enums/dto/auth.enum';
 
 export class RegisterDTO {
-  @IsNotEmpty({ message: 'ชื่อผู้ใช้ต้องไม่เป็นค่าว่าง' })
-  @Length(1, 30, { message: 'ชื่อผู้ใช้ต้องไม่เกิน 30 ตัวอักษร' })
+  @IsNotEmpty({ message: AUTH_DTO_MESSAGE.USERNAME_IS_NOT_EMPTY })
+  @Length(1, 30, {
+    message: AUTH_DTO_MESSAGE.USERNAME_INVALID_LENGTH,
+  })
   username: string;
 
-  @IsNotEmpty({ message: 'อีเมลต้องไม่เป็นค่าว่าง' })
-  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
+  @IsNotEmpty({ message: AUTH_DTO_MESSAGE.EMAIL_IS_NOT_EMPTY })
+  @IsEmail({}, { message: AUTH_DTO_MESSAGE.EMAIL_INVALID_FORMAT })
   email: string;
 
-  @IsNotEmpty({ message: 'รหัสผ่านต้องไม่เป็นค่าว่าง' })
-  @MinLength(6, { message: 'รหัสผ่านต้องยาวกว่าหรือเท่ากับ 6 ตัวอักษร' })
+  @IsNotEmpty({ message: AUTH_DTO_MESSAGE.PASSWORD_IS_NOT_EMPTY })
+  @MinLength(6, {
+    message: AUTH_DTO_MESSAGE.PASSWORD_MIN_LENGTH,
+  })
   password: string;
 }

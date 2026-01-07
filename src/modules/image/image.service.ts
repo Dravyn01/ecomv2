@@ -9,8 +9,6 @@ import { Image, ImageOwnerType } from './entities/image.entity';
 import { CreateImageDTO } from './dto/create-image.dto';
 import { UpdateImageDTO } from './dto/update-image.dto';
 import { MoveImageDTO } from './dto/move-image.dto';
-import { UpdatePrimaryImageDTO } from './dto/update-primary-image.dto';
-import { Min } from 'class-validator';
 
 interface CreateImageRequest {
   image: CreateImageDTO;
