@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtPayload } from '../strategies/jwt.strategy';
+import { JwtPayload } from '../../strategies/jwt.strategy';
 
 export class WsCheckRole implements CanActivate {
   private readonly className = WsCheckRole.name;
@@ -20,9 +20,11 @@ export class WsCheckRole implements CanActivate {
       'roles',
       context.getHandler(),
     );
+
     this.logger.debug(
       `[guard::${this.className}] get role from metadata: ${requiredRoles}`,
     );
+
     if (!requiredRoles) throw new ForbiddenException();
 
     const user: JwtPayload = context.switchToWs().getClient().data.user;

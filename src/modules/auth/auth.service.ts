@@ -8,6 +8,7 @@ import { Role, User } from 'src/modules/user/entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
 import { BaseUserDTO } from '../user/dto/base-user.dto';
 import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -93,4 +94,6 @@ export class AuthService {
 
     return { accessToken: token };
   }
+
+  async reset_password(dto: ResetPasswordDTO): Promise<void> {}
 }

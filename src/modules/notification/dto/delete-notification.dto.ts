@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
-import { COMMON_DTO } from 'src/common/enums/dto/common.enum';
+import { CONFIG_ENUM } from 'src/common/enums/common/common.enum';
 import { NOTIFICATION_DTO_MESSAGE } from 'src/common/enums/dto/notification.enum';
 
 export enum DeleteNotificationType {
@@ -9,7 +9,7 @@ export enum DeleteNotificationType {
 
 export class DeleteNotificationDTO {
   @IsNotEmpty({ message: NOTIFICATION_DTO_MESSAGE.ID_IS_NOT_EMPTY })
-  @IsUUID(COMMON_DTO.UUID_VERSION, {
+  @IsUUID(CONFIG_ENUM.UUID_VERSION, {
     message: NOTIFICATION_DTO_MESSAGE.ID_MUST_BE_UUID,
   })
   notification_id: string;

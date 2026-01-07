@@ -53,7 +53,7 @@ export class OrderController {
   async cancel(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<Order>> {
-    const order = await this.orderService.cancel(+order_id);
+    const order = await this.orderService.cancel(order_id);
     return { message: 'ยกเลิก order แล้ว', data: order };
   }
 
@@ -61,7 +61,7 @@ export class OrderController {
   async delete(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<Order>> {
-    const order = await this.orderService.delete(+order_id);
+    const order = await this.orderService.delete(order_id);
     return { message: `ลบ order หมายเลข ${order_id} เรียบร้อย`, data: order };
   }
 
@@ -69,7 +69,7 @@ export class OrderController {
   async paidOrder(
     @Param('order_id') order_id: string,
   ): Promise<ApiResponse<Order>> {
-    const order = await this.orderService.paid(+order_id);
+    const order = await this.orderService.paid(order_id);
     return { message: `paid order #${order.id}`, data: order };
   }
 }

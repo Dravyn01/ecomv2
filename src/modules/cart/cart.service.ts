@@ -8,7 +8,7 @@ import { StockService } from '../stock/stock.service';
 import { FindAllCartsDto } from './dto/find-all-carts.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { AddToCartDTO } from './dto/add-to-cart.dto';
-import { ActionCartItemDTO } from './dto/actions-cartitem.dto';
+import { ActionCartItemDTO } from './dto/action-cartitem.dto';
 
 @Injectable()
 export class CartService {

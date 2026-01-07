@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from '../strategies/jwt.strategy';
+import { JwtPayload } from '../../strategies/jwt.strategy';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {

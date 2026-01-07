@@ -9,18 +9,12 @@ import { BaseUserDTO } from '../user/dto/base-user.dto';
 
 @Controller('/api/auth')
 export class AuthController {
-  private readonly className = 'auth.controller';
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(private readonly authService: AuthService) {}
 
   @Post('/register')
   async register(@Body() body: RegisterDTO): Promise<ApiResponse<BaseUserDTO>> {
-    this.logger.log(
-      `[${this.className}::register] register with username=${body.username} email=${body.email}`,
-    );
     const user = await this.authService.register(body);
-    return { message: 'register success', data: user };
+    return { message: 'สมัครสมาชิกเรียบร้อย', data: user };
   }
 
   @UseGuards(LocalGuard)
@@ -28,14 +22,17 @@ export class AuthController {
   async login(
     @Req() req: { user: User },
   ): Promise<ApiResponse<{ accessToken: string }>> {
-    this.logger.log(
-      `[$${this.className}::login] login with email=${req.user.email}`,
-    );
     const result = await this.authService.login(req.user);
-    return { message: 'login success', data: result };
+    return { message: 'เข้าสุ่ระบบเรียบร้อย', data: result };
   }
 
   @UseGuards(JwtGuard)
+  @Post('/logout')
+  async logout() {}
+
+  @UseGuards(JwtGuard)
   @Post('/reset-password')
-  async reset_password() {}
+  async reset_password() {
+    await this.authService.reset_password();
+  }
 }

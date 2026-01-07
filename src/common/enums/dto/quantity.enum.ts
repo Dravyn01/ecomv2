@@ -1,6 +1,4 @@
-export enum COMMON_DTO {
-  UUID_VERSION = '4',
-
+export enum QUANTITY {
   // quantity
   QTY_IS_NOT_EMPTY = 'กรุณากรอกจำนวน',
   QTY_IS_INTEGER = 'จำนวนต้องเป็นตัวเลขเท่านั้น',

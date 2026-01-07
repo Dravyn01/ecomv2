@@ -6,12 +6,10 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
-import { Logger, NotFoundException, UseGuards } from '@nestjs/common';
-import { WsJwtGuard } from 'src/common/guards/ws-jwt.guard';
+import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Role } from 'src/modules/user/entities/user.entity';
 import { Inbox } from './entities/inbox.entity';
 import { Roles } from 'src/common/decorators/role.decorator';
-import { WsCheckRole } from 'src/common/guards/ws-role.guard';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatService } from './chat.service';
@@ -23,11 +21,11 @@ import { CreateMessageDTO } from '../message/dto/create-message.dto';
 import { UpdateMessageDTO } from '../message/dto/update-message.dto';
 import { DeleteMessageDTO } from '../message/dto/delete-message.dto';
 import { ReadMessageDTO } from '../message/dto/read-message.dto';
-import { LoadMessages } from '../message/dto/load-messages.dto';
 import { CreateReplyDTO } from '../message/dto/create-reply.dto';
 import { ConversationService } from '../conversation/conversation.service';
-import { ImageService } from '../image/image.service';
-import { ImageOwnerType } from '../image/entities/image.entity';
+import { WsJwtGuard } from 'src/common/guards/ws/ws-jwt.guard';
+import { WsCheckRole } from 'src/common/guards/ws/ws-role.guard';
+import { LoadMessagesDTO } from '../message/dto/load-messages.dto';
 
 /*
  * NOTE:
@@ -52,7 +50,6 @@ export class ChatGateway {
     private readonly notifyService: NotificationService,
     private readonly messageService: MessageService,
     private readonly conversationService: ConversationService,
-    private readonly imageService: ImageService,
   ) {}
 
   /**
@@ -268,7 +265,7 @@ export class ChatGateway {
   @UseGuards(WsCheckRole)
   @SubscribeMessage('LOAD_MESSAGE')
   async onLoadMessages(
-    @MessageBody() dto: LoadMessages,
+    @MessageBody() dto: LoadMessagesDTO,
     @ConnectedSocket() client: Socket,
   ) {
     const newMessages = await this.messageService.loadMessage(

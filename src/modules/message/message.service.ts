@@ -7,12 +7,11 @@ import { Injectable } from '@nestjs/common';
 import { UpdateMessageDTO } from './dto/update-message.dto';
 import { DeleteMessageDTO } from './dto/delete-message.dto';
 import { ReadMessageDTO } from './dto/read-message.dto';
-import { LoadMessages } from './dto/load-messages.dto';
+import { LoadMessagesDTO } from './dto/load-messages.dto';
 import { CreateReplyDTO } from './dto/create-reply.dto';
 import { DeleteReplyDTO } from './dto/delete-reply.dto';
 import { ConversationService } from '../conversation/conversation.service';
 import { UpdateReplyDTO } from './dto/update-reply.dto';
-import { DeleteResult } from 'typeorm/browser';
 import { Message } from './entities/message.entity';
 import { Replies } from './entities/reply.entity';
 import { Role } from '../user/entities/user.entity';
@@ -132,7 +131,10 @@ export class MessageService {
     );
   }
 
-  async loadMessage(user: JwtPayload, dto: LoadMessages): Promise<Message[]> {
+  async loadMessage(
+    user: JwtPayload,
+    dto: LoadMessagesDTO,
+  ): Promise<Message[]> {
     if (user.role !== Role.SUPPORT) {
       const isOwner = await this.conversationService.checkOwnerConversation(
         user.sub,
@@ -147,7 +149,9 @@ export class MessageService {
     // WARN: now message_id is uuid
     return await this.messageRepo.find({
       where: {
-        ...(dto.befor_message_id ? { id: LessThan(dto.befor_message_id) } : {}),
+        ...(dto.before_message_id
+          ? { id: LessThan(dto.before_message_id) }
+          : {}),
         conversation: { id: dto.conversation_id },
       },
       take: 10,
