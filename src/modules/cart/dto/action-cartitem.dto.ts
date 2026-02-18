@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { ACTION_CART_ITEM_DTO_MESSAGE } from 'src/common/enums/dto/action-cartitem.enum';
-import { CONFIG_ENUM } from 'src/common/enums/common/common.enum';
+import { APP_CONFIG } from 'src/common/enums/common/common.enum';
 import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
 
 enum ACTION_TYPE {
@@ -13,7 +13,7 @@ export class ActionCartItemDTO {
   user_id: string;
 
   @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
-  @IsUUID(CONFIG_ENUM.UUID_VERSION, {
+  @IsUUID(APP_CONFIG.UUID_VERSION, {
     message: VARIANT_DTO_MESSAGE.ID_MUST_BE_UUID,
   })
   variant_id: string;

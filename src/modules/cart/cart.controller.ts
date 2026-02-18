@@ -7,6 +7,8 @@ import {
   Delete,
   Param,
   Put,
+  UseGuards,
+  Res,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { ApiResponse } from 'src/common/dto/res/common-response';
@@ -15,8 +17,10 @@ import { FindAllCartsDto } from './dto/find-all-carts.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { AddToCartDTO } from './dto/add-to-cart.dto';
 import { ActionCartItemDTO } from './dto/action-cartitem.dto';
+import { JwtGuard } from 'src/common/guards/jwt.guard';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
 
-@Controller('/admin/carts')
+@Controller('/api/carts')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
@@ -29,6 +33,13 @@ export class CartController {
       message: `พบตะกร้าทั้งหมด ${carts.count} รายการ`,
       data: carts,
     };
+  }
+
+  @UseGuards(JwtGuard)
+  @Get('summary-cart')
+  async summaryCart(@Res() res: { user: JwtPayload }) {
+    const result = await this.cartService.previewCartSummary(res.user.sub);
+    return { data: result };
   }
 
   @Post('/add-to-cart')

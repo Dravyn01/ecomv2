@@ -16,6 +16,7 @@ import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { CreateMovementDTO } from '../stock/dto/create-movement.dto';
 import { Cart } from '../cart/entities/cart.entity';
 import { UserPurchaseHistory } from '../analytics/entities/user-purchase-history.entity';
+import { PromotionService } from '../promotion/promotion.service';
 
 @Injectable()
 export class OrderService {
@@ -25,6 +26,7 @@ export class OrderService {
     private readonly stockService: StockService,
     private readonly datasource: DataSource,
     private readonly productService: ProductService,
+    private readonly promotionService: PromotionService,
   ) {}
 
   async findAll(): Promise<Order[]> {
@@ -87,6 +89,18 @@ export class OrderService {
           variant: { id: item.variant.id },
         })),
       });
+
+      if (cart.code) {
+        // validate
+        const { promotion, discount } =
+          await this.promotionService.validateForCheckout(
+            cart.items,
+            cart.code,
+          );
+
+        // apply กับ order
+        await this.promotionService.applyToOrder(order, promotion, discount);
+      }
 
       // clear cart หลังสร้าง order
       await tx.delete(Cart, cart.id);

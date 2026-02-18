@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { RegisterDTO } from './dto/register.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,8 +13,16 @@ import * as bcrypt from 'bcryptjs';
 import { Role, User } from 'src/modules/user/entities/user.entity';
 import { LoginHistory } from './entities/login-history.entity';
 import { BaseUserDTO } from '../user/dto/base-user.dto';
-import { aggregateByProduct } from 'src/utils/aggrerate-by-product';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
+import { JwtPayload } from 'src/common/strategies/jwt.strategy';
+import {
+  COMMON_EXCEPTION,
+  APP_CONFIG,
+} from 'src/common/enums/common/common.enum';
+import {
+  AUTH_DTO_MESSAGE,
+  AUTH_FAILED_MESSAGE,
+} from 'src/common/enums/dto/auth.enum';
 
 @Injectable()
 export class AuthService {
@@ -95,5 +109,20 @@ export class AuthService {
     return { accessToken: token };
   }
 
-  async reset_password(dto: ResetPasswordDTO): Promise<void> {}
+  async reset_password(user: JwtPayload, dto: ResetPasswordDTO): Promise<void> {
+    const existsUser = await this.userRepo.findOneBy({
+      id: user.sub,
+    });
+
+    if (!existsUser)
+      throw new NotFoundException(COMMON_EXCEPTION.NOT_FOUND_USER);
+
+    const isValid = await bcrypt.compare(existsUser.password, dto.old_password);
+    if (!isValid) {
+      throw new UnauthorizedException(COMMON_EXCEPTION.INVALID_PASSWORD);
+    }
+
+    const newPassword = await bcrypt.hash(dto.new_password, APP_CONFIG.SALT);
+    await this.userRepo.update(user.sub, { password: newPassword });
+  }
 }

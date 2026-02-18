@@ -12,12 +12,12 @@ import { StockChangeType } from '../enums/stock-change.enum';
 import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
 import { STOCK_DTO_MESSAGE } from 'src/common/enums/dto/stock.enum';
 import { ORDER_DTO } from 'src/common/enums/dto/order.enum';
-import { CONFIG_ENUM } from 'src/common/enums/common/common.enum';
+import { APP_CONFIG } from 'src/common/enums/common/common.enum';
 import { QUANTITY } from 'src/common/enums/dto/quantity.enum';
 
 export class CreateMovementDTO {
   @IsNotEmpty({ message: VARIANT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
-  @IsUUID(CONFIG_ENUM.UUID_VERSION, {
+  @IsUUID(APP_CONFIG.UUID_VERSION, {
     message: VARIANT_DTO_MESSAGE.ID_MUST_BE_UUID,
   })
   variant_id: string;
@@ -39,6 +39,6 @@ export class CreateMovementDTO {
   note?: string;
 
   @IsOptional()
-  @IsUUID(CONFIG_ENUM.UUID_VERSION, { message: ORDER_DTO.ID_MUST_BE_UUID })
+  @IsUUID(APP_CONFIG.UUID_VERSION, { message: ORDER_DTO.ID_MUST_BE_UUID })
   order_id?: string;
 }

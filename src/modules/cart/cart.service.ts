@@ -9,6 +9,7 @@ import { FindAllCartsDto } from './dto/find-all-carts.query';
 import { DatasResponse } from 'src/common/dto/res/datas.response';
 import { AddToCartDTO } from './dto/add-to-cart.dto';
 import { ActionCartItemDTO } from './dto/action-cartitem.dto';
+import { PromotionService } from '../promotion/promotion.service';
 
 @Injectable()
 export class CartService {
@@ -22,6 +23,7 @@ export class CartService {
     private readonly variantService: ProductVariantService,
     private readonly stockService: StockService,
     private readonly datasource: DataSource,
+    private readonly promotionService: PromotionService,
   ) {}
 
   // # DEBUG METHOD
@@ -55,10 +57,6 @@ export class CartService {
   }
 
   async addToCart(body: AddToCartDTO): Promise<CartItem> {
-    this.logger.log(
-      `[cart.service::addToCart] START addToCart user=${body.user_id}, variant=${body.variant_id}, qty=${body.quantity}`,
-    );
-
     const user = await this.userService.findOne(body.user_id);
     const variant = await this.variantService.findOne(body.variant_id);
 
@@ -68,9 +66,6 @@ export class CartService {
       let cart = await tx.findOne(Cart, { where: { user: { id: user.id } } });
 
       if (!cart) {
-        this.logger.log(
-          `[cart.service::addToCart] Creating new cart for user=${user.id}`,
-        );
         cart = tx.create(Cart, { user: { id: user.id } });
         await tx.save(cart);
         this.logger.log(
@@ -84,10 +79,6 @@ export class CartService {
       });
 
       if (existing_item) {
-        this.logger.log(
-          `[cart.service::addToCart] Existing cart_item found itemId=${existing_item.id}, oldQty=${existing_item.quantity}`,
-        );
-
         // เพิ่มจำนวน
         existing_item.quantity += body.quantity;
 
@@ -96,33 +87,17 @@ export class CartService {
           existing_item.quantity,
         );
 
-        this.logger.log(
-          `[cart.service::addToCart] Updated quantity itemId=${existing_item.id}, newQty=${existing_item.quantity}`,
-        );
-
         return await tx.save(CartItem, existing_item);
       } else {
-        this.logger.log(
-          `[cart.service::addToCart] No existing cart_item. Creating new item variant=${variant.id}, qty=${body.quantity}`,
-        );
-
         const newItem = await tx.save(CartItem, {
           cart: { id: cart.id },
           variant: { id: variant.id },
           quantity: body.quantity,
         });
 
-        this.logger.log(
-          `[cart.service::addToCart] New cart_item created itemId=${newItem.id}, qty=${newItem.quantity}`,
-        );
-
         return newItem;
       }
     });
-
-    this.logger.log(
-      `[cart.service::addToCart] END addToCart itemId=${cart_item.id}, finalQty=${cart_item.quantity}`,
-    );
 
     return cart_item;
   }
@@ -137,13 +112,8 @@ export class CartService {
   async itemAction(
     body: ActionCartItemDTO,
   ): Promise<{ cart_item: CartItem; status: 'updated' | 'deleted' }> {
-    this.logger.log(
-      `[cart.service::itemAction] START user=${body.user_id}, variant=${body.variant_id}, action=${body.action}`,
-    );
-
     // หา cart ของ user
     const cart = await this.findOneByUser(body.user_id);
-    this.logger.log(`[cart.service::itemAction] Loaded cart cartId=${cart.id}`);
 
     // หา cart_item
     const cart_item = await this.cartItemRepo.findOneBy({
@@ -151,52 +121,63 @@ export class CartService {
       variant: { id: body.variant_id },
     });
 
-    this.logger.log(
-      `[cart.service::itemAction] CartItem lookup: ${cart_item ? `found itemId=${cart_item.id}, qty=${cart_item.quantity}` : 'not found'}`,
-    );
-
     if (!cart_item) {
-      this.logger.warn(
-        `[cart.service::itemAction] CartItem not found for deletion`,
-      );
       throw new NotFoundException('ไม่พบสินค้าที่ต้องการลบ');
     }
 
     // ตรวจสอบ action
-    const act = body.action.toUpperCase();
-    this.logger.log(`[cart.service::itemAction] Action resolved: ${act}`);
+    const act = body.action;
 
     const shouldDelete =
       act === 'REMOVE' || (act === 'DECREASE' && cart_item.quantity <= 1);
 
     if (shouldDelete) {
-      this.logger.log(
-        `[cart.service::itemAction] Deleting cart_item itemId=${cart_item.id}, qty=${cart_item.quantity}`,
-      );
-
       await this.cartItemRepo.delete(cart_item.id);
-
-      this.logger.log(
-        `[cart.service::itemAction] Cart_item deleted itemId=${cart_item.id}`,
-      );
 
       return { cart_item, status: 'deleted' };
     }
 
     // DECREASE quantity > 1
     cart_item.quantity -= 1;
-    this.logger.log(
-      `[cart.service::itemAction] Decreasing quantity itemId=${cart_item.id}, newQty=${cart_item.quantity}`,
-    );
 
     // return status 'updated'
     const updated_cart_item = await this.cartItemRepo.save(cart_item);
+    return { cart_item: updated_cart_item, status: 'updated' };
+  }
 
-    this.logger.log(
-      `[cart.service::itemAction] Cart_item updated itemId=${updated_cart_item.id}, qty=${updated_cart_item.quantity}`,
+  async previewCartSummary(user_id: string, promoCode: string) {
+    const items = await this.cartItemRepo.findBy({
+      cart: { user: { id: user_id } },
+    });
+    if (!items || items.length === 0)
+      throw new NotFoundException('ไม่พบตะกร้า');
+
+    let promotionPreviewResult;
+
+    if (promoCode) {
+      promotionPreviewResult = await this.promotionService.previewPromotion(
+        items,
+        promoCode,
+      );
+
+      await this.cartRepo.update(
+        { user: { id: user_id } },
+        { code: promoCode },
+      );
+    }
+
+    const total_price = items.reduce(
+      (sum, item) => sum + item.variant.price * item.quantity,
+      0,
     );
 
-    this.logger.log(`[cart.service::itemAction] END`);
-    return { cart_item: updated_cart_item, status: 'updated' };
+    return {
+      total_price,
+      ...(promotionPreviewResult && {
+        discount_total: promotionPreviewResult.discount_total,
+        final_total: promotionPreviewResult.final_total,
+      }),
+      // shipping_value: 45,
+    };
   }
 }

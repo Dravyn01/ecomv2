@@ -15,11 +15,11 @@ import { Type } from 'class-transformer';
 import { VARIANT_DTO_MESSAGE } from 'src/common/enums/dto/variant.enum';
 import { PRODUCT_DTO_MESSAGE } from 'src/common/enums/dto/product.enum';
 import { IMAGE_DTO_MESSAGE } from 'src/common/enums/dto/image.enum';
-import { CONFIG_ENUM } from 'src/common/enums/common/common.enum';
+import { APP_CONFIG } from 'src/common/enums/common/common.enum';
 
 export class CreateVariantDTO {
   @IsNotEmpty({ message: PRODUCT_DTO_MESSAGE.ID_IS_NOT_EMPTY })
-  @IsUUID(CONFIG_ENUM.UUID_VERSION, {
+  @IsUUID(APP_CONFIG.UUID_VERSION, {
     message: PRODUCT_DTO_MESSAGE.ID_MUST_BE_UUID,
   })
   product_id: string;

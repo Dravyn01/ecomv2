@@ -31,6 +31,10 @@ export class Cart {
   // One Cart Many CartItem
   @OneToMany(() => CartItem, (cartItem) => cartItem.cart)
   items: CartItem[];
+
+  /* Promotion Code */
+  @Column()
+  code?: string;
 }
 
 @Entity('cart_item')
